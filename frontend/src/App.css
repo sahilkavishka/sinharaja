@@ -1,0 +1,166 @@
+/* App.css */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto:wght@400;700&display=swap');
+
+body {
+  margin: 0;
+  overflow: hidden; /* Scroll බාර් එන්න දෙන්නේ නෑ */
+  background-color: black;
+  font-family: 'Roboto', sans-serif;
+}
+
+/* මුළු Screen එකම වහගන්න කෑල්ල */
+.game-screen {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end; /* ඔක්කොම යටට ගන්නවා */
+}
+
+/* Background Image එක */
+.background-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  z-index: -1; /* අනිත් ඒවට යටින් තියන්න */
+  transition: background-image 0.5s ease-in-out; /* පින්තූර මාරු වෙද්දි Smooth වෙන්න */
+}
+
+/* යටින් තියෙන කතාව පෙන්නන කොටුව (Dialogue Box) */
+.dialogue-box {
+  background: rgba(0, 0, 0, 0.85); /* කළු පාට, ටිකක් විනිවිද පේනවා */
+  color: white;
+  padding: 20px;
+  margin: 20px;
+  border-radius: 15px;
+  border: 2px solid #555;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+  min-height: 150px;
+  animation: slideUp 0.5s ease-out;
+}
+
+/* මාතෘකාව (Scene Name) */
+.character-name {
+  color: #ffcc00; /* රත්තරන් පාට */
+  font-weight: bold;
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+/* කතාවේ අකුරු */
+.dialogue-text {
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+/* තීරණ ගන්න බටන්ස් */
+.choices-container {
+  display: flex;
+  gap: 10px;
+  padding: 0 20px 20px 20px;
+  justify-content: center;
+}
+
+.choice-btn {
+  background: linear-gradient(45deg, #1e3c72, #2a5298);
+  border: 2px solid #4ca1af;
+  color: white;
+  padding: 15px 25px;
+  border-radius: 30px;
+  font-size: 1rem;
+  cursor: pointer;
+  flex: 1;
+  transition: all 0.2s;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+.choice-btn:hover {
+  transform: translateY(-3px); /* මවුස් එක තිබ්බම උඩට එනවා */
+  box-shadow: 0 6px 20px rgba(76, 161, 175, 0.6);
+  background: linear-gradient(45deg, #2a5298, #1e3c72);
+}
+
+/* පටන් ගද්දි එන Animation එක */
+@keyframes slideUp {
+  from { transform: translateY(50px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* --- START SCREEN STYLES --- */
+.start-screen {
+  background: black;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  background-image: url('https://images.unsplash.com/photo-1509557965875-b88c97052f0e?q=80&w=1920'); /* Horror Background */
+  background-size: cover;
+}
+
+.game-title {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 4rem;
+  text-align: center;
+  color: #c0392b; /* ලේ පාට (Blood Red) */
+  text-shadow: 4px 4px 0px #000;
+  margin-bottom: 10px;
+  animation: pulse 2s infinite; /* ගැහෙනවා වගේ පේන්න */
+}
+
+.subtitle {
+  font-size: 1.5rem;
+  letter-spacing: 5px;
+  margin-bottom: 50px;
+  text-shadow: 2px 2px 0px #000;
+}
+
+.start-btn {
+  background: transparent;
+  border: 3px solid white;
+  color: white;
+  padding: 20px 50px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: 0.3s;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
+}
+
+.start-btn:hover {
+  background: white;
+  color: black;
+  box-shadow: 0 0 20px white;
+}
+
+.loading-screen {
+    color: red;
+    font-size: 2rem;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: black;
+}
+
+/* Background එක උඩින් යන කළු පාට */
+.overlay {
+    background: linear-gradient(to bottom, transparent 40%, black 100%);
+    width: 100%;
+    height: 100%;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.8; }
+}
