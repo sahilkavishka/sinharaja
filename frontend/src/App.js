@@ -3,25 +3,23 @@ import axios from 'axios';
 import './App.css';
 
 function App() {
-  // --- STATE (ගේම් එකේ මතකය) ---
-  const [gameStarted, setGameStarted] = useState(false); // ගේම් එක පටන් ගත්තද?
+  const [gameStarted, setGameStarted] = useState(false);
   const [sceneId, setSceneId] = useState(1);
   const [sceneData, setSceneData] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // --- AUDIO SETUP (සද්ද පාලනය) ---
-  // 1. Background Music (Online Link එකක් දාලා තියෙන්නේ)
+  // --- අලුත්: Player ගේ Stats ---
+  const [health, setHealth] = useState(100);
+  const [sanity, setSanity] = useState(100);
+
   const bgmRef = useRef(new Audio("/sounds/bgm.mp3"));
-  // 2. Click Sound
   const clickSoundRef = useRef(new Audio("/sounds/click.mp3"));
 
-  // BGM එක දිගටම යන්න (Loop) හදනවා
   useEffect(() => {
     bgmRef.current.loop = true;
-    bgmRef.current.volume = 0.5; // සද්දෙ භාගයක් අඩු කරනවා
+    bgmRef.current.volume = 0.5;
   }, []);
 
-  // --- API CALLS ---
   useEffect(() => {
     if (gameStarted) {
       setLoading(true);
@@ -30,31 +28,49 @@ function App() {
           setSceneData(response.data);
           setLoading(false);
         })
-        .catch(error => {
-          console.error("Error:", error);
-          setLoading(false);
-        });
+        .catch(error => console.error("Error:", error));
     }
   }, [sceneId, gameStarted]);
 
-  // --- FUNCTIONS ---
-  
-  // ගේම් එක පටන් ගන්න බටන් එක
   const startGame = () => {
     setGameStarted(true);
-    bgmRef.current.play().catch(e => console.log("Audio play failed:", e)); // සින්දුව පටන් ගන්නවා
+    bgmRef.current.play().catch(e => console.log(e));
     playClick();
   };
 
-  // Click සද්දේ දාන Function එක
   const playClick = () => {
-    clickSoundRef.current.currentTime = 0; // මුල ඉඳන් සද්දේ එන්න
-    clickSoundRef.current.play();
+    clickSoundRef.current.currentTime = 0;
+    clickSoundRef.current.play().catch(e => console.log(e));
   }
 
-  // තීරණයක් ගත්තම වෙන දේ
-  const handleChoice = (nextId) => {
-    playClick(); // සද්දේ දානවා
+  // --- අලුත්: තීරණයක් ගත්තම Stats අඩු/වැඩි වෙන විදිය ---
+  const handleChoice = (nextId, healthEffect, sanityEffect) => {
+    playClick();
+    
+    // Health සහ Sanity ගණනය කිරීම
+    let newHealth = health + (healthEffect || 0);
+    let newSanity = sanity + (sanityEffect || 0);
+
+    // 100ට වඩා යන්නෙත් නෑ, 0ට වඩා අඩුවෙන්නෙත් නෑ
+    if (newHealth > 100) newHealth = 100;
+    if (newSanity > 100) newSanity = 100;
+
+    setHealth(newHealth);
+    setSanity(newSanity);
+
+    // මැරුණොත් වෙන දේ (Game Over)
+    if (newHealth <= 0) {
+      alert("ඔයා මිය ගියා! Game Over ☠️");
+      window.location.reload(); // ගේම් එක මුල ඉඳන් පටන් ගන්නවා
+      return;
+    }
+    
+    if (newSanity <= 0) {
+      alert("ඔයාට පිස්සු හැදුනා! Game Over 😵‍💫");
+      window.location.reload();
+      return;
+    }
+
     if (nextId !== 0) {
       setSceneId(nextId);
     } else {
@@ -62,12 +78,6 @@ function App() {
     }
   };
 
-  // --- RENDER (තිරයේ පෙනෙන දේ) ---
-
-  // 1. Loading Screen
-  if (loading) return <div className="loading-screen">Loading Horror...</div>;
-
-  // 2. Start Screen (Main Menu) - මුලින්ම පේන්නේ මේක
   if (!gameStarted) {
     return (
       <div className="start-screen">
@@ -78,20 +88,31 @@ function App() {
     );
   }
 
-  // 3. Game Screen (Error Handling)
-  if (!sceneData) return <div style={{color:'red'}}>Error Loading Data. Check Django!</div>;
+  if (!sceneData) return <div>Loading...</div>;
 
-  // 4. Main Game UI
   const defaultImage = "https://images.unsplash.com/photo-1440342359726-5918314352d8?q=80&w=1920";
 
   return (
     <div className="game-screen">
-      {/* Background Music Control (Optional: Mute button එකක් පස්සේ දාමු) */}
       
-      <div 
-        className="background-layer" 
-        style={{ backgroundImage: `url(${sceneData.image_url || defaultImage})` }} 
-      >
+      {/* --- අලුත්: HUD (Heads-Up Display) --- */}
+      <div className="hud-container">
+        <div className="stat-box">
+          <span className="stat-label">HEALTH ❤️</span>
+          <div className="progress-bar">
+            <div className="progress-fill health-fill" style={{ width: `${health}%` }}></div>
+          </div>
+        </div>
+        
+        <div className="stat-box">
+          <span className="stat-label">SANITY 🧠</span>
+          <div className="progress-bar">
+            <div className="progress-fill sanity-fill" style={{ width: `${sanity}%` }}></div>
+          </div>
+        </div>
+      </div>
+
+      <div className="background-layer" style={{ backgroundImage: `url(${sceneData.image_url || defaultImage})` }}>
         <div className="overlay"></div>
       </div>
 
@@ -102,13 +123,13 @@ function App() {
 
       <div className="choices-container">
         {sceneData.choice_1_text && (
-          <button className="choice-btn" onClick={() => handleChoice(sceneData.choice_1_next_id)}>
+          <button className="choice-btn" onClick={() => handleChoice(sceneData.choice_1_next_id, sceneData.choice_1_health_effect, sceneData.choice_1_sanity_effect)}>
             {sceneData.choice_1_text}
           </button>
         )}
         
         {sceneData.choice_2_text && (
-          <button className="choice-btn" onClick={() => handleChoice(sceneData.choice_2_next_id)}>
+          <button className="choice-btn" onClick={() => handleChoice(sceneData.choice_2_next_id, sceneData.choice_2_health_effect, sceneData.choice_2_sanity_effect)}>
             {sceneData.choice_2_text}
           </button>
         )}

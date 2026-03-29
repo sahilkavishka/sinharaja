@@ -21,3 +21,14 @@ class Scene(models.Model):
 
     def __str__(self):
         return self.title
+
+    # පළවෙනි තීරණයේ ප්‍රතිඵල
+    choice_1_health_effect = models.IntegerField(default=0) # Health එකට වෙන දේ (උදා: -10)
+    choice_1_sanity_effect = models.IntegerField(default=0) # Sanity එකට වෙන දේ
+
+    # දෙවෙනි තීරණයේ ප්‍රතිඵල
+    choice_2_health_effect = models.IntegerField(default=0)
+    choice_2_sanity_effect = models.IntegerField(default=0)
+
+    def __str__(self):
+        return self.title
