@@ -41,3 +41,15 @@ class Scene(models.Model):
     
     # දෙවෙනි තීරණය ගන්න නම් අතේ තියෙන්න ඕන දේ
     required_item_for_choice_2 = models.CharField(max_length=50, blank=True, null=True)
+
+    # --- අලුත්: Quick Time Events (Timer) ---
+    
+    # මේක හදිසි අවස්ථාවක්ද? (ඔව්/නෑ)
+    is_timed = models.BooleanField(default=False)
+    
+    # තත්පර කීයක් දෙනවද? (උදා: 5)
+    time_limit = models.IntegerField(default=5)
+    
+    # වෙලාව ඉවර වුනොත් මොකද වෙන්නේ? (දඬුවම)
+    timeout_next_id = models.IntegerField(default=0) # යන්න ඕන ඊළඟ Scene එක
+    timeout_health_effect = models.IntegerField(default=0) # ලේ අඩු වෙන ගාණ (උදා: -20)

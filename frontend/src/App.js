@@ -8,13 +8,14 @@ function App() {
   const [sceneData, setSceneData] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Stats & Inventory
   const [health, setHealth] = useState(100);
   const [sanity, setSanity] = useState(100);
   const [inventory, setInventory] = useState([]);
-
-  // Typewriter Effect සඳහා
   const [typedText, setTypedText] = useState("");
+  const [timeLeft, setTimeLeft] = useState(null);
+
+  // --- අලුත්: Game Over State එක ---
+  const [gameOver, setGameOver] = useState(null); // 'dead' , 'insane' , 'won' , null
 
   const bgmRef = useRef(new Audio("/sounds/bgm.mp3"));
   const clickSoundRef = useRef(new Audio("/sounds/click.mp3"));
@@ -24,31 +25,42 @@ function App() {
     bgmRef.current.volume = 0.5;
   }, []);
 
-  // API Call
   useEffect(() => {
-    if (gameStarted) {
+    if (gameStarted && !gameOver) {
       setLoading(true);
       axios.get(`http://127.0.0.1:8000/api/scene/${sceneId}/`)
         .then(response => {
           setSceneData(response.data);
           
-          // Inventory එකට බඩු දාන කෑල්ල
           if (response.data.given_item && !inventory.includes(response.data.given_item)) {
             setInventory(prev => [...prev, response.data.given_item]);
+          }
+          
+          if (response.data.is_timed) {
+            setTimeLeft(response.data.time_limit);
+          } else {
+            setTimeLeft(null);
           }
           setLoading(false);
         })
         .catch(error => console.error("Error:", error));
     }
-  }, [sceneId, gameStarted]);
+  }, [sceneId, gameStarted, gameOver]);
 
-  // අකුරෙන් අකුර ටයිප් කරන කෑල්ල (Typewriter Effect)
+  // --- වෙනස් කළා: Typewriter Effect Fix ---
   useEffect(() => {
     if (sceneData && sceneData.description) {
-      setTypedText(""); // පරණ අකුරු මකනවා
+      setTypedText(""); 
+      
+      // හදිසි අවස්ථාවක් නම් (Timer එකක් තියෙනවා නම්), අකුරු එකපාර පෙන්වන්න!
+      if (sceneData.is_timed) {
+        setTypedText(sceneData.description);
+        return;
+      }
+
+      // නැත්නම් හිමීට ටයිප් වෙන්න හරින්න
       let i = 0;
       const textToType = sceneData.description;
-      
       const typingInterval = setInterval(() => {
         if (i < textToType.length) {
           setTypedText((prev) => prev + textToType.charAt(i));
@@ -56,11 +68,26 @@ function App() {
         } else {
           clearInterval(typingInterval);
         }
-      }, 40); // 40 කියන්නේ ටයිප් වෙන වේගය (අඩු කළොත් වේගවත්)
-
+      }, 40);
       return () => clearInterval(typingInterval);
     }
   }, [sceneData]);
+
+  useEffect(() => {
+    if (timeLeft === null || gameOver) return; 
+
+    if (timeLeft === 0) {
+      // වෙලාව ඉවර වුනොත් Alert එක අයින් කරලා කෙලින්ම දඬුවම දෙනවා
+      handleChoice(sceneData.timeout_next_id, sceneData.timeout_health_effect, 0, null);
+      return;
+    }
+
+    const timerId = setInterval(() => {
+      setTimeLeft(prev => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timerId);
+  }, [timeLeft, sceneData, gameOver]);
 
   const startGame = () => {
     setGameStarted(true);
@@ -73,8 +100,19 @@ function App() {
     clickSoundRef.current.play().catch(e => console.log(e));
   }
 
+  // ගේම් එක ආයෙත් මුල ඉඳන් පටන් ගන්න බටන් එක
+  const restartGame = () => {
+    setHealth(100);
+    setSanity(100);
+    setInventory([]);
+    setSceneId(1);
+    setGameOver(null);
+    setTimeLeft(null);
+  };
+
   const handleChoice = (nextId, healthEffect, sanityEffect, requiredItem) => {
     if (requiredItem && !inventory.includes(requiredItem)) {
+      // Alert එක වෙනුවට පොඩි ශබ්දයක් හරි අමුතු විදියකට හරි පෙන්නන්න පුළුවන්, දැනට alert එක තියමු
       alert(`මේක කරන්න ඔයා ගාව "${requiredItem}" තියෙන්න ඕන!`);
       return; 
     }
@@ -90,30 +128,61 @@ function App() {
     setHealth(newHealth);
     setSanity(newSanity);
 
+    // --- වෙනස් කළා: Game Over Alerts අයින් කරලා ලස්සන Screen එකට යවනවා ---
     if (newHealth <= 0) {
-      alert("ඔයා මිය ගියා! Game Over ☠️");
-      window.location.reload();
+      setGameOver('dead');
       return;
     }
     
     if (newSanity <= 0) {
-      alert("ඔයාට පිස්සු හැදුනා! Game Over 😵‍💫");
-      window.location.reload();
+      setGameOver('insane');
       return;
     }
 
     if (nextId !== 0) {
       setSceneId(nextId);
     } else {
-      alert("Demo එක ඉවරයි! හොඳයිද?");
+      setGameOver('won'); // 0 දුන්නොත් ගේම් එක දිනුම්
     }
   };
 
+  // 1. මුල් තිරය
   if (!gameStarted) {
     return (
       <div className="start-screen">
         <h1 className="game-title">SINHARAJA<br/>MYSTERY</h1>
         <button className="start-btn" onClick={startGame}>ENTER THE JUNGLE</button>
+      </div>
+    );
+  }
+
+  // 2. අලුත්: Game Over Screens
+  if (gameOver === 'dead') {
+    return (
+      <div className="game-over-screen dead-screen">
+        <h1>YOU DIED</h1>
+        <p>කැලේ මැද ඔයාගේ ජීවිතය අවසන් විය...</p>
+        <button className="start-btn" onClick={restartGame}>TRY AGAIN</button>
+      </div>
+    );
+  }
+
+  if (gameOver === 'insane') {
+    return (
+      <div className="game-over-screen insane-screen">
+        <h1>MIND LOST</h1>
+        <p>සිහිකල්පනාව අහිමි වී ඔයා කැලේ අතරමං වුණා...</p>
+        <button className="start-btn" onClick={restartGame}>TRY AGAIN</button>
+      </div>
+    );
+  }
+
+  if (gameOver === 'won') {
+    return (
+      <div className="game-over-screen won-screen">
+        <h1>SURVIVED!</h1>
+        <p>ඔයා සිංහරාජයේ අභිරහස ජය ගත්තා!</p>
+        <button className="start-btn" onClick={restartGame}>PLAY AGAIN</button>
       </div>
     );
   }
@@ -124,36 +193,33 @@ function App() {
 
   return (
     <div className="game-container">
-      
-      {/* 1. Full Screen Background */}
       <div className="bg-image" style={{ backgroundImage: `url(${sceneData.image_url || defaultImage})` }}></div>
 
-      {/* 2. HUD (Health & Sanity) */}
+      {timeLeft !== null && (
+        <div className="timer-container">
+          <div className="timer-bar" style={{ width: `${(timeLeft / sceneData.time_limit) * 100}%` }}></div>
+          <span className="timer-text">{timeLeft}s</span>
+        </div>
+      )}
+
       <div className="top-hud">
         <div className="stat-box">
           <span className="stat-label">HEALTH</span>
           <div className="progress-bar"><div className="health-fill" style={{ width: `${health}%` }}></div></div>
         </div>
-        
         <div className="stat-box">
           <span className="stat-label">SANITY</span>
           <div className="progress-bar"><div className="sanity-fill" style={{ width: `${sanity}%` }}></div></div>
         </div>
       </div>
 
-      {/* 3. Bottom Area (Dialogue, Choices & Inventory) */}
       <div className="bottom-ui">
-        
-        {/* කතාව පෙන්නන කොටුව */}
         <div className="dialogue-box">
           <h2 className="scene-title">{sceneData.title}</h2>
-          {/* මෙතන තමයි අර ටයිප් වෙන අකුරු ටික වැටෙන්නේ */}
           <p className="typewriter-text">{typedText}</p>
         </div>
 
-        {/* Buttons සහ බඩු මල්ල */}
         <div className="controls-row">
-          
           <div className="inventory-section">
             <span className="inv-title">🎒 බඩු මල්ල</span>
             <div className="inv-items">
@@ -173,9 +239,7 @@ function App() {
               </button>
             )}
           </div>
-
         </div>
-
       </div>
     </div>
   );
