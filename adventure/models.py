@@ -32,3 +32,12 @@ class Scene(models.Model):
 
     def __str__(self):
         return self.title
+
+# මේ Scene එකට ආවම Player ට හම්බවෙන දේ (උදා: "පරණ යතුර")
+    given_item = models.CharField(max_length=50, blank=True, null=True) 
+
+    # පළවෙනි තීරණය ගන්න නම් (උදා: දොර අරින්න) අතේ තියෙන්න ඕන දේ
+    required_item_for_choice_1 = models.CharField(max_length=50, blank=True, null=True)
+    
+    # දෙවෙනි තීරණය ගන්න නම් අතේ තියෙන්න ඕන දේ
+    required_item_for_choice_2 = models.CharField(max_length=50, blank=True, null=True)

@@ -8,9 +8,13 @@ function App() {
   const [sceneData, setSceneData] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // --- අලුත්: Player ගේ Stats ---
+  // Stats & Inventory
   const [health, setHealth] = useState(100);
   const [sanity, setSanity] = useState(100);
+  const [inventory, setInventory] = useState([]);
+
+  // Typewriter Effect සඳහා
+  const [typedText, setTypedText] = useState("");
 
   const bgmRef = useRef(new Audio("/sounds/bgm.mp3"));
   const clickSoundRef = useRef(new Audio("/sounds/click.mp3"));
@@ -20,17 +24,43 @@ function App() {
     bgmRef.current.volume = 0.5;
   }, []);
 
+  // API Call
   useEffect(() => {
     if (gameStarted) {
       setLoading(true);
       axios.get(`http://127.0.0.1:8000/api/scene/${sceneId}/`)
         .then(response => {
           setSceneData(response.data);
+          
+          // Inventory එකට බඩු දාන කෑල්ල
+          if (response.data.given_item && !inventory.includes(response.data.given_item)) {
+            setInventory(prev => [...prev, response.data.given_item]);
+          }
           setLoading(false);
         })
         .catch(error => console.error("Error:", error));
     }
   }, [sceneId, gameStarted]);
+
+  // අකුරෙන් අකුර ටයිප් කරන කෑල්ල (Typewriter Effect)
+  useEffect(() => {
+    if (sceneData && sceneData.description) {
+      setTypedText(""); // පරණ අකුරු මකනවා
+      let i = 0;
+      const textToType = sceneData.description;
+      
+      const typingInterval = setInterval(() => {
+        if (i < textToType.length) {
+          setTypedText((prev) => prev + textToType.charAt(i));
+          i++;
+        } else {
+          clearInterval(typingInterval);
+        }
+      }, 40); // 40 කියන්නේ ටයිප් වෙන වේගය (අඩු කළොත් වේගවත්)
+
+      return () => clearInterval(typingInterval);
+    }
+  }, [sceneData]);
 
   const startGame = () => {
     setGameStarted(true);
@@ -43,25 +73,26 @@ function App() {
     clickSoundRef.current.play().catch(e => console.log(e));
   }
 
-  // --- අලුත්: තීරණයක් ගත්තම Stats අඩු/වැඩි වෙන විදිය ---
-  const handleChoice = (nextId, healthEffect, sanityEffect) => {
+  const handleChoice = (nextId, healthEffect, sanityEffect, requiredItem) => {
+    if (requiredItem && !inventory.includes(requiredItem)) {
+      alert(`මේක කරන්න ඔයා ගාව "${requiredItem}" තියෙන්න ඕන!`);
+      return; 
+    }
+
     playClick();
     
-    // Health සහ Sanity ගණනය කිරීම
     let newHealth = health + (healthEffect || 0);
     let newSanity = sanity + (sanityEffect || 0);
 
-    // 100ට වඩා යන්නෙත් නෑ, 0ට වඩා අඩුවෙන්නෙත් නෑ
     if (newHealth > 100) newHealth = 100;
     if (newSanity > 100) newSanity = 100;
 
     setHealth(newHealth);
     setSanity(newSanity);
 
-    // මැරුණොත් වෙන දේ (Game Over)
     if (newHealth <= 0) {
       alert("ඔයා මිය ගියා! Game Over ☠️");
-      window.location.reload(); // ගේම් එක මුල ඉඳන් පටන් ගන්නවා
+      window.location.reload();
       return;
     }
     
@@ -82,7 +113,6 @@ function App() {
     return (
       <div className="start-screen">
         <h1 className="game-title">SINHARAJA<br/>MYSTERY</h1>
-        <p className="subtitle">The Lost Expedition</p>
         <button className="start-btn" onClick={startGame}>ENTER THE JUNGLE</button>
       </div>
     );
@@ -93,46 +123,59 @@ function App() {
   const defaultImage = "https://images.unsplash.com/photo-1440342359726-5918314352d8?q=80&w=1920";
 
   return (
-    <div className="game-screen">
+    <div className="game-container">
       
-      {/* --- අලුත්: HUD (Heads-Up Display) --- */}
-      <div className="hud-container">
+      {/* 1. Full Screen Background */}
+      <div className="bg-image" style={{ backgroundImage: `url(${sceneData.image_url || defaultImage})` }}></div>
+
+      {/* 2. HUD (Health & Sanity) */}
+      <div className="top-hud">
         <div className="stat-box">
-          <span className="stat-label">HEALTH ❤️</span>
-          <div className="progress-bar">
-            <div className="progress-fill health-fill" style={{ width: `${health}%` }}></div>
-          </div>
+          <span className="stat-label">HEALTH</span>
+          <div className="progress-bar"><div className="health-fill" style={{ width: `${health}%` }}></div></div>
         </div>
         
         <div className="stat-box">
-          <span className="stat-label">SANITY 🧠</span>
-          <div className="progress-bar">
-            <div className="progress-fill sanity-fill" style={{ width: `${sanity}%` }}></div>
-          </div>
+          <span className="stat-label">SANITY</span>
+          <div className="progress-bar"><div className="sanity-fill" style={{ width: `${sanity}%` }}></div></div>
         </div>
       </div>
 
-      <div className="background-layer" style={{ backgroundImage: `url(${sceneData.image_url || defaultImage})` }}>
-        <div className="overlay"></div>
-      </div>
-
-      <div className="dialogue-box">
-        <div className="character-name">{sceneData.title}</div>
-        <p className="dialogue-text">{sceneData.description}</p>
-      </div>
-
-      <div className="choices-container">
-        {sceneData.choice_1_text && (
-          <button className="choice-btn" onClick={() => handleChoice(sceneData.choice_1_next_id, sceneData.choice_1_health_effect, sceneData.choice_1_sanity_effect)}>
-            {sceneData.choice_1_text}
-          </button>
-        )}
+      {/* 3. Bottom Area (Dialogue, Choices & Inventory) */}
+      <div className="bottom-ui">
         
-        {sceneData.choice_2_text && (
-          <button className="choice-btn" onClick={() => handleChoice(sceneData.choice_2_next_id, sceneData.choice_2_health_effect, sceneData.choice_2_sanity_effect)}>
-            {sceneData.choice_2_text}
-          </button>
-        )}
+        {/* කතාව පෙන්නන කොටුව */}
+        <div className="dialogue-box">
+          <h2 className="scene-title">{sceneData.title}</h2>
+          {/* මෙතන තමයි අර ටයිප් වෙන අකුරු ටික වැටෙන්නේ */}
+          <p className="typewriter-text">{typedText}</p>
+        </div>
+
+        {/* Buttons සහ බඩු මල්ල */}
+        <div className="controls-row">
+          
+          <div className="inventory-section">
+            <span className="inv-title">🎒 බඩු මල්ල</span>
+            <div className="inv-items">
+              {inventory.length === 0 ? <span className="empty">හිස්...</span> : inventory.map((item, i) => <span key={i} className="inv-badge">{item}</span>)}
+            </div>
+          </div>
+
+          <div className="choices-section">
+            {sceneData.choice_1_text && (
+              <button className="action-btn" onClick={() => handleChoice(sceneData.choice_1_next_id, sceneData.choice_1_health_effect, sceneData.choice_1_sanity_effect, sceneData.required_item_for_choice_1)}>
+                {sceneData.choice_1_text}
+              </button>
+            )}
+            {sceneData.choice_2_text && (
+              <button className="action-btn" onClick={() => handleChoice(sceneData.choice_2_next_id, sceneData.choice_2_health_effect, sceneData.choice_2_sanity_effect, sceneData.required_item_for_choice_2)}>
+                {sceneData.choice_2_text}
+              </button>
+            )}
+          </div>
+
+        </div>
+
       </div>
     </div>
   );
