@@ -4453,95 +4453,255 @@ export class SinharajaEngine {
     const distToPlayer = Math.hypot(obj.x - this.player.x, obj.y - this.player.y);
     const isNearby = distToPlayer < (obj.radius || 30) + 55;
 
-    // ── 1. OLD RANGER GUNADASA NPC ──
+    // ── 1. OLD RANGER GUNADASA NPC (Pro 2.5D Upright Elder Ranger) ──
     if (id === "gunadasa_npc" || id === "npc") {
+      // A. Ground Contact Shadow
       ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
       ctx.beginPath();
-      ctx.ellipse(0, 6, 20, 12, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, 3, 18, 8, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      const lookAngle = isNearby ? Math.atan2(this.player.y - obj.y, this.player.x - obj.x) : Math.PI * 0.4;
-      const breath = Math.sin(time * 0.0025) * 0.6;
+      // B. Direction Facing & Upright Model
+      // When player walks to his left, flip horizontally so he faces towards the player
+      const faceLeft = this.player.x < obj.x;
+      const breath = Math.sin(time * 0.0022) * 0.7;
 
       ctx.save();
-      ctx.rotate(lookAngle);
+      if (faceLeft) {
+        ctx.scale(-1, 1);
+      }
 
-      // Feet & Boots
-      ctx.fillStyle = "#3e2723";
-      ctx.fillRect(-6, -12, 8, 5);
-      ctx.fillRect(-6, 7, 8, 5);
-
-      // Traditional Sarong & Earthy Khaki Ranger Jacket
-      ctx.fillStyle = "#3a4a35";
-      ctx.beginPath();
-      ctx.ellipse(0, 0, 12 + breath, 13, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = "#22301e";
-      ctx.lineWidth = 1.8;
-      ctx.stroke();
-
-      // Leather shoulder belt & field pouch
-      ctx.strokeStyle = "#5d4037";
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.moveTo(-10, -9);
-      ctx.lineTo(8, 8);
-      ctx.stroke();
-      ctx.fillStyle = "#4e342e";
-      ctx.fillRect(5, 6, 6, 7);
-
-      // Elder Head with Weathered Skin and White/Silver Beard
-      ctx.fillStyle = "#c68a4c";
-      ctx.beginPath();
-      ctx.arc(3, 0, 7, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Silver gray beard on front of face
-      ctx.fillStyle = "#d1d5db";
-      ctx.beginPath();
-      ctx.arc(8, 0, 4, -Math.PI * 0.4, Math.PI * 0.4);
-      ctx.fill();
-
-      // Wide-Brimmed Ranger Safari Hat
-      ctx.fillStyle = "#5c4d37";
-      ctx.beginPath();
-      ctx.ellipse(2, 0, 11, 10, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = "#796245";
-      ctx.beginPath();
-      ctx.arc(2, 0, 6.5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = "#2a1c10";
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(2, 0, 5, 0, Math.PI * 2);
-      ctx.stroke();
-
-      // Right arm holding Bamboo Walking Staff
-      ctx.fillStyle = "#c68a4c";
-      ctx.beginPath();
-      ctx.arc(7, 12, 3, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = "#a1887f";
-      ctx.fillRect(4, 11, 18, 3);
+      // 1. Tall Bamboo Walking Staff (Planted into the soil on player-facing side)
+      // Brass ferrule tip on ground
       ctx.fillStyle = "#d4af37";
-      ctx.fillRect(20, 10.5, 3, 4);
+      ctx.fillRect(11.5, 1, 3, 3);
+
+      // Bamboo Shaft
+      const staffGrad = ctx.createLinearGradient(11, 0, 14, 0);
+      staffGrad.addColorStop(0, "#d4a359");
+      staffGrad.addColorStop(0.5, "#eed088");
+      staffGrad.addColorStop(1, "#9c6f28");
+      ctx.fillStyle = staffGrad;
+      ctx.fillRect(11.5, -46, 3, 47);
+
+      // Bamboo segments & dark knot rings
+      ctx.fillStyle = "#5d4037";
+      [-4, -14, -24, -34, -42].forEach(ky => {
+        ctx.fillRect(10.5, ky, 5, 2);
+      });
+
+      // 2. Leather Sandals & Feet at ground level
+      // Left foot & leather sandal
+      ctx.fillStyle = "#271810";
+      ctx.fillRect(-8, -1, 7, 4);
+      ctx.fillStyle = "#c68a4c"; // Weathered skin
+      ctx.fillRect(-7, -4, 5, 4);
+      ctx.fillStyle = "#422817"; // Leather strap
+      ctx.fillRect(-8, -2, 7, 1.5);
+
+      // Right foot & leather sandal
+      ctx.fillStyle = "#271810";
+      ctx.fillRect(1, -1, 7, 4);
+      ctx.fillStyle = "#c68a4c";
+      ctx.fillRect(2, -4, 5, 4);
+      ctx.fillStyle = "#422817";
+      ctx.fillRect(1, -2, 7, 1.5);
+
+      // 3. Traditional Sri Lankan Sarong (කයිලි / සරම)
+      const sarongGrad = ctx.createLinearGradient(-10, 0, 10, 0);
+      sarongGrad.addColorStop(0, "#293e26");
+      sarongGrad.addColorStop(0.3, "#3d5c38");
+      sarongGrad.addColorStop(0.8, "#2e462b");
+      sarongGrad.addColorStop(1, "#1e2e1c");
+      ctx.fillStyle = sarongGrad;
+
+      ctx.beginPath();
+      ctx.moveTo(-9, -22);
+      ctx.lineTo(9, -22);
+      ctx.lineTo(10, -4);
+      ctx.lineTo(-10, -4);
+      ctx.closePath();
+      ctx.fill();
+
+      // Subtle traditional woven checkered pattern lines
+      ctx.strokeStyle = "rgba(20, 32, 18, 0.55)";
+      ctx.lineWidth = 1;
+      for (let sy = -19; sy <= -6; sy += 4) {
+        ctx.beginPath();
+        ctx.moveTo(-9.5, sy);
+        ctx.lineTo(9.5, sy);
+        ctx.stroke();
+      }
+      for (let sx = -6; sx <= 6; sx += 4) {
+        ctx.beginPath();
+        ctx.moveTo(sx, -22);
+        ctx.lineTo(sx * 1.05, -4);
+        ctx.stroke();
+      }
+
+      // Sarong rolled waistband knot (සරම් ගැටය / බණ්ඩලය)
+      ctx.fillStyle = "#223520";
+      ctx.beginPath();
+      ctx.ellipse(0, -22, 10, 3.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 4. Leather Utility Field Belt & Pouch
+      ctx.fillStyle = "#3e2723";
+      ctx.fillRect(-9, -24, 18, 3);
+      ctx.fillStyle = "#d4af37"; // Brass buckle
+      ctx.fillRect(-2, -25, 4, 4);
+
+      // Field pouch & canvas canteen on hip
+      ctx.fillStyle = "#4e342e";
+      ctx.fillRect(-9, -21, 5, 6);
+      ctx.fillStyle = "#8d6e63";
+      ctx.beginPath();
+      ctx.ellipse(-7, -15, 3, 4, 0.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 5. Khaki Ranger Jacket & Torso (With breathing motion)
+      const torsoY = -37 + breath * 0.4;
+      const jacketGrad = ctx.createLinearGradient(-10, 0, 10, 0);
+      jacketGrad.addColorStop(0, "#4a5b42");
+      jacketGrad.addColorStop(0.5, "#607255");
+      jacketGrad.addColorStop(1, "#36432f");
+      ctx.fillStyle = jacketGrad;
+      ctx.fillRect(-10, torsoY, 20, 14);
+
+      ctx.strokeStyle = "#253020";
+      ctx.lineWidth = 1.2;
+      ctx.strokeRect(-10, torsoY, 20, 14);
+
+      // Ranger pockets & button placket
+      ctx.fillStyle = "#3e4d37";
+      ctx.fillRect(-8, torsoY + 3, 5, 5);
+      ctx.fillRect(3, torsoY + 3, 5, 5);
+      ctx.strokeStyle = "#1b2417";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, torsoY);
+      ctx.lineTo(0, torsoY + 14);
+      ctx.stroke();
+
+      // Brass buttons
+      ctx.fillStyle = "#d4af37";
+      ctx.fillRect(-0.75, torsoY + 3, 1.5, 1.5);
+      ctx.fillRect(-0.75, torsoY + 7, 1.5, 1.5);
+      ctx.fillRect(-0.75, torsoY + 11, 1.5, 1.5);
+
+      // 6. Arms & Hands
+      // Right Arm holding bamboo staff
+      ctx.fillStyle = "#4a5b42"; // Sleeve
+      ctx.beginPath();
+      ctx.moveTo(8, torsoY + 2);
+      ctx.lineTo(12, torsoY + 11);
+      ctx.lineTo(10, torsoY + 12);
+      ctx.lineTo(6, torsoY + 4);
+      ctx.closePath();
+      ctx.fill();
+
+      // Weathered hand gripping staff
+      ctx.fillStyle = "#c68a4c";
+      ctx.beginPath();
+      ctx.arc(11.5, torsoY + 12, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Left Arm relaxed at side
+      ctx.fillStyle = "#36432f";
+      ctx.beginPath();
+      ctx.moveTo(-8, torsoY + 2);
+      ctx.lineTo(-11, torsoY + 12);
+      ctx.lineTo(-9, torsoY + 13);
+      ctx.lineTo(-6, torsoY + 4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#c68a4c";
+      ctx.beginPath();
+      ctx.arc(-10, torsoY + 13, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 7. Elder Head, Weathered Skin, Facial Features & Grand Silver Beard
+      const headY = torsoY - 7;
+      // Neck
+      ctx.fillStyle = "#b57b42";
+      ctx.fillRect(-3, torsoY - 2, 6, 4);
+
+      // Head
+      ctx.fillStyle = "#c68a4c";
+      ctx.beginPath();
+      ctx.arc(0, headY, 6.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Wise eyes & eyebrows
+      ctx.fillStyle = "#94a3b8"; // Silver eyebrows
+      ctx.fillRect(1, headY - 3, 3, 1.2);
+      ctx.fillRect(-4, headY - 3, 3, 1.2);
+      ctx.fillStyle = "#1e293b"; // Eyes
+      ctx.fillRect(2, headY - 1.5, 1.5, 1.5);
+      ctx.fillRect(-3, headY - 1.5, 1.5, 1.5);
+
+      // Flowing Silver-White Elder Beard (Drapes over chest)
+      ctx.fillStyle = "#f1f5f9";
+      ctx.beginPath();
+      ctx.moveTo(-5, headY + 1);
+      ctx.quadraticCurveTo(-6, headY + 7, -2, headY + 12);
+      ctx.lineTo(0, headY + 13);
+      ctx.lineTo(2, headY + 12);
+      ctx.quadraticCurveTo(6, headY + 7, 5, headY + 1);
+      ctx.closePath();
+      ctx.fill();
+
+      // Subtle beard strands & shading
+      ctx.strokeStyle = "#cbd5e1";
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(0, headY + 2); ctx.lineTo(0, headY + 12);
+      ctx.moveTo(-2, headY + 3); ctx.lineTo(-1, headY + 11);
+      ctx.moveTo(2, headY + 3); ctx.lineTo(1, headY + 11);
+      ctx.stroke();
+
+      // 8. Wide-Brimmed Ranger Safari Hat
+      const hatY = headY - 4;
+
+      // Hat Brim (2.5D elliptical slant)
+      ctx.fillStyle = "#4a3c28";
+      ctx.beginPath();
+      ctx.ellipse(0, hatY, 13, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#271d11";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Hat Leather Band & Buckle
+      ctx.fillStyle = "#1c140d";
+      ctx.fillRect(-7, hatY - 4, 14, 2.5);
+      ctx.fillStyle = "#d4af37";
+      ctx.fillRect(2, hatY - 4, 2, 2.5);
+
+      // Hat Crown
+      const hatGrad = ctx.createLinearGradient(-6, 0, 6, 0);
+      hatGrad.addColorStop(0, "#5a4933");
+      hatGrad.addColorStop(0.5, "#705c42");
+      hatGrad.addColorStop(1, "#3d2e1c");
+      ctx.fillStyle = hatGrad;
+      ctx.beginPath();
+      ctx.roundRect(-6.5, hatY - 9, 13, 7, [4, 4, 0, 0]);
+      ctx.fill();
 
       ctx.restore();
 
-      // Speech beacon if not yet helped
+      // 9. Floating Speech Beacon if not yet helped (Rendered outside scale flip)
       if (!this.npc.helped) {
         const pulse = (time * 0.003) % 1;
         ctx.strokeStyle = `rgba(74, 222, 128, ${1 - pulse})`;
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(0, 0, 24 + pulse * 14, 0, Math.PI * 2);
+        ctx.arc(0, -58, 16 + pulse * 10, 0, Math.PI * 2);
         ctx.stroke();
 
         ctx.fillStyle = "#4ade80";
         ctx.beginPath();
-        ctx.arc(0, -26, 4, 0, Math.PI * 2);
+        ctx.arc(0, -58, 4, 0, Math.PI * 2);
         ctx.fill();
       }
     }
@@ -5131,14 +5291,14 @@ export class SinharajaEngine {
 
   // ── 3D Realistic Rainforest Tree (Buttress roots, cylindrical trunk, parallax canopy) ──
   render3DTree(ctx, tree, time, camCenterX, camCenterY, isMajorEndemic = false) {
-    const vLeft = this.camera.x - 160;
-    const vRight = this.camera.x + (this.canvas.width / this.zoom) + 160;
-    const vTop = this.camera.y - 160;
-    const vBottom = this.camera.y + (this.canvas.height / this.zoom) + 160;
+    const vLeft = this.camera.x - 180;
+    const vRight = this.camera.x + (this.canvas.width / this.zoom) + 180;
+    const vTop = this.camera.y - 250;
+    const vBottom = this.camera.y + (this.canvas.height / this.zoom) + 180;
 
-    const foliageR = tree.foliageR || tree.fr || 70;
-    const height = tree.height || (tree.fr ? tree.fr * 1.5 : 85);
-    const trunkR = tree.r || (tree.fr ? Math.max(12, tree.fr * 0.35) : 18);
+    const foliageR = tree.foliageR || tree.fr || 72;
+    const height = tree.height || (tree.fr ? Math.max(120, tree.fr * 1.75) : 115);
+    const trunkR = tree.r || (tree.fr ? Math.max(13, tree.fr * 0.36) : 18);
 
     if (tree.x + foliageR < vLeft || tree.x - foliageR > vRight ||
         tree.y + foliageR < vTop || tree.y - height - foliageR > vBottom) {
@@ -5597,117 +5757,134 @@ export class SinharajaEngine {
   }
 
   // ── 3D Realistic Shadow Stalker Leopard (Panthera pardus kotiya) ──
+  // ── 3D Realistic Shadow Stalker Leopard (2.5D Quadruped Prowling Big Cat) ──
   render3DShadowStalker(ctx, s, time) {
     if (!s || s.eyesAlpha <= 0.04) return;
     ctx.save();
     ctx.translate(s.x, s.y);
+
     const toPlayer = Math.atan2(this.player.y - s.y, this.player.x - s.x);
-    ctx.rotate(toPlayer);
+    const facingLeft = Math.cos(toPlayer) < 0;
+    if (facingLeft) {
+      ctx.scale(-1, 1); // Face left towards player!
+    }
 
     const alpha = Math.min(1.0, s.eyesAlpha);
     ctx.globalAlpha = alpha;
 
-    // Ground cast shadow
-    ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+    // 1. Ground Cast Shadow (Elongated under 4 paws)
+    ctx.fillStyle = "rgba(0, 0, 0, 0.48)";
     ctx.beginPath();
-    ctx.ellipse(0, 8, 32, 14, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 2, 28, 9, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Stalking feline leg animation
-    const stalkLeg = Math.sin((s.stalkFrame || time * 0.005) * 8) * 6;
+    // Stalking paw swing gait
+    const stalkCycle = (s.stalkFrame || time * 0.005) * 6;
+    const legFrontL = Math.sin(stalkCycle) * 6;
+    const legFrontR = -Math.sin(stalkCycle) * 6;
+    const legBackL = -Math.cos(stalkCycle) * 6;
+    const legBackR = Math.cos(stalkCycle) * 6;
 
-    // Muscular Feline Paws & Legs
-    ctx.fillStyle = "#8d5b24"; // Tawny base
-    ctx.fillRect(-14 + stalkLeg, -16, 8, 8);
-    ctx.fillRect(8 - stalkLeg, -16, 8, 8);
-    ctx.fillRect(-14 - stalkLeg, 8, 8, 8);
-    ctx.fillRect(8 + stalkLeg, 8, 8, 8);
+    // 2. Rear Paws & Hocks (Standing upright on ground)
+    ctx.fillStyle = "#6d3b14"; // Shaded back leg
+    ctx.fillRect(-18 + legBackR, -10, 5, 11);
+    ctx.fillStyle = "#8d5b24"; // Front-facing back leg
+    ctx.fillRect(-15 + legBackL, -12, 6, 13);
+    ctx.fillStyle = "#271206"; // Rear paws
+    ctx.fillRect(-16 + legBackL, 0, 7, 3);
 
-    // Sleek Muscular Body
-    const bodyGrad = ctx.createLinearGradient(0, -14, 0, 14);
+    // 3. Front Paws & Shoulders
+    ctx.fillStyle = "#6d3b14"; // Shaded front leg
+    ctx.fillRect(8 + legFrontR, -9, 5, 10);
+    ctx.fillStyle = "#8d5b24"; // Front-facing front leg
+    ctx.fillRect(11 + legFrontL, -11, 6, 12);
+    ctx.fillStyle = "#271206"; // Front paws
+    ctx.fillRect(10 + legFrontL, 0, 7, 3);
+
+    // 4. Muscular Feline Flank & Torso
+    const torsoY = -14 + Math.sin(stalkCycle * 2) * 1.5;
+    const bodyGrad = ctx.createLinearGradient(0, torsoY - 8, 0, torsoY + 8);
     bodyGrad.addColorStop(0, "#b47832"); // Golden tawny spine
     bodyGrad.addColorStop(0.65, "#8d5b24"); // Ribs
-    bodyGrad.addColorStop(1, "#451a03"); // Underbelly shadow
+    bodyGrad.addColorStop(1, "#f5deb3"); // Cream underbelly
     ctx.fillStyle = bodyGrad;
     ctx.beginPath();
-    ctx.ellipse(0, 0, 26, 15, 0, 0, Math.PI * 2);
+    ctx.ellipse(-2, torsoY, 20, 9, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = "#381a05";
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 1.2;
     ctx.stroke();
 
-    // Rosette camouflage coat spots (Sinharaja leopard rosettes)
+    // Rosette camouflage coat spots
     ctx.fillStyle = "rgba(28, 14, 4, 0.75)";
     [
-      { x: -12, y: -4 }, { x: -6, y: 5 }, { x: 2, y: -6 },
-      { x: 10, y: 3 }, { x: -2, y: 1 }, { x: -15, y: 4 }
+      { x: -14, y: torsoY - 2 }, { x: -8, y: torsoY + 2 }, { x: -2, y: torsoY - 4 },
+      { x: 4, y: torsoY + 1 }, { x: 10, y: torsoY - 3 }, { x: -4, y: torsoY + 3 }
     ].forEach((spot) => {
       ctx.beginPath();
-      ctx.arc(spot.x, spot.y, 2.5, 0, Math.PI * 2);
+      ctx.arc(spot.x, spot.y, 2.2, 0, Math.PI * 2);
       ctx.fill();
     });
 
-    // Twitching Long Tail with black tip
-    const tailWiggle = Math.sin(time * 0.006) * 8;
+    // 5. Twitching Long Tail with black tip
+    const tailWiggle = Math.sin(time * 0.007) * 7;
     ctx.strokeStyle = "#8d5b24";
-    ctx.lineWidth = 3.5;
+    ctx.lineWidth = 3.2;
     ctx.beginPath();
-    ctx.moveTo(-24, 0);
-    ctx.quadraticCurveTo(-36, tailWiggle * 0.5, -46, tailWiggle);
+    ctx.moveTo(-20, torsoY);
+    ctx.quadraticCurveTo(-30, torsoY - 12 + tailWiggle * 0.4, -36, torsoY - 16 + tailWiggle);
     ctx.stroke();
     ctx.strokeStyle = "#170e08"; // Black tail tip
     ctx.lineWidth = 3.5;
     ctx.beginPath();
-    ctx.moveTo(-44, tailWiggle * 0.85);
-    ctx.lineTo(-46, tailWiggle);
+    ctx.moveTo(-34, torsoY - 14 + tailWiggle * 0.9);
+    ctx.lineTo(-36, torsoY - 16 + tailWiggle);
     ctx.stroke();
 
-    // Feline Head & Ears
+    // 6. Feline Head & Ears
+    const headX = 18;
+    const headY = torsoY - 4;
     ctx.fillStyle = "#a16828";
     ctx.beginPath();
-    ctx.arc(20, 0, 10, 0, Math.PI * 2);
+    ctx.ellipse(headX, headY, 7.5, 6.5, 0.1, 0, Math.PI * 2);
     ctx.fill();
 
-    // Pointed ears with black backs
+    // Pointed feline ears
     ctx.fillStyle = "#1e1008";
     ctx.beginPath();
-    ctx.moveTo(16, -9); ctx.lineTo(12, -15); ctx.lineTo(21, -11);
+    ctx.moveTo(headX - 3, headY - 6); ctx.lineTo(headX - 1, headY - 12); ctx.lineTo(headX + 4, headY - 6);
     ctx.closePath();
     ctx.fill();
+
+    // White snout & whiskers
+    ctx.fillStyle = "#f5f5dc";
     ctx.beginPath();
-    ctx.moveTo(16, 9); ctx.lineTo(12, 15); ctx.lineTo(21, 11);
-    ctx.closePath();
+    ctx.ellipse(headX + 5, headY + 1.5, 3.5, 2.8, 0, 0, Math.PI * 2);
     ctx.fill();
+    ctx.fillStyle = "#170e08"; // Black nose
+    ctx.fillRect(headX + 7, headY, 1.5, 1.5);
 
     // Glowing Amber Eyes (Tapetum Lucidum reflection in the dark!)
     ctx.fillStyle = "#f59e0b";
     ctx.shadowColor = "#f59e0b";
     ctx.shadowBlur = 14;
     ctx.beginPath();
-    ctx.ellipse(24, -4.5, 3.2, 2, 0.2, 0, Math.PI * 2);
-    ctx.ellipse(24, 4.5, 3.2, 2, -0.2, 0, Math.PI * 2);
+    ctx.ellipse(headX + 3.5, headY - 1.5, 2.2, 1.6, 0.1, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    // Slit pupils
+    // Slit pupil
     ctx.fillStyle = "#000000";
-    ctx.fillRect(24, -5.5, 1.2, 2.5);
-    ctx.fillRect(24, 3.5, 1.2, 2.5);
+    ctx.fillRect(headX + 3.5, headY - 2.2, 0.9, 1.8);
 
-    // White muzzle & fangs if charging
-    ctx.fillStyle = "#e2e8f0";
-    ctx.beginPath();
-    ctx.ellipse(26, 0, 4, 3, 0, 0, Math.PI * 2);
-    ctx.fill();
-
+    // Snarling fangs if charging
     if (s.state === "charging") {
-      ctx.fillStyle = "#ef4444"; // Open snarling maw
+      ctx.fillStyle = "#dc2626"; // Open red mouth
       ctx.beginPath();
-      ctx.arc(28, 0, 3, 0, Math.PI * 2);
+      ctx.arc(headX + 6, headY + 3, 2.5, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = "#ffffff"; // Sharp fangs
-      ctx.fillRect(28, -2, 2, 1.5);
-      ctx.fillRect(28, 1, 2, 1.5);
+      ctx.fillStyle = "#ffffff"; // White sharp fangs
+      ctx.fillRect(headX + 5.5, headY + 1.5, 1.2, 2);
     }
 
     ctx.restore();
@@ -5787,158 +5964,340 @@ export class SinharajaEngine {
     ctx.restore();
   }
 
-  // ── Realistic 3D Ranger Character Model ──
+  // ── Pro 2.5D Isometric Standing Ranger Character (8-Directional Procedural Sprites) ──
   renderRealisticPlayer(ctx, time) {
     ctx.save();
     ctx.translate(this.player.x, this.player.y);
-    ctx.rotate(this.player.facingAngle);
 
-    // Directional ground shadow under player
+    const angle = this.player.facingAngle; // In radians (-PI to PI)
+    const isMoving = this.player.isMoving;
+    const walkCycle = this.player.walkFrame || 0;
+    const legSwing = isMoving ? Math.sin(walkCycle) * 7 : 0;
+    const armSwing = isMoving ? Math.cos(walkCycle) * 6 : 0;
+    const breath = Math.sin(time * 0.003) * 0.6;
+
+    // Determine 4 main 2.5D viewing directions:
+    // angle: 0 = East (Right), PI/2 = South (Down / Front), PI or -PI = West (Left), -PI/2 = North (Up / Back)
+    let viewDir = "south";
+    if (angle >= Math.PI * 0.25 && angle < Math.PI * 0.75) {
+      viewDir = "south"; // Walking towards camera (Front)
+    } else if (angle <= -Math.PI * 0.25 && angle > -Math.PI * 0.75) {
+      viewDir = "north"; // Walking away from camera (Back)
+    } else if (Math.abs(angle) <= Math.PI * 0.25) {
+      viewDir = "east"; // Walking right (Side East)
+    } else {
+      viewDir = "west"; // Walking left (Side West)
+    }
+
+    // 1. Ground Contact Shadow (Soft directional oval under boots)
     ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
     ctx.beginPath();
-    ctx.ellipse(-2, 4, 18, 11, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 2, 16, 7, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Walking legs & boots animation
-    const isMoving = this.player.isMoving;
-    const legSwing = isMoving ? Math.sin(this.player.walkFrame) * 8 : 0;
+    // 2. Render Upright Character Based on 2.5D Direction
+    if (viewDir === "south") {
+      // ═══════════════════════════════════════════════════════════════
+      // FRONT VIEW (Facing Player / Walking South)
+      // ═══════════════════════════════════════════════════════════════
 
-    // Left Boot & Leg
-    ctx.fillStyle = "#1e2e1e"; // Pants leg
-    ctx.fillRect(-6 + legSwing, -13, 10, 6);
-    ctx.fillStyle = "#2e1c14"; // Leather boot
-    ctx.fillRect(-2 + legSwing, -14, 8, 7);
-    ctx.fillStyle = "#150a06"; // Boot sole
-    ctx.fillRect(4 + legSwing, -14, 3, 7);
+      // A. Legs & Boots (Standing on ground, animated walking)
+      // Left Boot
+      ctx.fillStyle = "#1e281e"; // Olive pants
+      ctx.fillRect(-8, -18 + legSwing * 0.4, 6, 12);
+      ctx.fillStyle = "#271810"; // Leather boot
+      ctx.fillRect(-9, -6 + legSwing * 0.4, 7, 7);
+      ctx.fillStyle = "#140a05"; // Sole
+      ctx.fillRect(-9, 1 + legSwing * 0.4, 7, 2);
 
-    // Right Boot & Leg
-    ctx.fillStyle = "#1e2e1e";
-    ctx.fillRect(-6 - legSwing, 7, 10, 6);
-    ctx.fillStyle = "#2e1c14";
-    ctx.fillRect(-2 - legSwing, 7, 8, 7);
-    ctx.fillStyle = "#150a06";
-    ctx.fillRect(4 - legSwing, 7, 3, 7);
+      // Right Boot
+      ctx.fillStyle = "#1e281e";
+      ctx.fillRect(2, -18 - legSwing * 0.4, 6, 12);
+      ctx.fillStyle = "#271810";
+      ctx.fillRect(2, -6 - legSwing * 0.4, 7, 7);
+      ctx.fillStyle = "#140a05";
+      ctx.fillRect(2, 1 - legSwing * 0.4, 7, 2);
 
-    // Expedition Tactical Backpack (rear)
-    ctx.fillStyle = "#2d382d";
-    ctx.fillRect(-17, -11, 10, 22);
-    ctx.strokeStyle = "#1b241b";
-    ctx.lineWidth = 1.5;
-    ctx.strokeRect(-17, -11, 10, 22);
+      // B. Pelvis & Utility Belt
+      ctx.fillStyle = "#263626";
+      ctx.fillRect(-9, -23, 18, 6);
+      ctx.fillStyle = "#3e2723"; // Leather belt
+      ctx.fillRect(-9, -25, 18, 3);
+      ctx.fillStyle = "#d4af37"; // Brass buckle
+      ctx.fillRect(-2, -26, 4, 4);
 
-    // Bedroll strap on top of pack
-    ctx.fillStyle = "#4e342e";
-    ctx.beginPath();
-    ctx.ellipse(-17, 0, 4, 9, 0, 0, Math.PI * 2);
-    ctx.fill();
+      // C. Torso & Tactical Vest (Front View)
+      const torsoY = -38 + breath * 0.3;
+      ctx.fillStyle = "#2f4d2f"; // Olive ranger uniform
+      ctx.fillRect(-10, torsoY, 20, 14);
+      ctx.strokeStyle = "#1b2e1b";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(-10, torsoY, 20, 14);
 
-    // Ranger Torso & Tactical Vest
-    const breath = Math.sin(time * 0.003) * 0.7;
-    ctx.fillStyle = "#2f4d2f"; // Olive ranger uniform
-    ctx.beginPath();
-    ctx.ellipse(0, 0, 11 + breath * 0.5, 12, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = "#1a2e1a";
-    ctx.lineWidth = 2;
-    ctx.stroke();
+      // Chest pockets & harness straps
+      ctx.fillStyle = "#243a24";
+      ctx.fillRect(-8, torsoY + 2, 6, 5); // Left pocket
+      ctx.fillRect(2, torsoY + 2, 6, 5);  // Right pocket
+      ctx.fillStyle = "#d4af37"; // Ranger badge
+      ctx.fillRect(-6, torsoY + 3, 2, 2);
 
-    // Tactical chest harness straps
-    ctx.strokeStyle = "#1c261c";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(-8, -9); ctx.lineTo(6, -6);
-    ctx.moveTo(-8, 9); ctx.lineTo(6, 6);
-    ctx.stroke();
+      // Tactical harness cross-straps
+      ctx.strokeStyle = "#1b1b1b";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(-7, torsoY); ctx.lineTo(-4, torsoY + 14);
+      ctx.moveTo(7, torsoY); ctx.lineTo(4, torsoY + 14);
+      ctx.stroke();
 
-    // Ranger Head & Safari Brim Hat
-    ctx.fillStyle = "#dfa968"; // Skin neck
-    ctx.beginPath();
-    ctx.arc(3, 0, 6.5, 0, Math.PI * 2);
-    ctx.fill();
+      // D. Arms & Hands holding Flashlight / Device
+      // Left Arm
+      ctx.fillStyle = "#2f4d2f";
+      ctx.fillRect(-14, torsoY + 2, 4, 11);
+      ctx.fillStyle = "#c68a4c"; // Skin hand
+      ctx.fillRect(-14, torsoY + 13, 4, 4);
 
-    // Safari Hat Crown & Wide Brim
-    ctx.fillStyle = "#5c4a30"; // Dark khaki hat brim
-    ctx.beginPath();
-    ctx.ellipse(3, 0, 10, 9, 0, 0, Math.PI * 2);
-    ctx.fill();
+      // Right Arm (holding flashlight)
+      ctx.fillStyle = "#2f4d2f";
+      ctx.fillRect(10, torsoY + 2, 4, 11);
+      ctx.fillStyle = "#c68a4c"; // Hand
+      ctx.fillRect(10, torsoY + 13, 4, 4);
 
-    ctx.fillStyle = "#705c3d"; // Hat crown
-    ctx.beginPath();
-    ctx.arc(3, 0, 6, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = "#1e381e"; // Forest green hatband
-    ctx.beginPath();
-    ctx.arc(3, 0, 4.5, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Left Arm & Wristwatch
-    ctx.fillStyle = "#2f4d2f";
-    ctx.beginPath();
-    ctx.ellipse(3, -11, 5, 3.5, -0.2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#dfa968"; // Left hand
-    ctx.beginPath();
-    ctx.arc(7, -11, 3.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#00e5ff"; // Tactical watch LED
-    ctx.fillRect(5, -12, 2, 2);
-
-    // Right Arm & Flashlight / Flare Gun in Hand
-    ctx.fillStyle = "#2f4d2f";
-    ctx.beginPath();
-    ctx.ellipse(4, 11, 5, 3.5, 0.2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#dfa968"; // Right hand
-    ctx.beginPath();
-    ctx.arc(8, 11, 3.5, 0, Math.PI * 2);
-    ctx.fill();
-
-    if (this.chapter === 2) {
-      // Chapter 2: Handheld EMF Scanner Device with pulse sensor
-      ctx.fillStyle = "#263238";
-      ctx.fillRect(8, 8, 12, 6);
-      ctx.fillStyle = this.hasEmf ? "#00f5d4" : "#ffb300";
-      ctx.shadowColor = this.hasEmf ? "#00f5d4" : "#ffb300";
-      ctx.shadowBlur = this.hasEmf ? 8 : 2;
-      ctx.fillRect(16, 9, 3, 4);
-      ctx.shadowBlur = 0;
-    } else {
-      // Chapter 1: Flashlight Metallic Body in hand
+      // Flashlight body pointing down-forward
       ctx.fillStyle = "#37474f";
-      ctx.fillRect(8, 9, 12, 4);
+      ctx.fillRect(8, torsoY + 16, 7, 10);
       ctx.fillStyle = "#78909c";
-      ctx.fillRect(18, 8, 4, 6);
-
-      // Flashlight illuminated bulb tip
-      if (this.torchOn) {
+      ctx.fillRect(7, torsoY + 26, 9, 3); // Flashlight bezel
+      if (this.torchOn && this.battery > 0) {
         ctx.fillStyle = this.uvMode ? "#d500f9" : "#ffeb3b";
         ctx.shadowColor = this.uvMode ? "#d500f9" : "#ffeb3b";
         ctx.shadowBlur = 10;
         ctx.beginPath();
-        ctx.arc(22, 11, 3.5, 0, Math.PI * 2);
+        ctx.arc(11.5, torsoY + 29, 3, 0, Math.PI * 2);
         ctx.fill();
         ctx.shadowBlur = 0;
       }
+
+      // E. Neck & Face (Front View)
+      ctx.fillStyle = "#c68a4c"; // Neck
+      ctx.fillRect(-3, torsoY - 4, 6, 5);
+
+      // Face
+      ctx.fillStyle = "#dfa968"; // Skin tone
+      ctx.beginPath();
+      ctx.ellipse(0, torsoY - 8, 6.5, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Eyes & Brow
+      ctx.fillStyle = "#1e1008";
+      ctx.fillRect(-4, torsoY - 9, 2.5, 1.5);
+      ctx.fillRect(1.5, torsoY - 9, 2.5, 1.5);
+
+      // F. Safari Brim Hat (Front 3D View)
+      // Wide curved oval brim
+      ctx.fillStyle = "#4a3b2c"; // Dark khaki hat brim
+      ctx.beginPath();
+      ctx.ellipse(0, torsoY - 12, 14, 5.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#2e2318";
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      // Crown of Hat
+      ctx.fillStyle = "#63503a"; // Light khaki hat crown
+      ctx.beginPath();
+      ctx.ellipse(0, torsoY - 16, 8, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Forest green hatband
+      ctx.fillStyle = "#1b381b";
+      ctx.fillRect(-8, torsoY - 15, 16, 2.5);
+
+    } else if (viewDir === "north") {
+      // ═══════════════════════════════════════════════════════════════
+      // BACK VIEW (Facing North / Away from Camera)
+      // ═══════════════════════════════════════════════════════════════
+
+      // A. Legs & Boots (Walking away)
+      // Left Boot
+      ctx.fillStyle = "#1e281e";
+      ctx.fillRect(-8, -18 - legSwing * 0.4, 6, 12);
+      ctx.fillStyle = "#271810";
+      ctx.fillRect(-9, -6 - legSwing * 0.4, 7, 7);
+      ctx.fillStyle = "#140a05";
+      ctx.fillRect(-9, 1 - legSwing * 0.4, 7, 2);
+
+      // Right Boot
+      ctx.fillStyle = "#1e281e";
+      ctx.fillRect(2, -18 + legSwing * 0.4, 6, 12);
+      ctx.fillStyle = "#271810";
+      ctx.fillRect(2, -6 + legSwing * 0.4, 7, 7);
+      ctx.fillStyle = "#140a05";
+      ctx.fillRect(2, 1 + legSwing * 0.4, 7, 2);
+
+      // B. Torso & Massive Expedition Backpack (Back View)
+      const torsoY = -38 + breath * 0.3;
+
+      // Heavy Expedition Backpack
+      ctx.fillStyle = "#1f2d1f"; // Dark army canvas
+      ctx.fillRect(-12, torsoY - 2, 24, 18);
+      ctx.strokeStyle = "#121b12";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(-12, torsoY - 2, 24, 18);
+
+      // Bedroll strapped to top of pack
+      ctx.fillStyle = "#4e342e"; // Brown roll
+      ctx.beginPath();
+      ctx.ellipse(0, torsoY - 4, 13, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#271612";
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      // Canteen strapped to side of pack
+      ctx.fillStyle = "#546e7a";
+      ctx.fillRect(11, torsoY + 4, 4, 7);
+
+      // Back of neck & collar
+      ctx.fillStyle = "#243a24";
+      ctx.fillRect(-5, torsoY - 6, 10, 4);
+
+      // C. Safari Hat (Back View)
+      ctx.fillStyle = "#4a3b2c"; // Hat brim back
+      ctx.beginPath();
+      ctx.ellipse(0, torsoY - 11, 14, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#63503a"; // Crown back
+      ctx.beginPath();
+      ctx.ellipse(0, torsoY - 15, 8, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Hatband
+      ctx.fillStyle = "#1b381b";
+      ctx.fillRect(-8, torsoY - 14, 16, 2.5);
+
+    } else {
+      // ═══════════════════════════════════════════════════════════════
+      // SIDE PROFILE VIEW (East or West)
+      // ═══════════════════════════════════════════════════════════════
+      ctx.save();
+      if (viewDir === "west") {
+        ctx.scale(-1, 1); // Flip horizontally for west!
+      }
+
+      // A. Walking Legs in Scissors Stride
+      const stride = isMoving ? Math.sin(walkCycle) * 9 : 0;
+
+      // Back leg
+      ctx.fillStyle = "#172017";
+      ctx.fillRect(-4 - stride * 0.5, -17, 5, 11);
+      ctx.fillStyle = "#20120a";
+      ctx.fillRect(-5 - stride * 0.7, -6, 7, 7);
+
+      // Front leg
+      ctx.fillStyle = "#223322";
+      ctx.fillRect(-2 + stride * 0.5, -17, 6, 11);
+      ctx.fillStyle = "#2e1a10";
+      ctx.fillRect(-2 + stride * 0.7, -6, 8, 7);
+      ctx.fillStyle = "#140a05";
+      ctx.fillRect(-2 + stride * 0.7, 1, 8, 2);
+
+      // B. Torso Side View & Backpack
+      const torsoY = -38 + breath * 0.3;
+
+      // Backpack hanging on rear (left side)
+      ctx.fillStyle = "#1f2d1f";
+      ctx.fillRect(-13, torsoY, 8, 16);
+      ctx.fillStyle = "#4e342e"; // Bedroll on top
+      ctx.beginPath();
+      ctx.ellipse(-9, torsoY - 2, 5, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Torso side
+      ctx.fillStyle = "#2f4d2f";
+      ctx.fillRect(-6, torsoY, 13, 15);
+      ctx.strokeStyle = "#1b2e1b";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(-6, torsoY, 13, 15);
+
+      // C. Arm holding Flashlight pointing East
+      ctx.fillStyle = "#2f4d2f";
+      ctx.fillRect(-1 + armSwing * 0.3, torsoY + 2, 5, 10);
+      ctx.fillStyle = "#c68a4c"; // Hand
+      ctx.fillRect(4 + armSwing * 0.3, torsoY + 8, 5, 4);
+
+      // Flashlight body extending horizontally to the right
+      ctx.fillStyle = "#37474f";
+      ctx.fillRect(8, torsoY + 7, 12, 5);
+      ctx.fillStyle = "#78909c";
+      ctx.fillRect(19, torsoY + 6, 3, 7); // Bezel
+      if (this.torchOn && this.battery > 0) {
+        ctx.fillStyle = this.uvMode ? "#d500f9" : "#ffeb3b";
+        ctx.shadowColor = this.uvMode ? "#d500f9" : "#ffeb3b";
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.arc(23, torsoY + 9.5, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+
+      // D. Head & Face Profile
+      ctx.fillStyle = "#dfa968"; // Face profile
+      ctx.beginPath();
+      ctx.arc(1, torsoY - 8, 6.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Nose & chin profile pointing right
+      ctx.fillStyle = "#dfa968";
+      ctx.beginPath();
+      ctx.moveTo(5, torsoY - 10);
+      ctx.lineTo(9, torsoY - 7);
+      ctx.lineTo(6, torsoY - 5);
+      ctx.closePath();
+      ctx.fill();
+
+      // Eye
+      ctx.fillStyle = "#1e1008";
+      ctx.fillRect(4, torsoY - 9, 2, 1.5);
+
+      // E. Safari Hat in Side Profile
+      // Brim tilted forward
+      ctx.fillStyle = "#4a3b2c";
+      ctx.beginPath();
+      ctx.ellipse(2, torsoY - 12, 14, 4.5, 0.1, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Crown
+      ctx.fillStyle = "#63503a";
+      ctx.beginPath();
+      ctx.arc(1, torsoY - 15, 6.5, Math.PI, 0);
+      ctx.closePath();
+      ctx.fill();
+
+      // Hatband
+      ctx.fillStyle = "#1b381b";
+      ctx.fillRect(-5, torsoY - 14, 13, 2.5);
+
+      ctx.restore();
     }
 
-    // Bleeding Blood Drop Pulses
+    // 3. Bleeding Blood Drops
     if (this.bleeding) {
       const bloodGlow = Math.sin(time * 0.01) * 0.4 + 0.6;
       ctx.fillStyle = `rgba(213, 0, 0, ${bloodGlow})`;
       ctx.beginPath();
-      ctx.arc(-8, -4, 4, 0, Math.PI * 2);
-      ctx.arc(-4, 6, 3, 0, Math.PI * 2);
+      ctx.arc(-6, -15, 3.5, 0, Math.PI * 2);
+      ctx.arc(6, -8, 2.5, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    // Magpie Lucky Charm Azure Aura
+    // 4. Magpie Charm Aura
     if (this.magpieCharmActive) {
       const charmPulse = Math.sin(time * 0.006) * 0.2 + 0.35;
       ctx.strokeStyle = `rgba(0, 229, 255, ${charmPulse})`;
       ctx.lineWidth = 2.5;
       ctx.beginPath();
-      ctx.arc(0, 0, this.player.radius + 6, 0, Math.PI * 2);
+      ctx.ellipse(0, -22, 16, 26, 0, 0, Math.PI * 2);
       ctx.stroke();
     }
 
@@ -6935,7 +7294,7 @@ export class SinharajaEngine {
 
     // A. 3D Jungle Trees & Towering Endemic Giants
     this.jungleTrees.forEach((t) => {
-      if (t.x >= vLeft - 90 && t.x <= vRight + 90 && t.y >= vTop - 140 && t.y <= vBottom + 140) {
+      if (t.x >= vLeft - 140 && t.x <= vRight + 140 && t.y >= vTop - 250 && t.y <= vBottom + 160) {
         yEntities.push({
           y: t.y,
           render: () => this.render3DTree(ctx, t, renderTime, camCenterX, camCenterY, false),
@@ -6943,7 +7302,7 @@ export class SinharajaEngine {
       }
     });
     this.trees.forEach((t) => {
-      if (t.x >= vLeft - 120 && t.x <= vRight + 120 && t.y >= vTop - 180 && t.y <= vBottom + 180) {
+      if (t.x >= vLeft - 140 && t.x <= vRight + 140 && t.y >= vTop - 250 && t.y <= vBottom + 160) {
         yEntities.push({
           y: t.y,
           render: () => this.render3DTree(ctx, t, renderTime, camCenterX, camCenterY, true),
