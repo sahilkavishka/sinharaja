@@ -129,6 +129,10 @@ export class SinharajaEngine {
     this.caveDroplets = [];       // Cave drip particle system
     this.godRays = [];            // Volumetric god-rays through canopy
     this.lastHurtFlash = 0;       // Last time hurt flash happened
+    this.footprints = [];         // Dynamic explorer trail footprints
+    this.waterRipples = [];       // Concentric water ripple particles
+    this.analogMove = { x: 0, y: 0, active: false }; // Virtual analog joystick vector
+    this.dpr = Math.min(window.devicePixelRatio || 1, 2);
     // ═════════════════════════════════════════════════════════════════════
 
 
@@ -3086,6 +3090,13 @@ export class SinharajaEngine {
     }
   }
 
+  setAnalogMove(x, y, active) {
+    this.analogMove = { x: x || 0, y: y || 0, active: !!active };
+    if (active && (x !== 0 || y !== 0)) {
+      this.player.facingAngle = Math.atan2(y, x);
+    }
+  }
+
   interactNearest() {
     for (let obj of this.interactiveObjects) {
       const dist = Math.hypot(obj.x - this.player.x, obj.y - this.player.y);
@@ -3239,7 +3250,14 @@ export class SinharajaEngine {
       this.keys["d"] ||
       this.keys["arrowright"];
 
-    if (isKeyMoving) {
+    if (this.analogMove && this.analogMove.active) {
+      this.moveTarget = null;
+      dx = this.analogMove.x;
+      dy = this.analogMove.y;
+      if (dx !== 0 || dy !== 0) {
+        this.player.facingAngle = Math.atan2(dy, dx);
+      }
+    } else if (isKeyMoving) {
       this.moveTarget = null; // Keyboard overrides click-to-move
       if (this.keys["w"] || this.keys["arrowup"]) dy -= 1;
       if (this.keys["s"] || this.keys["arrowdown"]) dy += 1;
@@ -3437,22 +3455,41 @@ export class SinharajaEngine {
       const moveDelta = speed * Math.min(dt * 60, 2.0);
       this.player.walkFrame += dt * 10;
       this.player.stepDistance = (this.player.stepDistance || 0) + moveDelta;
-      if (this.player.stepDistance >= 44) {
+      if (this.player.stepDistance >= 40) {
         this.player.stepDistance = 0;
         if (inWater) {
           this.playSfx("splash");
-        } else if (onLogBridge || inShelter) {
-          this.playSfx("step_wood");
-        } else if (inCave) {
-          this.playSfx("step_cave");
-        } else if (inMud) {
-          this.playSfx("step_mud");
+          if (!this.waterRipples) this.waterRipples = [];
+          this.waterRipples.push({
+            x: this.player.x,
+            y: this.player.y + 4,
+            r: 3,
+            maxR: 28,
+            alpha: 0.85,
+            speed: 22
+          });
         } else {
-          this.playSfx("step");
+          if (onLogBridge || inShelter) {
+            this.playSfx("step_wood");
+          } else if (inCave) {
+            this.playSfx("step_cave");
+          } else if (inMud) {
+            this.playSfx("step_mud");
+          } else {
+            this.playSfx("step");
+          }
+          if (!this.footsteps) this.footsteps = [];
+          if (this.footsteps.length > 60) this.footsteps.shift();
+          const footSide = (this.footstepCount = (this.footstepCount || 0) + 1) % 2 === 0 ? 1 : -1;
+          const perpAngle = this.player.facingAngle + Math.PI / 2;
+          this.footsteps.push({
+            x: this.player.x + Math.cos(perpAngle) * (4 * footSide),
+            y: this.player.y + Math.sin(perpAngle) * (4 * footSide),
+            angle: this.player.facingAngle,
+            alpha: inMud ? 0.65 : 0.38,
+            isMud: inMud
+          });
         }
-        // Add footstep mud mark
-        if (this.footsteps.length > 25) this.footsteps.shift();
-        this.footsteps.push({ x: this.player.x, y: this.player.y, alpha: 0.45 });
       }
     }
 
@@ -4082,10 +4119,27 @@ export class SinharajaEngine {
       }
     }
 
-    // Fade footsteps
-    this.footsteps.forEach((f) => {
-      f.alpha = Math.max(0, f.alpha - 0.05 * dt);
-    });
+    // Fade footsteps & clean up expired
+    if (this.footsteps) {
+      for (let i = this.footsteps.length - 1; i >= 0; i--) {
+        this.footsteps[i].alpha -= 0.04 * dt;
+        if (this.footsteps[i].alpha <= 0) {
+          this.footsteps.splice(i, 1);
+        }
+      }
+    }
+
+    // Expand and fade water ripples
+    if (this.waterRipples) {
+      for (let i = this.waterRipples.length - 1; i >= 0; i--) {
+        const rip = this.waterRipples[i];
+        rip.r += (rip.speed || 20) * dt;
+        rip.alpha -= 0.65 * dt;
+        if (rip.alpha <= 0 || rip.r >= rip.maxR) {
+          this.waterRipples.splice(i, 1);
+        }
+      }
+    }
 
     // Report stats to UI (Throttled to ~15 Hz to eliminate React virtual DOM thrashing)
     this.statsUpdateTimer = (this.statsUpdateTimer || 0) + dt;
@@ -4481,13 +4535,45 @@ export class SinharajaEngine {
       ctx.restore();
     }
 
-    // Footsteps
-    this.footsteps.forEach((f) => {
-      ctx.fillStyle = `rgba(30, 20, 15, ${f.alpha})`;
-      ctx.beginPath();
-      ctx.ellipse(f.x, f.y, 4, 6, 0, 0, Math.PI * 2);
-      ctx.fill();
-    });
+    // Dynamic Concentric Water Ripples
+    if (this.waterRipples && this.waterRipples.length > 0) {
+      ctx.save();
+      this.waterRipples.forEach((rip) => {
+        ctx.strokeStyle = `rgba(180, 225, 255, ${Math.max(0, rip.alpha)})`;
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.ellipse(rip.x, rip.y, rip.r, rip.r * 0.52, 0, 0, Math.PI * 2);
+        ctx.stroke();
+
+        if (rip.r > 8) {
+          ctx.strokeStyle = `rgba(140, 200, 240, ${Math.max(0, rip.alpha * 0.5)})`;
+          ctx.lineWidth = 1.0;
+          ctx.beginPath();
+          ctx.ellipse(rip.x, rip.y, rip.r * 0.6, rip.r * 0.32, 0, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      });
+      ctx.restore();
+    }
+
+    // Dynamic Explorer Boot Footsteps Trail
+    if (this.footsteps && this.footsteps.length > 0) {
+      this.footsteps.forEach((f) => {
+        ctx.save();
+        ctx.translate(f.x, f.y);
+        ctx.rotate((f.angle || 0) + Math.PI / 2);
+        ctx.fillStyle = f.isMud ? `rgba(22, 14, 8, ${f.alpha})` : `rgba(32, 22, 16, ${f.alpha})`;
+        // Boot heel
+        ctx.beginPath();
+        ctx.ellipse(0, 3, 2.4, 1.8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Boot sole
+        ctx.beginPath();
+        ctx.ellipse(0, -2, 3.2, 3.8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+    }
 
     // ── Chapter 1 Facilities ──
     if (this.chapter === 1) {

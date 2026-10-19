@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { SinharajaEngine } from "./SinharajaEngine";
+import { I18N } from "./i18n";
 import "./App.css";
 
 // ── Sharp Monochrome Vector SVG Icons for Tactical HUD ────────────────────────
@@ -599,8 +600,68 @@ export default function App() {
   const [showControlsGuide, setShowControlsGuide] = useState(false);
   const [showTrophies, setShowTrophies] = useState(false);
 
-  // Settings State
+  // Settings & Localization State
   const [isMuted, setIsMuted] = useState(false);
+  const [lang, setLang] = useState(() => {
+    try {
+      return localStorage.getItem("sinharaja_lang") || "si";
+    } catch (e) {
+      return "si";
+    }
+  });
+  const [controlScheme, setControlScheme] = useState(() => {
+    try {
+      return localStorage.getItem("sinharaja_controls") || "joystick";
+    } catch (e) {
+      return "joystick";
+    }
+  });
+  const [isFullscreen, setIsFullscreen] = useState(() => typeof document !== "undefined" && !!document.fullscreenElement);
+
+  // Virtual Analog Joystick State
+  const [joystickPos, setJoystickPos] = useState({ x: 0, y: 0, active: false });
+  const joystickTouchIdRef = useRef(null);
+  const joystickCenterRef = useRef({ x: 0, y: 0 });
+
+  const toggleLanguage = useCallback(() => {
+    setLang((prev) => {
+      const next = prev === "en" ? "si" : "en";
+      try {
+        localStorage.setItem("sinharaja_lang", next);
+      } catch (e) {}
+      return next;
+    });
+  }, []);
+
+  const toggleControlScheme = useCallback(() => {
+    setControlScheme((prev) => {
+      const next = prev === "joystick" ? "dpad" : "joystick";
+      try {
+        localStorage.setItem("sinharaja_controls", next);
+      } catch (e) {}
+      return next;
+    });
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFsChange);
+    return () => document.removeEventListener("fullscreenchange", handleFsChange);
+  }, []);
 
   // UI Panels
   const [showEvidenceBoard, setShowEvidenceBoard] = useState(false);
@@ -1034,6 +1095,69 @@ export default function App() {
     });
   };
 
+  // 360° Mobile Virtual Analog Joystick Event Handlers
+  const handleJoystickStart = (e) => {
+    const touch = e.changedTouches[0];
+    joystickTouchIdRef.current = touch.identifier;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    joystickCenterRef.current = { x: centerX, y: centerY };
+
+    const dx = touch.clientX - centerX;
+    const dy = touch.clientY - centerY;
+    const dist = Math.hypot(dx, dy);
+    const maxRadius = 45;
+    const clampedDist = Math.min(dist, maxRadius);
+    const angle = Math.atan2(dy, dx);
+    const knobX = Math.cos(angle) * clampedDist;
+    const knobY = Math.sin(angle) * clampedDist;
+
+    setJoystickPos({ x: knobX, y: knobY, active: true });
+    if (engineRef.current) {
+      engineRef.current.setAnalogMove(knobX / maxRadius, knobY / maxRadius, true);
+    }
+  };
+
+  const handleJoystickMove = (e) => {
+    if (joystickTouchIdRef.current === null) return;
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      const touch = e.changedTouches[i];
+      if (touch.identifier === joystickTouchIdRef.current) {
+        const { x: centerX, y: centerY } = joystickCenterRef.current;
+        const dx = touch.clientX - centerX;
+        const dy = touch.clientY - centerY;
+        const dist = Math.hypot(dx, dy);
+        const maxRadius = 45;
+        const clampedDist = Math.min(dist, maxRadius);
+        const angle = Math.atan2(dy, dx);
+        const knobX = Math.cos(angle) * clampedDist;
+        const knobY = Math.sin(angle) * clampedDist;
+
+        setJoystickPos({ x: knobX, y: knobY, active: true });
+        if (engineRef.current) {
+          engineRef.current.setAnalogMove(knobX / maxRadius, knobY / maxRadius, true);
+        }
+        break;
+      }
+    }
+  };
+
+  const handleJoystickEnd = (e) => {
+    if (joystickTouchIdRef.current === null) return;
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      const touch = e.changedTouches[i];
+      if (touch.identifier === joystickTouchIdRef.current) {
+        joystickTouchIdRef.current = null;
+        setJoystickPos({ x: 0, y: 0, active: false });
+        if (engineRef.current) {
+          engineRef.current.setAnalogMove(0, 0, false);
+        }
+        break;
+      }
+    }
+  };
+
   // Touch Virtual Controls
   const handleVirtualDir = (key, isDown) => {
     if (engineRef.current) engineRef.current.keys[key] = isDown;
@@ -1373,31 +1497,43 @@ export default function App() {
 
         <div className="select-header">
           <div className="header-titles">
-            <span className="sub-badge">EXPEDITION DOSSIER // සිංහරාජ අභිරහස</span>
-            <h1 className="main-title">SELECT MISSION CHAPTER</h1>
-            <p className="main-subtitle">
-              පරිච්ඡේද තෝරා එක් එක් මෙහෙයුමේ ඇති සාක්ෂි එකතු කර ප්‍රධාන අභිරහස විසඳන්න.
-            </p>
+            <span className="sub-badge">{I18N[lang].expedition_dossier}</span>
+            <h1 className="main-title">{I18N[lang].select_chapter}</h1>
+            <p className="main-subtitle">{I18N[lang].tagline_main}</p>
           </div>
 
           <div className="top-action-bar">
             <button
+              className="action-pill lang-pill"
+              onClick={toggleLanguage}
+              title="භාෂාව මාරු කරන්න / Switch Language"
+            >
+              🌐 {lang === "en" ? "EN ⟷ සිංහල" : "සිංහල ⟷ EN"}
+            </button>
+            <button
+              className="action-pill fullscreen-pill"
+              onClick={toggleFullscreen}
+              title={isFullscreen ? I18N[lang].exit_fullscreen : I18N[lang].fullscreen}
+            >
+              <Icons.Zoom className="tactical-svg-icon" /> {isFullscreen ? I18N[lang].exit_fullscreen : I18N[lang].fullscreen}
+            </button>
+            <button
               className="action-pill evidence-pill"
               onClick={() => setShowEvidenceBoard(true)}
             >
-              <Icons.Evidence className="tactical-svg-icon" /> සාක්ෂි ලේඛනාගාරය ({totalEvidenceCount} / 15)
+              <Icons.Evidence className="tactical-svg-icon" /> {I18N[lang].evidence_board} ({totalEvidenceCount} / 15)
             </button>
             <button
               className="action-pill trophy-pill"
               onClick={() => setShowTrophies(true)}
             >
-              <Icons.Trophy className="tactical-svg-icon" /> මෙහෙයුම් සම්මාන ({unlockedAchievements.length} / {MASTER_ACHIEVEMENTS.length})
+              <Icons.Trophy className="tactical-svg-icon" /> {I18N[lang].achievements} ({unlockedAchievements.length} / {MASTER_ACHIEVEMENTS.length})
             </button>
             <button
               className="action-pill journal-pill"
               onClick={() => setShowJournal(true)}
             >
-              <Icons.Journal className="tactical-svg-icon" /> ගවේෂණ සටහන් ({journal.length})
+              <Icons.Journal className="tactical-svg-icon" /> {I18N[lang].field_guide} ({journal.length})
             </button>
           </div>
         </div>
@@ -1923,46 +2059,40 @@ export default function App() {
   }
 
   if (gameOver) {
-    let title = "YOU DIED";
-    let msg = "කැලේ මැද ඔබේ ජීවිතය අවසන් විය...";
+    let title = I18N[lang].game_over_dead_title;
+    let msg = I18N[lang].game_over_dead_msg;
     let cls = "dead-screen";
 
     if (gameOver === "insane") {
-      title = "MIND LOST";
-      msg = "අන්ධකාරයේ බිය සහ පිස්සුව නිසා ඔබ සිංහරාජයේ සදහටම අතරමං විය...";
+      title = I18N[lang].game_over_insane_title;
+      msg = I18N[lang].game_over_insane_msg;
       cls = "insane-screen";
     } else if (gameOver === "won") {
       cls = "won-screen";
-      if (activeChapter === 2) {
-        if (victoryType === "hero") {
-          title = "CHAPTER 02 COMPLETE: CASCADES CONQUERED";
-          msg = "ඔබ සියලු සාක්ෂි එකතු කර කඳු මුදුනේ සංඥා කුලුන දල්වා දෙවන කඳවුරේ අභිරහස හෙළිදරව් කළා!";
-        } else {
-          title = "CHAPTER 02 SURVIVED";
-          msg = "ඔබ දියඇලි නිම්නයෙන් දිවි ගලවා ගත්තා! සියලු සාක්ෂි එකතු කිරීමට නැවත උත්සාහ කරන්න.";
-        }
-      } else {
-        if (victoryType === "hero") {
-          title = "CHAPTER 01 COMPLETE: LEGEND OF SINHARAJA";
-          msg = "ඔබ සාක්ෂි 3ම එකතු කර අතුරුදහන් වූ ගවේෂකයන්ගේ ආරම්භක අභිරහස හෙළිදරව් කළා! Chapter 02 දැන් විවෘතයි!";
-        } else {
-          title = "CHAPTER 01 SURVIVED";
-          msg = "ඔබ දිවි ගලවා ගත්තා! සියලු සාක්ෂි එකතු කිරීමට නැවත උත්සාහ කරන්න.";
-        }
-      }
+      title = I18N[lang].victory_title;
+      msg = victoryType === "hero" ? I18N[lang].victory_hero_msg : I18N[lang].victory_survivor_msg;
     }
 
     return (
       <div className={`game-over-screen ${cls}`}>
         <div className="game-over-modal">
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "12px" }}>
+            <button
+              className="action-pill lang-pill"
+              onClick={toggleLanguage}
+              style={{ padding: "4px 10px", fontSize: "0.75rem" }}
+            >
+              🌐 {lang === "en" ? "EN ⟷ සිංහල" : "සිංහල ⟷ EN"}
+            </button>
+          </div>
           <h1 className="game-over-title">{title}</h1>
           <p className="game-over-msg">{msg}</p>
           <div className="modal-buttons">
             <button className="start-btn" onClick={() => launchChapter(activeChapter)}>
-              නැවත සෙල්ලම් කරන්න (RETRY CHAPTER)
+              {I18N[lang].play_again} ▶
             </button>
             <button className="start-btn secondary-btn" onClick={() => setCurrentView("chapters")}>
-              පරිච්ඡේද තෝරන්න (CHAPTER SELECT)
+              {I18N[lang].quit_to_menu}
             </button>
           </div>
         </div>
@@ -2070,16 +2200,16 @@ export default function App() {
           {/* Left: Biometric Survival Pod */}
           <div className="biometric-pod">
             <div className="survivor-profile-tag">
-              <span className="profile-callsign">RANGER CALLSIGN: KAVISHKA</span>
+              <span className="profile-callsign">{I18N[lang].callsign}</span>
               <span className={`profile-status ${stats.bleeding ? "status-danger" : stats.teaBuffTimer > 0 ? "status-buff" : stats.nearCampfire ? "status-safe" : "status-ok"}`}>
                 {stats.bleeding ? (
-                  <><span className="status-led led-red" /> CRITICAL // TRAUMA</>
+                  <><span className="status-led led-red" /> {I18N[lang].critical_trauma}</>
                 ) : stats.teaBuffTimer > 0 ? (
-                  <><span className="status-led led-amber" /> ADRENALINE BOOST</>
+                  <><span className="status-led led-amber" /> {I18N[lang].adrenaline_boost}</>
                 ) : stats.nearCampfire ? (
-                  <><span className="status-led led-cyan" /> THERMAL SAFE</>
+                  <><span className="status-led led-cyan" /> {I18N[lang].thermal_safe}</>
                 ) : (
-                  <><span className="status-led led-green" /> VITALS STABLE</>
+                  <><span className="status-led led-green" /> {I18N[lang].vitals_stable}</>
                 )}
               </span>
             </div>
@@ -2317,6 +2447,20 @@ export default function App() {
                 title="ශබ්ද පාලනය"
               >
                 {isMuted ? <Icons.AudioMute className="tactical-svg-icon" /> : <Icons.AudioOn className="tactical-svg-icon" />}
+              </button>
+              <button
+                className="tactical-lang-btn"
+                onClick={toggleLanguage}
+                title="භාෂාව මාරු කරන්න / Switch Language"
+              >
+                🌐 {lang.toUpperCase()}
+              </button>
+              <button
+                className="tactical-fullscreen-btn"
+                onClick={toggleFullscreen}
+                title={isFullscreen ? I18N[lang].exit_fullscreen : I18N[lang].fullscreen}
+              >
+                <Icons.Zoom className="tactical-svg-icon" /> {isFullscreen ? "EXIT FS" : "FULL"}
               </button>
               <button
                 className="tactical-map-btn"
@@ -2683,31 +2827,58 @@ export default function App() {
       {isPaused && (
         <div className="tactical-pause-overlay">
           <div className="tactical-pause-modal">
-            <h1 className="pause-title">MISSION PAUSED</h1>
-            <p className="pause-subtitle">SINHARAJA EXPEDITION // TACTICAL OVERVIEW</p>
+            <h1 className="pause-title">{I18N[lang].mission_paused}</h1>
+            <p className="pause-subtitle">{I18N[lang].expedition_overview}</p>
 
-            {/* In-Game Audio & Viewport Settings */}
+            {/* In-Game Audio, Controls & Language Settings */}
             <div className="pause-settings-panel">
               <div className="setting-row">
-                <span><Icons.AudioOn className="tactical-svg-icon" /> ශබ්ද තත්ත්වය (AUDIO):</span>
+                <span><Icons.AudioOn className="tactical-svg-icon" /> {I18N[lang].audio_status}</span>
                 <button
                   className={`settings-toggle-btn ${isMuted ? "off" : "on"}`}
                   onClick={toggleMute}
                 >
-                  {isMuted ? "නිහඬයි (MUTED)" : "ක්‍රියාත්මකයි (ON)"}
+                  {isMuted ? I18N[lang].audio_muted : I18N[lang].audio_on}
                 </button>
               </div>
               <div className="setting-row">
-                <span><Icons.Zoom className="tactical-svg-icon" /> කැමරා දර්ශනය (BINOCULARS):</span>
+                <span><Icons.Compass className="tactical-svg-icon" /> {I18N[lang].language_select}</span>
+                <button
+                  className="settings-toggle-btn lang-toggle-btn"
+                  onClick={toggleLanguage}
+                >
+                  {lang === "en" ? "🇬🇧 ENGLISH" : "🇱🇰 සිංහල"}
+                </button>
+              </div>
+              <div className="setting-row">
+                <span><Icons.Target className="tactical-svg-icon" /> {I18N[lang].touch_controls}</span>
+                <button
+                  className="settings-toggle-btn"
+                  onClick={toggleControlScheme}
+                >
+                  {controlScheme === "joystick" ? I18N[lang].controls_joystick : I18N[lang].controls_dpad}
+                </button>
+              </div>
+              <div className="setting-row">
+                <span><Icons.Zoom className="tactical-svg-icon" /> {I18N[lang].fullscreen}:</span>
+                <button
+                  className="settings-toggle-btn"
+                  onClick={toggleFullscreen}
+                >
+                  {isFullscreen ? I18N[lang].exit_fullscreen : I18N[lang].fullscreen}
+                </button>
+              </div>
+              <div className="setting-row">
+                <span><Icons.Zoom className="tactical-svg-icon" /> {I18N[lang].camera_view}</span>
                 <button
                   className="settings-toggle-btn"
                   onClick={() => handleVirtualAction("zoom")}
                 >
-                  {stats.zoom < 0.95 ? "පුළුල් (WIDE 0.75x)" : "සාමාන්‍ය (1.0x)"}
+                  {stats.zoom < 0.95 ? I18N[lang].cam_wide : I18N[lang].cam_normal}
                 </button>
               </div>
               <div className="setting-row">
-                <span><Icons.Shield className="tactical-svg-icon" /> පැවැත්මේ දුෂ්කරතාව (SURVIVAL MODE):</span>
+                <span><Icons.Shield className="tactical-svg-icon" /> {I18N[lang].survival_difficulty}</span>
                 <button
                   className={`settings-toggle-btn difficulty-toggle-btn ${stats.difficulty === "hardcore" ? "diff-hardcore" : "diff-tactical"}`}
                   onClick={() => {
@@ -2715,32 +2886,32 @@ export default function App() {
                     if (engineRef.current) engineRef.current.setDifficulty(nextDiff);
                   }}
                 >
-                  {stats.difficulty === "hardcore" ? "⚔️ NIGHTMARE HARDCORE (1.55x)" : "🛡️ TACTICAL PRO"}
+                  {stats.difficulty === "hardcore" ? I18N[lang].difficulty_hardcore : I18N[lang].difficulty_tactical}
                 </button>
               </div>
             </div>
 
             <div className="pause-menu-actions">
               <button className="pause-menu-btn resume-btn" onClick={togglePause}>
-                ▶ RESUME EXPEDITION (ඉදිරියට)
+                {I18N[lang].resume}
               </button>
               <button className="pause-menu-btn" onClick={() => setShowEvidenceBoard(true)}>
-                <Icons.Evidence className="tactical-svg-icon" /> EVIDENCE CASE BOARD (සාක්ෂි පුවරුව)
+                <Icons.Evidence className="tactical-svg-icon" /> {I18N[lang].evidence_board}
               </button>
               <button className="pause-menu-btn" onClick={() => setShowTrophies(true)}>
-                <Icons.Trophy className="tactical-svg-icon" /> ACHIEVEMENTS & TROPHIES (සම්මාන)
+                <Icons.Trophy className="tactical-svg-icon" /> {I18N[lang].achievements}
               </button>
               <button className="pause-menu-btn" onClick={() => setShowJournal(true)}>
-                <Icons.Journal className="tactical-svg-icon" /> WILDLIFE FIELD GUIDE (වනජීවී සටහන්)
+                <Icons.Journal className="tactical-svg-icon" /> {I18N[lang].field_guide}
               </button>
               <button className="pause-menu-btn" onClick={() => setShowControlsGuide(true)}>
-                <Icons.Keyboard className="tactical-svg-icon" /> CONTROLS GUIDE (පාලනයන්)
+                <Icons.Keyboard className="tactical-svg-icon" /> {I18N[lang].controls_guide}
               </button>
               <button className="pause-menu-btn" onClick={() => launchChapter(activeChapter)}>
-                <Icons.Restart className="tactical-svg-icon" /> RESTART MISSION (නැවත අරඹන්න)
+                <Icons.Restart className="tactical-svg-icon" /> {I18N[lang].restart_mission}
               </button>
               <button className="pause-menu-btn quit-btn" onClick={() => setCurrentView("chapters")}>
-                <Icons.Exit className="tactical-svg-icon" /> QUIT TO CHAPTER SELECT (පරිච්ඡේද තෝරන්න)
+                <Icons.Exit className="tactical-svg-icon" /> {I18N[lang].quit_to_menu}
               </button>
             </div>
           </div>
@@ -2799,7 +2970,7 @@ export default function App() {
         <div className="belt-slot" onClick={() => handleVirtualAction("salt")}>
           <span className="belt-hotkey">[1]</span>
           <span className="belt-icon"><Icons.Salt className="tactical-svg-icon" /></span>
-          <span className="belt-tag">ලුණු ({stats.saltCount})</span>
+          <span className="belt-tag">{I18N[lang].salt} ({stats.saltCount})</span>
         </div>
 
         <div
@@ -2808,7 +2979,7 @@ export default function App() {
         >
           <span className="belt-hotkey">[2]</span>
           <span className="belt-icon"><Icons.Herb className="tactical-svg-icon" /></span>
-          <span className="belt-tag">ඖෂධ ({stats.herbCount})</span>
+          <span className="belt-tag">{I18N[lang].herb} ({stats.herbCount})</span>
         </div>
 
         <div
@@ -2818,7 +2989,7 @@ export default function App() {
         >
           <span className="belt-hotkey">[B]</span>
           <span className="belt-icon"><Icons.Balm className="tactical-svg-icon" /></span>
-          <span className="belt-tag">ආලේපනය ({stats.balmCount})</span>
+          <span className="belt-tag">{I18N[lang].balm} ({stats.balmCount})</span>
         </div>
 
         <div
@@ -2828,7 +2999,7 @@ export default function App() {
         >
           <span className="belt-hotkey">[T]</span>
           <span className="belt-icon"><Icons.Tea className="tactical-svg-icon" /></span>
-          <span className="belt-tag">ඔසුපැන්</span>
+          <span className="belt-tag">{I18N[lang].tea}</span>
         </div>
 
         {(stats.chapter === 2 || activeChapter === 2) && (
@@ -2839,7 +3010,7 @@ export default function App() {
           >
             <span className="belt-hotkey">[G]</span>
             <span className="belt-icon"><Icons.GingerTea className="tactical-svg-icon" /></span>
-            <span className="belt-tag">ඉඟුරු තේ ({stats.gingerTeaCount || 0})</span>
+            <span className="belt-tag">{I18N[lang].ginger_tea} ({stats.gingerTeaCount || 0})</span>
           </div>
         )}
 
@@ -2850,7 +3021,7 @@ export default function App() {
         >
           <span className="belt-hotkey">[C]</span>
           <span className="belt-icon"><Icons.Camera className="tactical-svg-icon" /></span>
-          <span className="belt-tag">කැමරාව ({capturedPhotos.length})</span>
+          <span className="belt-tag">{I18N[lang].camera} ({capturedPhotos.length})</span>
         </div>
 
         {stats.uvUnlocked && (
@@ -2882,7 +3053,7 @@ export default function App() {
           >
             <span className="belt-hotkey">[3]</span>
             <span className="belt-icon"><Icons.Torch className="tactical-svg-icon" /></span>
-            <span className="belt-tag">{stats.torchOn ? "TORCH ON" : "TORCH OFF"}</span>
+            <span className="belt-tag">{stats.torchOn ? I18N[lang].torch_on : I18N[lang].torch_off}</span>
           </div>
         )}
 
@@ -2899,19 +3070,19 @@ export default function App() {
         <div className="belt-slot" onClick={() => handleVirtualAction("interact")}>
           <span className="belt-hotkey">[4]</span>
           <span className="belt-icon"><Icons.Inspect className="tactical-svg-icon" /></span>
-          <span className="belt-tag">පරීක්ෂාව</span>
+          <span className="belt-tag">{I18N[lang].interact}</span>
         </div>
 
         <div className="belt-slot" onClick={() => handleVirtualAction("zoom")}>
           <span className="belt-hotkey">[Z]</span>
           <span className="belt-icon"><Icons.Zoom className="tactical-svg-icon" /></span>
-          <span className="belt-tag">Zoom</span>
+          <span className="belt-tag">{I18N[lang].zoom}</span>
         </div>
 
         <div className="belt-slot" onClick={() => setShowEvidenceBoard(true)}>
           <span className="belt-hotkey">[5]</span>
           <span className="belt-icon"><Icons.Evidence className="tactical-svg-icon" /></span>
-          <span className="belt-tag">සාක්ෂි ({currentChapterEvidenceCount}/3)</span>
+          <span className="belt-tag">{I18N[lang].evidence} ({currentChapterEvidenceCount}/3)</span>
         </div>
 
         <div
@@ -2923,7 +3094,7 @@ export default function App() {
         >
           <span className="belt-hotkey">[M]</span>
           <span className="belt-icon"><Icons.Map className="tactical-svg-icon" /></span>
-          <span className="belt-tag">සිතියම</span>
+          <span className="belt-tag">{I18N[lang].map}</span>
         </div>
 
         <div
@@ -2935,7 +3106,7 @@ export default function App() {
         >
           <span className="belt-hotkey">[I]</span>
           <span className="belt-icon"><Icons.Backpack className="tactical-svg-icon" /></span>
-          <span className="belt-tag">බඩු මල්ල</span>
+          <span className="belt-tag">{I18N[lang].bag}</span>
         </div>
       </div>
 
@@ -3893,48 +4064,85 @@ export default function App() {
         </div>
       )}
 
-      {/* Touch D-Pad for Mobile */}
+      {/* Mobile Touch Controls Zone (Dual Scheme: 360° Analog Joystick vs Classic D-Pad) */}
       <div className="touch-controls">
-        <div className="dpad-box">
-          <button
-            className="dpad-btn up"
-            onMouseDown={() => handleVirtualDir("w", true)}
-            onMouseUp={() => handleVirtualDir("w", false)}
-            onTouchStart={() => handleVirtualDir("w", true)}
-            onTouchEnd={() => handleVirtualDir("w", false)}
+        {controlScheme === "joystick" ? (
+          <div
+            className="virtual-joystick-zone"
+            onTouchStart={handleJoystickStart}
+            onTouchMove={handleJoystickMove}
+            onTouchEnd={handleJoystickEnd}
+            onTouchCancel={handleJoystickEnd}
           >
-            ▲
-          </button>
-          <div className="dpad-row">
+            <div className="joystick-base">
+              <div className="joystick-crosshair-h" />
+              <div className="joystick-crosshair-v" />
+              <div
+                className={`joystick-knob ${joystickPos.active ? "knob-active" : ""}`}
+                style={{
+                  transform: `translate(${joystickPos.x}px, ${joystickPos.y}px)`,
+                }}
+              >
+                <div className="knob-center-ring" />
+              </div>
+            </div>
             <button
-              className="dpad-btn left"
-              onMouseDown={() => handleVirtualDir("a", true)}
-              onMouseUp={() => handleVirtualDir("a", false)}
-              onTouchStart={() => handleVirtualDir("a", true)}
-              onTouchEnd={() => handleVirtualDir("a", false)}
+              className="joystick-switch-mode-btn"
+              onClick={toggleControlScheme}
+              title="D-Pad එකට මාරු වන්න"
             >
-              ◀
-            </button>
-            <button
-              className="dpad-btn right"
-              onMouseDown={() => handleVirtualDir("d", true)}
-              onMouseUp={() => handleVirtualDir("d", false)}
-              onTouchStart={() => handleVirtualDir("d", true)}
-              onTouchEnd={() => handleVirtualDir("d", false)}
-            >
-              ▶
+              D-PAD
             </button>
           </div>
-          <button
-            className="dpad-btn down"
-            onMouseDown={() => handleVirtualDir("s", true)}
-            onMouseUp={() => handleVirtualDir("s", false)}
-            onTouchStart={() => handleVirtualDir("s", true)}
-            onTouchEnd={() => handleVirtualDir("s", false)}
-          >
-            ▼
-          </button>
-        </div>
+        ) : (
+          <div className="dpad-box">
+            <button
+              className="dpad-btn up"
+              onMouseDown={() => handleVirtualDir("w", true)}
+              onMouseUp={() => handleVirtualDir("w", false)}
+              onTouchStart={() => handleVirtualDir("w", true)}
+              onTouchEnd={() => handleVirtualDir("w", false)}
+            >
+              ▲
+            </button>
+            <div className="dpad-row">
+              <button
+                className="dpad-btn left"
+                onMouseDown={() => handleVirtualDir("a", true)}
+                onMouseUp={() => handleVirtualDir("a", false)}
+                onTouchStart={() => handleVirtualDir("a", true)}
+                onTouchEnd={() => handleVirtualDir("a", false)}
+              >
+                ◀
+              </button>
+              <button
+                className="dpad-btn right"
+                onMouseDown={() => handleVirtualDir("d", true)}
+                onMouseUp={() => handleVirtualDir("d", false)}
+                onTouchStart={() => handleVirtualDir("d", true)}
+                onTouchEnd={() => handleVirtualDir("d", false)}
+              >
+                ▶
+              </button>
+            </div>
+            <button
+              className="dpad-btn down"
+              onMouseDown={() => handleVirtualDir("s", true)}
+              onMouseUp={() => handleVirtualDir("s", false)}
+              onTouchStart={() => handleVirtualDir("s", true)}
+              onTouchEnd={() => handleVirtualDir("s", false)}
+            >
+              ▼
+            </button>
+            <button
+              className="joystick-switch-mode-btn"
+              onClick={toggleControlScheme}
+              title="ජෝයිස්ටික් එකට මාරු වන්න"
+            >
+              JOYSTICK
+            </button>
+          </div>
+        )}
 
         <div className="action-buttons-touch">
           <button
