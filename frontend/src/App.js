@@ -555,29 +555,36 @@ export default function App() {
   const canvasRef = useRef(null);
   const engineRef = useRef(null);
 
-  // Persistence State
-  const [unlockedChapters, setUnlockedChapters] = useState(() => {
-    try {
-      const saved = localStorage.getItem(SAVE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.unlockedChapters && Array.isArray(parsed.unlockedChapters)) {
-          return Array.from(new Set([...parsed.unlockedChapters, 1, 2, 3, 4, 5]));
-        }
-      }
-    } catch (e) {}
-    return [1, 2, 3, 4, 5]; // All 5 Chapters unlocked and playable!
-  });
-
+  // Persistence State - Strict Sequential Progression (1 -> 2 -> 3 -> 4 -> 5)
   const [completedChapters, setCompletedChapters] = useState(() => {
     try {
       const saved = localStorage.getItem(SAVE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed.completedChapters) return parsed.completedChapters;
+        if (parsed.completedChapters && Array.isArray(parsed.completedChapters)) {
+          return parsed.completedChapters;
+        }
       }
     } catch (e) {}
     return [];
+  });
+
+  const [unlockedChapters, setUnlockedChapters] = useState(() => {
+    try {
+      const saved = localStorage.getItem(SAVE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const unlocked = new Set([1]);
+        if (parsed.completedChapters && Array.isArray(parsed.completedChapters)) {
+          parsed.completedChapters.forEach((c) => {
+            unlocked.add(c);
+            if (c + 1 <= 5) unlocked.add(c + 1);
+          });
+        }
+        return Array.from(unlocked).sort((a, b) => a - b);
+      }
+    } catch (e) {}
+    return [1]; // Only Chapter 1 unlocked initially
   });
 
   const [unlockedAchievements, setUnlockedAchievements] = useState(() => {
@@ -1614,10 +1621,14 @@ export default function App() {
                     className={`chap-play-btn ${isUnlocked ? "btn-primary" : "btn-locked"}`}
                     onClick={(e) => {
                       e.stopPropagation();
-                      launchChapter(chap.id);
+                      if (isUnlocked) {
+                        launchChapter(chap.id);
+                      } else {
+                        showToast(`[LOCKED] ${chap.title} අගුළු වැටී ඇත! එය විවෘත කිරීමට Chapter 0${chap.id - 1} සම්පූර්ණ කරන්න.`);
+                      }
                     }}
                   >
-                    {isUnlocked ? `DEPLOY ${chap.title} ▶` : "CLASSIFIED // LOCKED"}
+                    {isUnlocked ? (isDone ? `REPLAY ${chap.title} ▶` : `DEPLOY ${chap.title} ▶`) : `🔒 LOCKED (COMPLETE CH 0${chap.id - 1})`}
                   </button>
                 </div>
               </div>

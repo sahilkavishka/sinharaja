@@ -4231,6 +4231,858 @@ export class SinharajaEngine {
     return false;
   }
 
+  // ── Realistic 3D Ground Items Renderer ─────────────────────────────────────
+  renderRealisticGroundItem(ctx, it, time) {
+    ctx.save();
+    ctx.translate(it.x, it.y);
+
+    // Soft drop shadow
+    ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+    ctx.beginPath();
+    ctx.ellipse(0, 6, 14, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    const t = it.type || "";
+    if (t === "salt") {
+      // 3D Canvas Salt Pouch
+      ctx.fillStyle = "#8d704b"; // Shadow side
+      ctx.beginPath();
+      ctx.ellipse(2, 0, 9, 8, 0.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#bca37f"; // Light side
+      ctx.beginPath();
+      ctx.ellipse(-1, -1, 8, 7.5, -0.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Tied neck with dark cord
+      ctx.strokeStyle = "#4a3525";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, -6, 4, 0, Math.PI);
+      ctx.stroke();
+
+      // Spilling white salt crystals with sparkle
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.ellipse(0, -7, 5, 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+      ctx.fillRect(-2, -9, 2, 2);
+      ctx.fillRect(2, -8, 1.5, 1.5);
+    } else if (t === "herb") {
+      // 3D Medicinal Jungle Herb Cluster
+      const sway = Math.sin(time * 2 + it.x) * 0.1;
+      ctx.rotate(sway);
+
+      // Radial fern fronds
+      for (let i = 0; i < 5; i++) {
+        const angle = (i * Math.PI * 2) / 5 - Math.PI / 2;
+        ctx.save();
+        ctx.rotate(angle);
+        ctx.fillStyle = i % 2 === 0 ? "#1b5e20" : "#2e7d32";
+        ctx.beginPath();
+        ctx.ellipse(0, -8, 3.5, 9, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#81c784";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, -15);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Central medicinal golden blossom & dewdrop
+      ctx.fillStyle = "#ffd54f";
+      ctx.beginPath();
+      ctx.arc(0, 0, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+      ctx.beginPath();
+      ctx.arc(-1, -1, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Subtle emerald aura
+      ctx.strokeStyle = "rgba(74, 222, 128, 0.4)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, 14 + Math.sin(time * 3) * 2, 0, Math.PI * 2);
+      ctx.stroke();
+    } else if (t === "ginger_tea") {
+      // 3D Steaming Terracotta Tea Pot
+      const potGrad = ctx.createRadialGradient(-3, -3, 2, 0, 0, 10);
+      potGrad.addColorStop(0, "#d97706");
+      potGrad.addColorStop(1, "#78350f");
+      ctx.fillStyle = potGrad;
+      ctx.beginPath();
+      ctx.arc(0, 0, 9, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Rim & lid
+      ctx.fillStyle = "#92400e";
+      ctx.beginPath();
+      ctx.ellipse(0, -6, 5, 2.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#fbbf24";
+      ctx.beginPath();
+      ctx.arc(0, -8, 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Handle and spout
+      ctx.strokeStyle = "#78350f";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(-8, 0, 4, Math.PI * 0.5, Math.PI * 1.5);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(7, -2);
+      ctx.lineTo(12, -7);
+      ctx.stroke();
+
+      // Animated rising steam wisps
+      const steamY = ((time * 20 + it.x) % 25);
+      const steamAlpha = Math.max(0, 1 - steamY / 25);
+      ctx.strokeStyle = `rgba(254, 243, 199, ${steamAlpha * 0.65})`;
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(11, -8 - steamY);
+      ctx.quadraticCurveTo(15 + Math.sin(time * 4) * 3, -14 - steamY, 11, -20 - steamY);
+      ctx.stroke();
+    } else if (t === "feather") {
+      // 3D Iridescent Sacred Blue Magpie Feather
+      const hoverY = Math.sin(time * 3 + it.x) * 4;
+      ctx.translate(0, hoverY - 4);
+      ctx.rotate(0.35 + Math.sin(time * 2) * 0.08);
+
+      // Feather vane
+      ctx.fillStyle = "#1d4ed8"; // Royal blue
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 4.5, 13, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Tip pattern (Chestnut and white bands)
+      ctx.fillStyle = "#78350f";
+      ctx.beginPath();
+      ctx.ellipse(0, 8, 3.8, 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#f8fafc";
+      ctx.beginPath();
+      ctx.ellipse(0, 11, 2.5, 2, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // White quill shaft
+      ctx.strokeStyle = "#f8fafc";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(0, -14);
+      ctx.lineTo(0, 13);
+      ctx.stroke();
+
+      // Sacred shimmer particle
+      ctx.fillStyle = "rgba(96, 165, 250, 0.85)";
+      ctx.beginPath();
+      ctx.arc(Math.sin(time * 5) * 6, Math.cos(time * 4) * 8, 1.8, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // Generic Rugged Survival Supply Kit
+      ctx.fillStyle = "#334155";
+      ctx.fillRect(-8, -6, 16, 12);
+      ctx.fillStyle = "#475569";
+      ctx.fillRect(-7, -5, 14, 4);
+      ctx.fillStyle = "#ef4444";
+      ctx.fillRect(-2, -3, 4, 6);
+      ctx.fillRect(-4, -1, 8, 2);
+    }
+
+    ctx.restore();
+  }
+
+  // ── Realistic 3D Interactive Objects Renderer ─────────────────────────────
+  render3DInteractiveObject(ctx, obj, time) {
+    ctx.save();
+    ctx.translate(obj.x, obj.y);
+
+    const id = obj.id || "";
+    const distToPlayer = Math.hypot(obj.x - this.player.x, obj.y - this.player.y);
+    const isNearby = distToPlayer < (obj.radius || 30) + 55;
+
+    // ── 1. OLD RANGER GUNADASA NPC ──
+    if (id === "gunadasa_npc" || id === "npc") {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+      ctx.beginPath();
+      ctx.ellipse(0, 6, 20, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      const lookAngle = isNearby ? Math.atan2(this.player.y - obj.y, this.player.x - obj.x) : Math.PI * 0.4;
+      const breath = Math.sin(time * 0.0025) * 0.6;
+
+      ctx.save();
+      ctx.rotate(lookAngle);
+
+      // Feet & Boots
+      ctx.fillStyle = "#3e2723";
+      ctx.fillRect(-6, -12, 8, 5);
+      ctx.fillRect(-6, 7, 8, 5);
+
+      // Traditional Sarong & Earthy Khaki Ranger Jacket
+      ctx.fillStyle = "#3a4a35";
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 12 + breath, 13, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#22301e";
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+
+      // Leather shoulder belt & field pouch
+      ctx.strokeStyle = "#5d4037";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(-10, -9);
+      ctx.lineTo(8, 8);
+      ctx.stroke();
+      ctx.fillStyle = "#4e342e";
+      ctx.fillRect(5, 6, 6, 7);
+
+      // Elder Head with Weathered Skin and White/Silver Beard
+      ctx.fillStyle = "#c68a4c";
+      ctx.beginPath();
+      ctx.arc(3, 0, 7, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Silver gray beard on front of face
+      ctx.fillStyle = "#d1d5db";
+      ctx.beginPath();
+      ctx.arc(8, 0, 4, -Math.PI * 0.4, Math.PI * 0.4);
+      ctx.fill();
+
+      // Wide-Brimmed Ranger Safari Hat
+      ctx.fillStyle = "#5c4d37";
+      ctx.beginPath();
+      ctx.ellipse(2, 0, 11, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#796245";
+      ctx.beginPath();
+      ctx.arc(2, 0, 6.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#2a1c10";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(2, 0, 5, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Right arm holding Bamboo Walking Staff
+      ctx.fillStyle = "#c68a4c";
+      ctx.beginPath();
+      ctx.arc(7, 12, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#a1887f";
+      ctx.fillRect(4, 11, 18, 3);
+      ctx.fillStyle = "#d4af37";
+      ctx.fillRect(20, 10.5, 3, 4);
+
+      ctx.restore();
+
+      // Speech beacon if not yet helped
+      if (!this.npc.helped) {
+        const pulse = (time * 0.003) % 1;
+        ctx.strokeStyle = `rgba(74, 222, 128, ${1 - pulse})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, 24 + pulse * 14, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.fillStyle = "#4ade80";
+        ctx.beginPath();
+        ctx.arc(0, -26, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    // ── 2. CHESTS, BOXES & SUPPLY CRATES ──
+    else if (id.includes("chest") || id.includes("crate") || id.includes("box")) {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+      ctx.beginPath();
+      ctx.ellipse(0, 12, 22, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Front Face
+      const frontGrad = ctx.createLinearGradient(0, -5, 0, 12);
+      frontGrad.addColorStop(0, "#4e342e");
+      frontGrad.addColorStop(1, "#271612");
+      ctx.fillStyle = frontGrad;
+      ctx.fillRect(-18, -4, 36, 16);
+
+      // Top Face (Isometric Tilt)
+      ctx.fillStyle = "#6d4c41";
+      ctx.beginPath();
+      ctx.moveTo(-18, -4);
+      ctx.lineTo(-12, -14);
+      ctx.lineTo(24, -14);
+      ctx.lineTo(18, -4);
+      ctx.closePath();
+      ctx.fill();
+
+      // Right Side Face
+      ctx.fillStyle = "#3e2723";
+      ctx.beginPath();
+      ctx.moveTo(18, -4);
+      ctx.lineTo(24, -14);
+      ctx.lineTo(24, 2);
+      ctx.lineTo(18, 12);
+      ctx.closePath();
+      ctx.fill();
+
+      // Iron corner brackets & strapping
+      ctx.fillStyle = "#212121";
+      ctx.fillRect(-18, -4, 4, 16);
+      ctx.fillRect(14, -4, 4, 16);
+      ctx.fillRect(-18, 3, 36, 3);
+
+      // Brass Lock Hasp & Padlock
+      ctx.fillStyle = "#f59e0b";
+      ctx.beginPath();
+      ctx.arc(0, 2, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#000000";
+      ctx.fillRect(-1, 2, 2, 3);
+
+      if (isNearby) {
+        ctx.strokeStyle = "rgba(245, 158, 11, 0.7)";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(-19, -5, 38, 18);
+      }
+    }
+    // ── 3. FIELD LOGBOOKS, RESEARCH PAPERS & ANCIENT SLATES ──
+    else if (id.includes("diary") || id.includes("slate") || id.includes("doc") || id.includes("truth") || id.includes("tape")) {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+      ctx.beginPath();
+      ctx.ellipse(0, 8, 16, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (id.includes("slate")) {
+        ctx.fillStyle = "#475569";
+        ctx.fillRect(-14, -16, 28, 22);
+        ctx.fillStyle = "#334155";
+        ctx.fillRect(-12, -14, 24, 18);
+
+        ctx.strokeStyle = "#38bdf8";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(-7, -10); ctx.lineTo(-2, -5); ctx.lineTo(-7, 0);
+        ctx.moveTo(3, -10); ctx.lineTo(7, -10); ctx.lineTo(5, -2);
+        ctx.stroke();
+
+        ctx.shadowColor = "#38bdf8";
+        ctx.shadowBlur = 8;
+        ctx.fillStyle = "#38bdf8";
+        ctx.fillRect(-1, -7, 2, 2);
+        ctx.shadowBlur = 0;
+      } else if (id.includes("tape")) {
+        ctx.fillStyle = "#1e293b";
+        ctx.fillRect(-13, -9, 26, 17);
+        ctx.fillStyle = "#475569";
+        ctx.fillRect(-9, -6, 18, 11);
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(-4, 0, 3, 0, Math.PI * 2);
+        ctx.arc(4, 0, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#0f172a";
+        ctx.beginPath();
+        ctx.arc(-4, 0, 1.5, 0, Math.PI * 2);
+        ctx.arc(4, 0, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.fillStyle = "#3e2723";
+        ctx.beginPath();
+        ctx.ellipse(0, 4, 16, 9, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#7c2d12";
+        ctx.fillRect(-13, -11, 26, 16);
+        ctx.fillStyle = "#fef3c7";
+        ctx.fillRect(-11, -10, 22, 13);
+        ctx.strokeStyle = "#b45309";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(0, -10); ctx.lineTo(0, 3);
+        ctx.stroke();
+
+        ctx.fillStyle = "#dc2626";
+        ctx.fillRect(1, 1, 2.5, 8);
+      }
+    }
+    // ── 4. KEYS, KEYCARDS & ANCIENT CRYSTAL / DNA CORES ──
+    else if (id.includes("key") || id.includes("sample") || id.includes("core") || id.includes("gem") || id.includes("mask")) {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+      ctx.beginPath();
+      ctx.ellipse(0, 6, 14, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (id.includes("keycard")) {
+        ctx.fillStyle = "#f1f5f9";
+        ctx.fillRect(-10, -6, 20, 12);
+        ctx.fillStyle = "#0284c7";
+        ctx.fillRect(-10, -6, 20, 3.5);
+        ctx.fillStyle = "#eab308";
+        ctx.fillRect(-6, -1, 4, 4);
+        ctx.fillStyle = "#0f172a";
+        ctx.fillRect(0, -1, 8, 4);
+      } else if (id.includes("core") || id.includes("gem") || id.includes("crystal") || id.includes("sample")) {
+        const pulse = Math.sin(time * 0.005) * 4;
+        ctx.shadowColor = "#00f5d4";
+        ctx.shadowBlur = 12 + pulse;
+
+        ctx.fillStyle = "#334155";
+        ctx.fillRect(-8, 2, 16, 6);
+
+        ctx.fillStyle = "rgba(6, 182, 212, 0.35)";
+        ctx.fillRect(-6, -14, 12, 16);
+
+        ctx.fillStyle = "#00f5d4";
+        ctx.beginPath();
+        ctx.moveTo(0, -13);
+        ctx.lineTo(4, -6);
+        ctx.lineTo(0, 1);
+        ctx.lineTo(-4, -6);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.shadowBlur = 0;
+      } else {
+        ctx.fillStyle = "#f59e0b";
+        ctx.beginPath();
+        ctx.arc(-6, -2, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#451a03";
+        ctx.beginPath();
+        ctx.arc(-6, -2, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#d97706";
+        ctx.fillRect(-2, -3.5, 16, 3);
+        ctx.fillRect(8, -0.5, 3, 5);
+        ctx.fillRect(12, -0.5, 2.5, 3.5);
+      }
+    }
+    // ── 5. HEAVY DIESEL GENERATOR, BREAKER & HIGH-TECH TERMINALS ──
+    else if (id.includes("generator") || id.includes("breaker") || id.includes("terminal")) {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+      ctx.beginPath();
+      ctx.ellipse(0, 16, 28, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      const vShudder = (this.generatorOn ? Math.sin(time * 40) * 0.6 : 0);
+      ctx.translate(vShudder, 0);
+
+      const genGrad = ctx.createLinearGradient(0, -18, 0, 14);
+      genGrad.addColorStop(0, "#475569");
+      genGrad.addColorStop(1, "#1e293b");
+      ctx.fillStyle = genGrad;
+      ctx.fillRect(-22, -16, 44, 30);
+
+      ctx.fillStyle = "#334155";
+      ctx.fillRect(-18, -24, 36, 10);
+
+      ctx.strokeStyle = "#0f172a";
+      ctx.lineWidth = 1.5;
+      for (let y = -8; y <= 6; y += 4) {
+        ctx.beginPath();
+        ctx.moveTo(-16, y);
+        ctx.lineTo(6, y);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = "#1e293b";
+      ctx.fillRect(12, -28, 5, 14);
+      ctx.fillStyle = "#94a3b8";
+      ctx.fillRect(11, -30, 7, 3);
+
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(12, -2, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#ef4444";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(12, -2);
+      ctx.lineTo(14, -4);
+      ctx.stroke();
+
+      const isRunning = this.generatorOn || this.breakerOff;
+      ctx.fillStyle = isRunning ? "#22c55e" : "#ef4444";
+      ctx.shadowColor = isRunning ? "#22c55e" : "#ef4444";
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.arc(12, 6, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+    // ── 6. RADIO TOWER, RADAR, SATELLITE DISH & EXTRACTION HELIPAD ──
+    else if (id.includes("tower") || id.includes("satellite") || id.includes("beacon") || id.includes("helipad") || id.includes("monorail") || id.includes("elevator")) {
+      if (id.includes("helipad")) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+        ctx.beginPath();
+        ctx.arc(0, 0, 36, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#334155";
+        ctx.beginPath();
+        ctx.arc(0, 0, 34, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = "#eab308";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(0, 0, 32, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(-12, -14, 5, 28);
+        ctx.fillRect(7, -14, 5, 28);
+        ctx.fillRect(-12, -2.5, 24, 5);
+
+        const strobe = Math.floor((time * 0.006) % 4);
+        for (let i = 0; i < 4; i++) {
+          const ang = (i * Math.PI) / 2 + Math.PI / 4;
+          const lx = Math.cos(ang) * 28;
+          const ly = Math.sin(ang) * 28;
+          ctx.fillStyle = i === strobe ? "#22c55e" : "#14532d";
+          ctx.beginPath();
+          ctx.arc(lx, ly, 3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+        ctx.beginPath();
+        ctx.ellipse(0, 14, 24, 9, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = "#64748b";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(-16, 12); ctx.lineTo(0, -18); ctx.lineTo(16, 12);
+        ctx.stroke();
+
+        ctx.fillStyle = "#94a3b8";
+        ctx.beginPath();
+        ctx.arc(0, -18, 12, Math.PI * 0.7, Math.PI * 1.8);
+        ctx.stroke();
+
+        ctx.strokeStyle = "#cbd5e1";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, -18); ctx.lineTo(0, -38);
+        ctx.stroke();
+
+        const beaconOn = Math.sin(time * 0.008) > 0.2;
+        ctx.fillStyle = beaconOn ? "#ef4444" : "#450a0a";
+        ctx.shadowColor = beaconOn ? "#ef4444" : "transparent";
+        ctx.shadowBlur = beaconOn ? 14 : 0;
+        ctx.beginPath();
+        ctx.arc(0, -39, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    }
+    // ── 7. DIRECTIONAL TRAIL SIGNS & INFORMATION POSTS ──
+    else if (id.includes("sign")) {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.38)";
+      ctx.beginPath();
+      ctx.ellipse(0, 8, 12, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#3e2723";
+      ctx.beginPath();
+      ctx.ellipse(0, 5, 8, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#5d4037";
+      ctx.fillRect(-3, -24, 6, 30);
+      ctx.fillStyle = "#795548";
+      ctx.fillRect(-3, -24, 2, 30);
+
+      // Upper plank
+      ctx.fillStyle = "#8d6e63";
+      ctx.beginPath();
+      ctx.moveTo(-16, -22);
+      ctx.lineTo(14, -22);
+      ctx.lineTo(20, -16);
+      ctx.lineTo(14, -10);
+      ctx.lineTo(-16, -10);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = "#3e2723";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Lower plank
+      ctx.fillStyle = "#6d4c41";
+      ctx.beginPath();
+      ctx.moveTo(16, -10);
+      ctx.lineTo(-14, -10);
+      ctx.lineTo(-20, -4);
+      ctx.lineTo(-14, 2);
+      ctx.lineTo(16, 2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#1e293b";
+      ctx.fillRect(-1, -17, 2, 2);
+      ctx.fillRect(-1, -5, 2, 2);
+    }
+    // ── 8. SACRED FEATHERS & NATURAL FOUNTAINS ──
+    else if (id.includes("feather")) {
+      const hoverY = Math.sin(time * 0.004 + obj.x) * 5;
+      ctx.translate(0, hoverY - 6);
+
+      ctx.fillStyle = "rgba(59, 130, 246, 0.25)";
+      ctx.beginPath();
+      ctx.arc(0, 0, 18, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#1d4ed8";
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 5, 14, 0.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#f8fafc";
+      ctx.fillRect(-0.5, -14, 1.2, 28);
+    }
+    // ── 9. DEFAULT AAA EXPEDITION CRATE FALLBACK ──
+    else {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+      ctx.beginPath();
+      ctx.ellipse(0, 10, 18, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#334155";
+      ctx.fillRect(-14, -8, 28, 16);
+      ctx.fillStyle = "#475569";
+      ctx.fillRect(-14, -8, 28, 4);
+      ctx.strokeStyle = "#38bdf8";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(-14, -8, 28, 16);
+    }
+
+    // ── TACTICAL DIEGETIC IN-WORLD HOVER BADGE ──
+    if (isNearby) {
+      const tw = Math.min(220, ctx.measureText(obj.title).width + 30);
+      ctx.fillStyle = "rgba(10, 15, 12, 0.94)";
+      ctx.strokeStyle = "#38bdf8";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(-tw / 2, -obj.radius - 38, tw, 26, 4);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.font = "bold 12px 'Noto Sans Sinhala', sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#38bdf8";
+      ctx.fillText(obj.title, 0, -obj.radius - 25);
+    }
+
+    ctx.restore();
+  }
+
+  // ── Realistic 3D Campfire Renderer ────────────────────────────────────────
+  renderRealisticCampfire(ctx, fire, time) {
+    ctx.save();
+    ctx.translate(fire.x, fire.y);
+
+    // Charcoal ash bed
+    ctx.fillStyle = "rgba(15, 12, 10, 0.75)";
+    ctx.beginPath();
+    ctx.ellipse(0, 4, fire.radius + 6, fire.radius * 0.65 + 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Ring of 3D river rocks surrounding fire pit
+    const numRocks = 9;
+    for (let i = 0; i < numRocks; i++) {
+      const angle = (i * Math.PI * 2) / numRocks;
+      const rx = Math.cos(angle) * (fire.radius - 2);
+      const ry = Math.sin(angle) * (fire.radius * 0.65 - 1) + 2;
+      const rockRadius = 6.5 + (i % 3) * 1.5;
+
+      ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+      ctx.beginPath();
+      ctx.ellipse(rx + 1, ry + 2, rockRadius, rockRadius * 0.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      const rockGrad = ctx.createRadialGradient(rx - 2, ry - 2, 1, rx, ry, rockRadius);
+      rockGrad.addColorStop(0, i % 2 === 0 ? "#78716c" : "#57534e");
+      rockGrad.addColorStop(1, i % 2 === 0 ? "#292524" : "#1c1917");
+      ctx.fillStyle = rockGrad;
+      ctx.beginPath();
+      ctx.ellipse(rx, ry, rockRadius, rockRadius * 0.75, angle, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Crossed 3D charred logs
+    ctx.strokeStyle = "#271612";
+    ctx.lineWidth = 4.5;
+    ctx.beginPath();
+    ctx.moveTo(-14, -8); ctx.lineTo(14, 8);
+    ctx.moveTo(-14, 8); ctx.lineTo(14, -8);
+    ctx.moveTo(0, -14); ctx.lineTo(0, 10);
+    ctx.stroke();
+
+    // Glowing hot ember core
+    const emberPulse = Math.sin(time * 0.01) * 3;
+    ctx.fillStyle = "#ea580c";
+    ctx.shadowColor = "#f97316";
+    ctx.shadowBlur = 16 + emberPulse;
+    ctx.beginPath();
+    ctx.arc(0, 0, 10 + emberPulse * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Multi-layer dynamic flame tongues
+    const f1 = Math.sin(time * 0.02) * 3;
+    const f2 = Math.cos(time * 0.025) * 4;
+    const f3 = Math.sin(time * 0.035) * 3;
+
+    // Outer flame (Deep Orange / Red)
+    ctx.fillStyle = "#dc2626";
+    ctx.beginPath();
+    ctx.moveTo(-10, 4);
+    ctx.quadraticCurveTo(-14 + f1, -12, f1, -26 + f2);
+    ctx.quadraticCurveTo(14 + f3, -12, 10, 4);
+    ctx.closePath();
+    ctx.fill();
+
+    // Mid flame (Golden Amber)
+    ctx.fillStyle = "#f59e0b";
+    ctx.beginPath();
+    ctx.moveTo(-7, 3);
+    ctx.quadraticCurveTo(-9 + f2, -8, f2 * 0.5, -20 + f1);
+    ctx.quadraticCurveTo(9 + f1, -8, 7, 3);
+    ctx.closePath();
+    ctx.fill();
+
+    // Core flame (Warm Yellow)
+    ctx.fillStyle = "#fef08a";
+    ctx.beginPath();
+    ctx.arc(0, -2, 6 + Math.abs(f1 * 0.5), 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  // ── Realistic 3D Granite Boulder / Obstacle Renderer ──────────────────────
+  renderRealisticBoulder(ctx, obs) {
+    if (obs.radius) {
+      ctx.save();
+      ctx.translate(obs.x, obs.y);
+
+      const r = obs.radius;
+      ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+      ctx.beginPath();
+      ctx.ellipse(r * 0.15, r * 0.25, r * 1.15, r * 0.75, 0.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      const rockGrad = ctx.createRadialGradient(-r * 0.35, -r * 0.35, r * 0.1, 0, 0, r);
+      rockGrad.addColorStop(0, "#64748b");
+      rockGrad.addColorStop(0.65, "#334155");
+      rockGrad.addColorStop(1, "#0f172a");
+      ctx.fillStyle = rockGrad;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, r, r * 0.88, -0.15, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Top highlighted facet
+      ctx.fillStyle = "rgba(203, 213, 225, 0.25)";
+      ctx.beginPath();
+      ctx.ellipse(-r * 0.25, -r * 0.3, r * 0.5, r * 0.35, -0.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // North-face rainforest moss patches
+      ctx.fillStyle = "#365314";
+      ctx.beginPath();
+      ctx.ellipse(-r * 0.1, -r * 0.45, r * 0.65, r * 0.25, -0.1, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#4d7c0f";
+      ctx.beginPath();
+      ctx.ellipse(-r * 0.15, -r * 0.48, r * 0.45, r * 0.15, -0.1, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    } else if (obs.w && obs.h) {
+      ctx.save();
+      ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+      ctx.fillRect(obs.x + 4, obs.y + 4, obs.w, obs.h);
+
+      ctx.fillStyle = "#3e2723";
+      ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
+      ctx.strokeStyle = "#1b0000";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(obs.x, obs.y, obs.w, obs.h);
+
+      ctx.strokeStyle = "#271612";
+      ctx.lineWidth = 1;
+      const step = obs.w > obs.h ? obs.h / 3 : obs.w / 3;
+      if (obs.w > obs.h) {
+        for (let py = obs.y + step; py < obs.y + obs.h; py += step) {
+          ctx.beginPath();
+          ctx.moveTo(obs.x, py); ctx.lineTo(obs.x + obs.w, py);
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
+    }
+  }
+
+  // ── Realistic Segmented Jungle Leech Renderer ─────────────────────────────
+  renderRealisticLeech(ctx, l) {
+    if (!l.alive) return;
+    ctx.save();
+    ctx.translate(l.x, l.y);
+
+    const angle = Math.atan2(this.player.y - l.y, this.player.x - l.x);
+    ctx.rotate(angle);
+
+    const stretch = Math.sin(l.crawlFrame || 0);
+    const bodyLen = Math.max(8, l.radius * 1.5 + stretch * 3.5);
+    const bodyW = Math.max(3, l.radius * 0.7 - stretch * 1.0);
+
+    // Ground cast shadow
+    ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+    ctx.beginPath();
+    ctx.ellipse(0, 2, bodyLen + 2, bodyW + 1, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Posterior anchor sucker
+    ctx.fillStyle = "#1c1917";
+    ctx.beginPath();
+    ctx.arc(-bodyLen * 0.65, 0, bodyW * 0.9, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Segmented muscular annelid body (7 distinct segments)
+    for (let i = -3; i <= 3; i++) {
+      const segX = (i / 3) * (bodyLen * 0.52);
+      const segR = bodyW * (1 - Math.abs(i) * 0.14);
+      ctx.fillStyle = i % 2 === 0 ? "#1c1917" : "#450a0a";
+      ctx.beginPath();
+      ctx.arc(segX, 0, Math.max(1.8, segR), 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Anterior searching sucker head
+    ctx.fillStyle = "#7f1d1d";
+    ctx.beginPath();
+    ctx.ellipse(bodyLen * 0.7, 0, 2.8, 2.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Wet specular glint along moist cuticle
+    ctx.fillStyle = "rgba(255, 255, 255, 0.75)";
+    ctx.fillRect(0, -1, 3, 1);
+
+    ctx.restore();
+  }
+
   // ── 8. Render Loop ────────────────────────────────────────────────────────
   render() {
     const ctx = this.ctx;
@@ -5236,24 +6088,10 @@ export class SinharajaEngine {
       ctx.restore();
     }
 
-    // 3. Campfires (Animated Flames)
+    // 3. Realistic 3D Campfires
+    const renderTime = performance.now();
     this.campfires.forEach((fire) => {
-      ctx.fillStyle = "#2c1a0e";
-      ctx.beginPath();
-      ctx.arc(fire.x, fire.y, fire.radius, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Flame core
-      const flicker = Math.sin(performance.now() * 0.015) * 4;
-      ctx.fillStyle = "#ff6f00";
-      ctx.beginPath();
-      ctx.arc(fire.x, fire.y - 2, 14 + flicker, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = "#ffd54f";
-      ctx.beginPath();
-      ctx.arc(fire.x, fire.y - 4, 8 + flicker / 2, 0, Math.PI * 2);
-      ctx.fill();
+      this.renderRealisticCampfire(ctx, fire, renderTime);
     });
 
     // Campfire Floating Embers
@@ -5266,71 +6104,24 @@ export class SinharajaEngine {
     });
     ctx.globalAlpha = 1.0;
 
-    // 4. Obstacles (Boulders & Cabin Walls)
+    // 4. Realistic 3D Obstacles (Granite Boulders & Timber Structures)
     this.obstacles.forEach((obs) => {
-      if (obs.radius) {
-        ctx.fillStyle = "#3a423a";
-        ctx.beginPath();
-        ctx.arc(obs.x, obs.y, obs.radius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = "#1b241b";
-        ctx.lineWidth = 4;
-        ctx.stroke();
-      } else if (obs.w) {
-        ctx.fillStyle = "#3e2723";
-        ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
-        ctx.strokeStyle = "#1b0000";
-        ctx.strokeRect(obs.x, obs.y, obs.w, obs.h);
-      }
+      this.renderRealisticBoulder(ctx, obs);
     });
 
-    // 5. Ground Items
+    // 5. Realistic 3D Ground Items (No flat emojis!)
     this.items.forEach((it) => {
-      ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
-      ctx.beginPath();
-      ctx.arc(it.x, it.y, 18, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.font = "20px sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(it.icon, it.x, it.y);
+      this.renderRealisticGroundItem(ctx, it, renderTime);
     });
 
-    // 6. Interactive Objects & Markers
+    // 6. Realistic 3D Interactive Objects, Props & NPCs
     this.interactiveObjects.forEach((obj) => {
-      ctx.fillStyle = "rgba(104, 211, 112, 0.2)";
-      ctx.beginPath();
-      ctx.arc(obj.x, obj.y, obj.radius, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.font = "28px sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(obj.icon, obj.x, obj.y);
-
-      const dist = Math.hypot(obj.x - this.player.x, obj.y - this.player.y);
-      if (dist < obj.radius + 50) {
-        ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
-        ctx.strokeStyle = "#68d370";
-        ctx.lineWidth = 1.5;
-        const text = `${obj.title} ${obj.prompt}`;
-        ctx.font = "14px 'Noto Sans Sinhala', sans-serif";
-        const tw = ctx.measureText(text).width + 16;
-        ctx.fillRect(obj.x - tw / 2, obj.y - obj.radius - 28, tw, 24);
-        ctx.strokeRect(obj.x - tw / 2, obj.y - obj.radius - 28, tw, 24);
-        ctx.fillStyle = "#fff";
-        ctx.fillText(text, obj.x, obj.y - obj.radius - 15);
-      }
+      this.render3DInteractiveObject(ctx, obj, renderTime);
     });
 
-    // 7. Enemy Leeches
+    // 7. Realistic Segmented Jungle Leeches
     this.leeches.forEach((l) => {
-      if (!l.alive) return;
-      ctx.fillStyle = "#8b0000";
-      ctx.beginPath();
-      const stretch = Math.sin(l.crawlFrame) * 4;
-      ctx.ellipse(l.x, l.y, l.radius + stretch, l.radius - stretch / 2, 0, 0, Math.PI * 2);
-      ctx.fill();
+      this.renderRealisticLeech(ctx, l);
     });
 
     // 7.1 Green Pit Vipers (පළා පොළඟුන්)
