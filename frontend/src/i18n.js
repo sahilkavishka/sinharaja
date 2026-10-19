@@ -6,7 +6,7 @@
 export const I18N = {
   en: {
     // Top Bar & Callsigns
-    callsign: "RANGER CALLSIGN: KAVISHKA",
+    callsign: "RANGER CALLSIGN: SINHA-01",
     vitals_stable: "VITALS STABLE",
     critical_trauma: "CRITICAL // TRAUMA",
     adrenaline_boost: "ADRENALINE BOOST",
@@ -100,7 +100,7 @@ export const I18N = {
 
   si: {
     // Top Bar & Callsigns
-    callsign: "රේන්ජර් කෝල්සයින්: කවිෂ්ක",
+    callsign: "රේන්ජර් කෝල්සයින්: සිංහ-01",
     vitals_stable: "ප්‍රාණ තත්ත්වය යහපත්",
     critical_trauma: "අවදානම් // බරපතල තුවාල",
     adrenaline_boost: "ඇඩ්‍රිනලින් ප්‍රබෝධය",

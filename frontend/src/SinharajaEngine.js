@@ -291,13 +291,13 @@ export class SinharajaEngine {
       { x: 1350, y: 410, shake: 0, callTimer: 18, treeName: "දුන් ගස" },
     ];
 
-    // Endemic Trees (Flora with Canopy Shadows)
+    // Endemic Trees (3D Flora with Canopy Elevation and Buttress Roots)
     this.trees = [
-      { x: 380, y: 220, r: 45, foliageR: 85, name: "මහා හොර ගස (Dipterocarpus)" },
-      { x: 680, y: 520, r: 40, foliageR: 80, name: "දුන් ගස (Doona)" },
-      { x: 1100, y: 380, r: 50, foliageR: 95, name: "වල් දෙල් ගස (Artocarpus)" },
-      { x: 1550, y: 780, r: 42, foliageR: 80, name: "කැකුණ ගස" },
-      { x: 2100, y: 550, r: 55, foliageR: 100, name: "පුරාණ වෘක්ෂය" },
+      { x: 380, y: 220, r: 42, height: 115, foliageR: 95, name: "මහා හොර ගස (Dipterocarpus zeylanicus)", hue: 125, saturation: 42, lightness: 18 },
+      { x: 680, y: 520, r: 38, height: 105, foliageR: 88, name: "දුන් ගස (Doona congestiflora)", hue: 130, saturation: 45, lightness: 20 },
+      { x: 1100, y: 380, r: 48, height: 125, foliageR: 105, name: "වල් දෙල් ගස (Artocarpus nobilis)", hue: 120, saturation: 38, lightness: 17 },
+      { x: 1550, y: 780, r: 40, height: 100, foliageR: 85, name: "කැකුණ ගස (Canarium zeylanicum)", hue: 135, saturation: 42, lightness: 19 },
+      { x: 2100, y: 550, r: 52, height: 130, foliageR: 110, name: "පුරාණ වෘක්ෂය (Ancient Shorea)", hue: 118, saturation: 35, lightness: 16 },
     ];
 
     // Wildlife: Fireflies & Footsteps
@@ -1061,14 +1061,17 @@ export class SinharajaEngine {
     };
     const rand = rng(77);
     for (let i = 0; i < 80; i++) {
+      const fr = 32 + rand() * 40;
       this.jungleTrees.push({
         x: rand() * this.worldWidth,
         y: rand() * this.worldHeight,
-        r: 12 + rand() * 18,
-        fr: 28 + rand() * 35,
-        hue: 110 + rand() * 35,
-        saturation: 35 + rand() * 30,
-        lightness: 12 + rand() * 10,
+        r: 10 + rand() * 12,
+        height: 65 + rand() * 45,
+        foliageR: fr,
+        fr: fr,
+        hue: 112 + rand() * 32,
+        saturation: 38 + rand() * 25,
+        lightness: 14 + rand() * 10,
         phase: rand() * Math.PI * 2,
       });
     }
@@ -3358,7 +3361,7 @@ export class SinharajaEngine {
       this.triggerRadio(
         "welcome",
         "SINHA-BASE // ALPHA",
-        "රේන්ජර් කවිෂ්ක වෙත: කුඩව මාවතේ ඝන මීදුමක් පවතී. මුලින්ම ඉදිරියෙන් ඇති මුරපොළ කුටිය (Outpost Cabin) වෙත ගොස් උපකරණ පරීක්ෂා කරන්න!"
+        "රේන්ජර් සිංහ-01 වෙත: කුඩව මාවතේ ඝන මීදුමක් පවතී. මුලින්ම ඉදිරියෙන් ඇති මුරපොළ කුටිය (Outpost Cabin) වෙත ගොස් උපකරණ පරීක්ෂා කරන්න!"
       );
     }
 
@@ -3732,67 +3735,110 @@ export class SinharajaEngine {
       });
     }
 
-    // 4.3 Sinharaja Shadow Stalker (Apex Jungle Leopard AI)
+    // 4.3 Sinharaja Shadow Stalker (Apex Jungle Leopard AI - Ambush Predator)
     if (this.shadowStalker && (this.chapter === 1 || this.chapter === 3 || this.chapter === 5)) {
       const s = this.shadowStalker;
       if (s.roarCooldown > 0) s.roarCooldown -= dt;
+      if (s.attackCooldown > 0) s.attackCooldown -= dt;
       const sDist = Math.hypot(this.player.x - s.x, this.player.y - s.y);
 
       if (nearCampfire || this.player.inShelter) {
         s.state = "lurking";
-        s.eyesAlpha = Math.max(0, s.eyesAlpha - 1.5 * dt);
-        if (sDist < 420) {
+        s.eyesAlpha = Math.max(0, s.eyesAlpha - 1.8 * dt);
+        if (sDist < 450) {
           const awayAngle = Math.atan2(s.y - this.player.y, s.x - this.player.x);
-          s.x += Math.cos(awayAngle) * (120 * dt);
-          s.y += Math.sin(awayAngle) * (120 * dt);
+          s.x += Math.cos(awayAngle) * (140 * dt);
+          s.y += Math.sin(awayAngle) * (140 * dt);
         }
       } else {
-        const isStalkable = !this.torchOn || this.noiseLevel > 60 || this.sanity < 45;
-        if (isStalkable) {
-          const approachAngle = Math.atan2(this.player.y - s.y, this.player.x - s.x);
-          const stalkSpeed = s.state === "charging" ? 220 : 65;
-          s.x += Math.cos(approachAngle) * (stalkSpeed * dt);
-          s.y += Math.sin(approachAngle) * (stalkSpeed * dt);
+        // Flashlight beam detection (direct light cone deterrence)
+        const angleToStalker = Math.atan2(s.y - this.player.y, s.x - this.player.x);
+        let angleDiff = Math.abs(this.player.facingAngle - angleToStalker);
+        if (angleDiff > Math.PI) angleDiff = Math.PI * 2 - angleDiff;
+        const caughtInBeam = this.torchOn && (this.battery > 0) && (angleDiff < 0.65) && (sDist < 380);
 
-          if (sDist < 300) {
-            s.eyesAlpha = Math.min(1.0, s.eyesAlpha + 1.2 * dt);
-            if (s.roarCooldown <= 0) {
-              s.roarCooldown = 6.0;
-              this.playSfx("leopard_growl");
-              this.triggerScreenShake(3.0, 0.25);
-              this.spawnFloatingText(s.x, s.y - 20, "GROWL... 🐾", "#f59e0b");
-              this.cb.onNotify("🐾 කැලෑ දිවියෙකුගේ ගෙරවුම් හඬක් අසලින් ඇසේ! ආලෝකය දල්වන්න!");
-            }
+        if (caughtInBeam) {
+          // Direct light beam repels the stealth predator!
+          s.state = "repelled";
+          s.eyesAlpha = Math.min(1.0, s.eyesAlpha + 2.5 * dt); // Amber glare reflection!
+          const awayAngle = Math.atan2(s.y - this.player.y, s.x - this.player.x);
+          s.x += Math.cos(awayAngle) * (210 * dt);
+          s.y += Math.sin(awayAngle) * (210 * dt);
+          s.stalkTimer = 0;
+          if (s.roarCooldown <= 0 && sDist < 280) {
+            s.roarCooldown = 5.0;
+            this.playSfx("leopard_growl");
+            this.triggerScreenShake(3.0, 0.25);
+            this.spawnFloatingText(s.x, s.y - 25, "HISS! (Deterred by Flashlight) 🐾", "#f59e0b");
+            this.cb.onNotify("🐾 ආලෝකය වැදීමෙන් දිවියා අඳුරට පසුබැස්සේය! ආලෝකය නොනවත්වා තබාගන්න!");
           }
-
-          const angleToStalker = Math.atan2(s.y - this.player.y, s.x - this.player.x);
-          const angleDiff = Math.abs(this.player.facingAngle - angleToStalker);
-          const caughtInBeam = this.torchOn && (angleDiff < 0.6 || angleDiff > Math.PI * 2 - 0.6);
-
-          if (caughtInBeam && sDist < 260) {
-            s.state = "repelled";
-            s.x -= Math.cos(approachAngle) * (180 * dt);
-            s.y -= Math.sin(approachAngle) * (180 * dt);
-            s.eyesAlpha = Math.max(0, s.eyesAlpha - 2 * dt);
-          } else if (sDist < 140) {
-            s.state = "charging";
-          }
-
-          if (sDist < 42) {
-            const pounceDmg = Math.round(32 * diffMult);
-            this.health = Math.max(0, this.health - pounceDmg);
-            this.sanity = Math.max(0, this.sanity - 20);
-            this.bleeding = true;
-            this.playSfx("hurt");
-            this.triggerScreenShake(14, 0.5);
-            this.spawnFloatingText(this.player.x, this.player.y - 30, `LEOPARD MAUL! -${pounceDmg} HP 🐾`, "#dc2626");
-            this.cb.onNotify("🐾 දිවියා ඔබ වෙත කඩා පැන්නේය! ගිනිමැලය වෙත දිවයන්න!");
+        } else if (s.state === "repelled") {
+          // Retreat into darkness until safe distance, then resume stalking
+          const awayAngle = Math.atan2(s.y - this.player.y, s.x - this.player.x);
+          s.x += Math.cos(awayAngle) * (160 * dt);
+          s.y += Math.sin(awayAngle) * (160 * dt);
+          s.eyesAlpha = Math.max(0, s.eyesAlpha - 1.2 * dt);
+          if (sDist > 360) {
             s.state = "lurking";
-            s.x += (Math.random() - 0.5) * 450;
-            s.y += (Math.random() - 0.5) * 450;
           }
         } else {
-          s.eyesAlpha = Math.max(0, s.eyesAlpha - dt);
+          // Stealth Ambush Stalking: Circle toward player's rear blind spot!
+          const rearAngle = this.player.facingAngle + Math.PI;
+          const stalkTargetX = this.player.x + Math.cos(rearAngle) * 210;
+          const stalkTargetY = this.player.y + Math.sin(rearAngle) * 210;
+
+          const toTargetAngle = Math.atan2(stalkTargetY - s.y, stalkTargetX - s.x);
+          const stalkSpeed = (s.state === "charging") ? 270 : 85;
+          s.x += Math.cos(toTargetAngle) * (stalkSpeed * dt);
+          s.y += Math.sin(toTargetAngle) * (stalkSpeed * dt);
+          s.stalkFrame = (s.stalkFrame || 0) + dt * (s.state === "charging" ? 14 : 5);
+
+          // If in rear quadrant and close, stalking timer advances
+          const isBehind = angleDiff > 1.2;
+          if (isBehind && sDist < 280) {
+            s.stalkTimer = (s.stalkTimer || 0) + dt;
+            s.eyesAlpha = Math.min(1.0, s.eyesAlpha + 0.7 * dt);
+
+            if (s.roarCooldown <= 0) {
+              s.roarCooldown = 4.0;
+              this.playSfx("leopard_growl");
+              this.triggerScreenShake(3.5, 0.3);
+              this.spawnFloatingText(s.x, s.y - 20, "STALKING BEHIND YOU... 🐾", "#ef4444");
+              this.cb.onNotify("🐾 පිටුපසින් කැලෑ දිවියෙකුගේ ගෙරවුම් හඬක් ඇසේ! විදුලි පන්දම හරවා ආලෝකය විහිදුවන්න!");
+            }
+
+            // Ambush charge triggered if unspotted for 3.5s, or flashlight off, or very close!
+            if (s.stalkTimer > 3.5 || !this.torchOn || sDist < 120) {
+              s.state = "charging";
+            }
+          } else {
+            s.stalkTimer = Math.max(0, (s.stalkTimer || 0) - dt * 0.5);
+            s.eyesAlpha = Math.max(0, s.eyesAlpha - dt * 0.5);
+          }
+
+          // If charging, rush straight at player!
+          if (s.state === "charging") {
+            const chargeAngle = Math.atan2(this.player.y - s.y, this.player.x - s.x);
+            s.x += Math.cos(chargeAngle) * (260 * dt);
+            s.y += Math.sin(chargeAngle) * (260 * dt);
+            s.eyesAlpha = 1.0;
+
+            if (sDist < 44 && (s.attackCooldown <= 0)) {
+              s.attackCooldown = 2.0;
+              const pounceDmg = Math.round(36 * diffMult);
+              this.health = Math.max(0, this.health - pounceDmg);
+              this.sanity = Math.max(0, this.sanity - 22);
+              this.bleeding = true;
+              this.playSfx("hurt");
+              this.triggerScreenShake(16, 0.55);
+              this.spawnFloatingText(this.player.x, this.player.y - 32, `LEOPARD AMBUSH! -${pounceDmg} HP 🩸`, "#dc2626");
+              this.cb.onNotify("🐾 දිවියා පිටුපසින් කඩා පැන්නේය! ලුණු [1] දමා ලේ ගැලීම නවත්වන්න හෝ ගිනිමැලය වෙත දිවයන්න!");
+              s.state = "repelled";
+              s.stalkTimer = 0;
+              s.x += (Math.random() - 0.5) * 450;
+              s.y += (Math.random() - 0.5) * 450;
+            }
+          }
         }
       }
     }
@@ -5083,6 +5129,914 @@ export class SinharajaEngine {
     ctx.restore();
   }
 
+  // ── 3D Realistic Rainforest Tree (Buttress roots, cylindrical trunk, parallax canopy) ──
+  render3DTree(ctx, tree, time, camCenterX, camCenterY, isMajorEndemic = false) {
+    const vLeft = this.camera.x - 160;
+    const vRight = this.camera.x + (this.canvas.width / this.zoom) + 160;
+    const vTop = this.camera.y - 160;
+    const vBottom = this.camera.y + (this.canvas.height / this.zoom) + 160;
+
+    const foliageR = tree.foliageR || tree.fr || 70;
+    const height = tree.height || (tree.fr ? tree.fr * 1.5 : 85);
+    const trunkR = tree.r || (tree.fr ? Math.max(12, tree.fr * 0.35) : 18);
+
+    if (tree.x + foliageR < vLeft || tree.x - foliageR > vRight ||
+        tree.y + foliageR < vTop || tree.y - height - foliageR > vBottom) {
+      return;
+    }
+
+    // Camera height parallax offset: elevated treetop shifts relative to ground camera
+    const pX = (tree.x - camCenterX) * 0.055;
+    const pY = (tree.y - camCenterY) * 0.055;
+    const topX = tree.x + pX;
+    const topY = tree.y - height + pY;
+
+    // Wind rustle sway
+    const sway = Math.sin(time * 0.0018 + (tree.phase || tree.x * 0.01)) * (this.windStrength * 4.5);
+
+    // Player proximity transparency check: when player walks underneath the canopy
+    const distToPlayer = Math.hypot(this.player.x - tree.x, this.player.y - (tree.y - height * 0.45));
+    const underCanopy = distToPlayer < foliageR * 1.1;
+    const canopyAlpha = underCanopy ? 0.32 : 1.0;
+
+    ctx.save();
+
+    // A. Buttress Roots spreading onto muddy soil
+    ctx.fillStyle = "#1e130c";
+    ctx.strokeStyle = "#120a06";
+    ctx.lineWidth = 1.5;
+    const buttresses = [
+      { dx: -trunkR * 1.35, dy: trunkR * 0.35 },
+      { dx: trunkR * 1.25, dy: trunkR * 0.3 },
+      { dx: -trunkR * 0.65, dy: trunkR * 0.75 },
+      { dx: trunkR * 0.65, dy: trunkR * 0.7 },
+    ];
+    buttresses.forEach((b) => {
+      ctx.beginPath();
+      ctx.moveTo(tree.x, tree.y);
+      ctx.quadraticCurveTo(tree.x + b.dx * 0.5, tree.y + b.dy * 0.2, tree.x + b.dx, tree.y + b.dy);
+      ctx.lineTo(tree.x + b.dx * 0.65, tree.y + b.dy + 4);
+      ctx.lineTo(tree.x, tree.y + 4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    });
+
+    // B. Cylindrical 3D Vertical Trunk
+    const trunkGrad = ctx.createLinearGradient(tree.x - trunkR, 0, tree.x + trunkR, 0);
+    trunkGrad.addColorStop(0, "#4a3022"); // Highlight side
+    trunkGrad.addColorStop(0.35, "#321e14"); // Base bark
+    trunkGrad.addColorStop(0.85, "#1c100a"); // Shadow side
+    trunkGrad.addColorStop(1, "#0d0604"); // Ambient crease
+    ctx.fillStyle = trunkGrad;
+
+    ctx.beginPath();
+    ctx.moveTo(tree.x - trunkR, tree.y);
+    ctx.lineTo(topX - trunkR * 0.65, topY);
+    ctx.lineTo(topX + trunkR * 0.65, topY);
+    ctx.lineTo(tree.x + trunkR, tree.y);
+    ctx.closePath();
+    ctx.fill();
+
+    // Bark ridges & climbing tropical liana vines
+    ctx.strokeStyle = "rgba(12, 7, 4, 0.65)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(tree.x - trunkR * 0.3, tree.y);
+    ctx.lineTo(topX - trunkR * 0.2, topY);
+    ctx.moveTo(tree.x + trunkR * 0.3, tree.y);
+    ctx.lineTo(topX + trunkR * 0.2, topY);
+    ctx.stroke();
+
+    // Epiphytic moss patch on trunk
+    ctx.fillStyle = "rgba(46, 125, 50, 0.75)";
+    ctx.beginPath();
+    ctx.ellipse(tree.x - trunkR * 0.35, tree.y - height * 0.3, trunkR * 0.3, height * 0.14, -0.15, 0, Math.PI * 2);
+    ctx.fill();
+
+    // C. Elevated 3D Canopy Cluster
+    ctx.globalAlpha = canopyAlpha;
+
+    // Underside deep ambient occlusion foliage
+    ctx.fillStyle = this.chapter === 2 ? "#1e3320" : "#0d1f10";
+    ctx.beginPath();
+    ctx.arc(topX + sway, topY + 8, foliageR * 0.95, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Mid-tier lush rainforest foliage
+    const treeHue = tree.hue || 124;
+    const treeSat = tree.saturation || 42;
+    const treeLit = this.chapter === 2 ? (tree.lightness || 18) + 16 : (tree.lightness || 18);
+    ctx.fillStyle = `hsl(${treeHue}, ${treeSat}%, ${treeLit}%)`;
+    ctx.beginPath();
+    ctx.arc(topX + sway - 6, topY - 4, foliageR * 0.88, 0, Math.PI * 2);
+    ctx.arc(topX + sway + 10, topY - 2, foliageR * 0.75, 0, Math.PI * 2);
+    ctx.arc(topX + sway, topY - 16, foliageR * 0.82, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Top Sunlight Highlights (Spherical 3D shading)
+    const sunGrad = ctx.createRadialGradient(
+      topX + sway - foliageR * 0.3, topY - 16 - foliageR * 0.3, foliageR * 0.1,
+      topX + sway, topY - 10, foliageR
+    );
+    sunGrad.addColorStop(0, `hsla(${treeHue + 12}, ${treeSat + 15}%, ${treeLit + 18}%, 0.9)`);
+    sunGrad.addColorStop(0.65, `hsla(${treeHue}, ${treeSat}%, ${treeLit}%, 0.35)`);
+    sunGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+
+    ctx.fillStyle = sunGrad;
+    ctx.beginPath();
+    ctx.arc(topX + sway, topY - 14, foliageR * 0.95, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Under-canopy subtle guide ring if player is inside
+    if (underCanopy) {
+      ctx.strokeStyle = "rgba(104, 211, 112, 0.45)";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.arc(tree.x, tree.y, trunkR + 6, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    ctx.restore();
+  }
+
+  // ── 3D Realistic Kudawa Outpost Cabin (Timber logs, cutaway roof, warm interior) ──
+  render3DOutpostCabin(ctx, time) {
+    const x = 450;
+    const y = 640;
+    const w = 200;
+    const h = 180;
+    const wallH = 65; // Height of 3D walls
+    const inShelter = this.player.inShelter;
+
+    ctx.save();
+
+    // 1. Raised Wooden Foundation Deck & Porch Steps
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.fillRect(x - 8, y + h + 2, w + 16, 26); // Deck shadow
+
+    ctx.fillStyle = "#3e2723";
+    ctx.fillRect(x - 10, y + h - 15, w + 20, 22);
+    ctx.strokeStyle = "#1b0000";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x - 10, y + h - 15, w + 20, 22);
+
+    // Steps leading to porch
+    ctx.fillStyle = "#4e342e";
+    ctx.fillRect(x + 75, y + h + 7, 50, 10);
+    ctx.fillRect(x + 80, y + h + 17, 40, 9);
+
+    // 2. 3D Interior Floor (Visible always, highlighted when inside)
+    ctx.fillStyle = "#271612";
+    ctx.fillRect(x, y, w, h);
+    // Plank floorboards
+    ctx.strokeStyle = "rgba(62, 39, 35, 0.6)";
+    ctx.lineWidth = 1.5;
+    for (let py = y + 15; py < y + h; py += 16) {
+      ctx.beginPath();
+      ctx.moveTo(x, py); ctx.lineTo(x + w, py);
+      ctx.stroke();
+    }
+
+    // Interior furniture
+    // Cot / bunk bed in corner
+    ctx.fillStyle = "#37474f";
+    ctx.fillRect(x + 15, y + 20, 45, 80);
+    ctx.fillStyle = "#546e7a";
+    ctx.fillRect(x + 15, y + 20, 45, 25); // Pillow
+    ctx.fillStyle = "#263238";
+    ctx.strokeRect(x + 15, y + 20, 45, 80);
+
+    // Radio desk table
+    ctx.fillStyle = "#4e342e";
+    ctx.fillRect(x + 75, y + 20, 70, 35);
+    ctx.fillStyle = "#37474f";
+    ctx.fillRect(x + 85, y + 24, 18, 14); // Radio receiver
+    ctx.strokeStyle = "#cfd8dc";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x + 94, y + 24); ctx.lineTo(x + 94, y + 10); // Antenna
+    ctx.stroke();
+
+    // Solar battery bank
+    ctx.fillStyle = "#1e293b";
+    ctx.fillRect(x + 155, y + 22, 32, 28);
+    ctx.fillStyle = "#22c55e";
+    ctx.beginPath();
+    ctx.arc(x + 165, y + 32, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 3. 3D Solid Timber Log Walls
+    // Back Wall (North)
+    ctx.fillStyle = "#3e2723";
+    ctx.fillRect(x, y - wallH, w, wallH);
+    // Left Wall (West - in light)
+    ctx.fillStyle = "#4e342e";
+    ctx.beginPath();
+    ctx.moveTo(x, y - wallH);
+    ctx.lineTo(x - 14, y - wallH + 15);
+    ctx.lineTo(x - 14, y + h);
+    ctx.lineTo(x, y + h);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = "#1b0000";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Front Wall with Doorway (South)
+    // Left front section
+    ctx.fillStyle = "#2e1c14";
+    ctx.fillRect(x, y + h - 18, 70, 18);
+    // Right front section
+    ctx.fillRect(x + 130, y + h - 18, 70, 18);
+
+    // Right Wall (East - in shadow)
+    ctx.fillStyle = "#1e130c";
+    ctx.beginPath();
+    ctx.moveTo(x + w, y - wallH);
+    ctx.lineTo(x + w + 14, y - wallH + 15);
+    ctx.lineTo(x + w + 14, y + h);
+    ctx.lineTo(x + w, y + h);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = "#120a06";
+    ctx.stroke();
+
+    // 4. 3D Pitch Shingle Roof (Cutaway fade when inside!)
+    const roofAlpha = inShelter ? 0.12 : 1.0;
+    ctx.globalAlpha = roofAlpha;
+
+    // Roof shadow
+    ctx.fillStyle = "rgba(0,0,0,0.4)";
+    ctx.fillRect(x - 20, y + h - wallH, w + 40, wallH + 10);
+
+    // West Roof Slope
+    const ridgeY = y - wallH - 35;
+    const ridgeX = x + w / 2;
+    ctx.fillStyle = "#5d4037"; // Lit slope
+    ctx.beginPath();
+    ctx.moveTo(x - 18, y - wallH + 15);
+    ctx.lineTo(ridgeX, ridgeY);
+    ctx.lineTo(ridgeX, ridgeY + h);
+    ctx.lineTo(x - 18, y + h);
+    ctx.closePath();
+    ctx.fill();
+
+    // East Roof Slope
+    ctx.fillStyle = "#3e2723"; // Shadowed slope
+    ctx.beginPath();
+    ctx.moveTo(ridgeX, ridgeY);
+    ctx.lineTo(x + w + 18, y - wallH + 15);
+    ctx.lineTo(x + w + 18, y + h);
+    ctx.lineTo(ridgeX, ridgeY + h);
+    ctx.closePath();
+    ctx.fill();
+
+    // Corrugated tin lines on roof
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.35)";
+    ctx.lineWidth = 2;
+    for (let rx = x; rx < x + w; rx += 22) {
+      ctx.beginPath();
+      ctx.moveTo(rx, y - wallH + 10);
+      ctx.lineTo(rx, y + h - 5);
+      ctx.stroke();
+    }
+
+    // Ridge cap
+    ctx.strokeStyle = "#8d6e63";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(ridgeX, ridgeY);
+    ctx.lineTo(ridgeX, ridgeY + h);
+    ctx.stroke();
+
+    // Chimney pipe with smoke
+    ctx.fillStyle = "#263238";
+    ctx.fillRect(x + 35, ridgeY + 15, 10, 22);
+    const smokeY = (time * 0.03) % 40;
+    ctx.fillStyle = "rgba(200, 200, 200, 0.4)";
+    ctx.beginPath();
+    ctx.arc(x + 40 + Math.sin(time * 0.003) * 5, ridgeY + 10 - smokeY, 4 + smokeY * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.globalAlpha = 1.0;
+
+    // Cabin Name Signboard
+    ctx.fillStyle = "#ffe082";
+    ctx.font = "bold 12px 'Noto Sans Sinhala', sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("🏡 කුඩව මුරපොළ කුටිය (Outpost Shelter)", x + w / 2, y - wallH - 42);
+
+    ctx.restore();
+  }
+
+  // ── 3D Realistic Evacuation Helicopter & Helipad ──
+  render3DHelicopter(ctx, time) {
+    const hx = 2700;
+    const hy = 1800;
+
+    ctx.save();
+    ctx.translate(hx, hy);
+
+    // 1. Helipad Concrete Pad & Markings
+    ctx.fillStyle = "#1e293b";
+    ctx.beginPath();
+    ctx.arc(0, 0, 95, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#eab308";
+    ctx.lineWidth = 6;
+    ctx.stroke();
+
+    ctx.strokeStyle = "#facc15";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, 0, 72, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 52px 'Share Tech Mono', sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("H", 0, 0);
+
+    // Perimeter warning flashers
+    const flasherOn = Math.sin(time * 0.008) > 0;
+    [
+      { x: -82, y: -82 }, { x: 82, y: -82 },
+      { x: -82, y: 82 }, { x: 82, y: 82 }
+    ].forEach((b) => {
+      ctx.fillStyle = flasherOn ? "#ef4444" : "#450a0a";
+      ctx.shadowColor = flasherOn ? "#ef4444" : "transparent";
+      ctx.shadowBlur = flasherOn ? 12 : 0;
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, 6, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.shadowBlur = 0;
+
+    // 2. 3D Helicopter Tubular Landing Skids
+    ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+    ctx.fillRect(-28, 8, 56, 12); // Ground shadow
+
+    ctx.strokeStyle = "#64748b";
+    ctx.lineWidth = 4;
+    // Left Skid
+    ctx.beginPath();
+    ctx.moveTo(-24, -30); ctx.lineTo(-24, 30);
+    ctx.moveTo(-24, 30); ctx.quadraticCurveTo(-24, 36, -20, 38);
+    ctx.stroke();
+    // Right Skid
+    ctx.beginPath();
+    ctx.moveTo(24, -30); ctx.lineTo(24, 30);
+    ctx.moveTo(24, 30); ctx.quadraticCurveTo(24, 36, 20, 38);
+    ctx.stroke();
+    // Skid Cross-struts
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-24, -14); ctx.lineTo(24, -14);
+    ctx.moveTo(-24, 16); ctx.lineTo(24, 16);
+    ctx.stroke();
+
+    // 3. 3D Fuselage Body (Olive drab tactical finish)
+    const fuseGrad = ctx.createLinearGradient(-18, 0, 18, 0);
+    fuseGrad.addColorStop(0, "#2d4a2d"); // Highlight
+    fuseGrad.addColorStop(0.5, "#1b301b"); // Base
+    fuseGrad.addColorStop(1, "#0d1a0d"); // Shadow
+
+    ctx.fillStyle = fuseGrad;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 22, 42, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#081008";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // 4. Cockpit Canopy Glass (Glossy specular reflection)
+    const glassGrad = ctx.createLinearGradient(0, 15, 0, 38);
+    glassGrad.addColorStop(0, "rgba(56, 189, 248, 0.85)");
+    glassGrad.addColorStop(0.5, "rgba(14, 116, 144, 0.95)");
+    glassGrad.addColorStop(1, "rgba(8, 47, 73, 0.98)");
+    ctx.fillStyle = glassGrad;
+    ctx.beginPath();
+    ctx.ellipse(0, 25, 14, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Glass glare reflection stripe
+    ctx.fillStyle = "rgba(255, 255, 255, 0.65)";
+    ctx.beginPath();
+    ctx.ellipse(-4, 22, 3, 7, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 5. Tail Boom & Fin
+    ctx.fillStyle = "#1b301b";
+    ctx.fillRect(-5, -68, 10, 40);
+    ctx.fillStyle = "#334155";
+    ctx.fillRect(-15, -72, 30, 6); // Stabilizer wing
+
+    // Spinning Tail Rotor
+    const tailAngle = time * 0.05;
+    ctx.save();
+    ctx.translate(0, -72);
+    ctx.rotate(tailAngle);
+    ctx.fillStyle = "rgba(226, 232, 240, 0.85)";
+    ctx.fillRect(-14, -2, 28, 4);
+    ctx.restore();
+
+    // 6. Spinning Main 4-Blade Rotor Disc with motion blur
+    ctx.save();
+    ctx.rotate(this.heliRotorAngle);
+
+    // Translucent Motion Blur Disc
+    ctx.fillStyle = "rgba(203, 213, 225, 0.18)";
+    ctx.beginPath();
+    ctx.arc(0, 0, 85, 0, Math.PI * 2);
+    ctx.fill();
+
+    // High-speed carbon rotor blades
+    ctx.fillStyle = "rgba(241, 245, 249, 0.85)";
+    ctx.fillRect(-85, -3, 170, 6);
+    ctx.fillRect(-3, -85, 6, 170);
+
+    // Blade yellow safety tips
+    ctx.fillStyle = "#facc15";
+    ctx.fillRect(-85, -3, 14, 6);
+    ctx.fillRect(71, -3, 14, 6);
+    ctx.fillRect(-3, -85, 6, 14);
+    ctx.fillRect(-3, 71, 6, 14);
+
+    // Rotor hub
+    ctx.fillStyle = "#0f172a";
+    ctx.beginPath();
+    ctx.arc(0, 0, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#eab308";
+    ctx.beginPath();
+    ctx.arc(0, 0, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // 7. Volumetric Aerial Searchlight Cone
+    const searchAngle = this.chopperSearchlightAngle || 0;
+    const beamDist = 180;
+    const beamTargetX = Math.cos(searchAngle) * beamDist;
+    const beamTargetY = Math.sin(searchAngle) * beamDist;
+
+    const sLightGrad = ctx.createRadialGradient(beamTargetX, beamTargetY, 15, beamTargetX, beamTargetY, 140);
+    sLightGrad.addColorStop(0, "rgba(254, 240, 138, 0.45)");
+    sLightGrad.addColorStop(0.5, "rgba(254, 240, 138, 0.18)");
+    sLightGrad.addColorStop(1, "rgba(254, 240, 138, 0)");
+
+    ctx.fillStyle = sLightGrad;
+    ctx.beginPath();
+    ctx.arc(beamTargetX, beamTargetY, 140, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  // ── 3D Realistic Shadow Stalker Leopard (Panthera pardus kotiya) ──
+  render3DShadowStalker(ctx, s, time) {
+    if (!s || s.eyesAlpha <= 0.04) return;
+    ctx.save();
+    ctx.translate(s.x, s.y);
+    const toPlayer = Math.atan2(this.player.y - s.y, this.player.x - s.x);
+    ctx.rotate(toPlayer);
+
+    const alpha = Math.min(1.0, s.eyesAlpha);
+    ctx.globalAlpha = alpha;
+
+    // Ground cast shadow
+    ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+    ctx.beginPath();
+    ctx.ellipse(0, 8, 32, 14, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Stalking feline leg animation
+    const stalkLeg = Math.sin((s.stalkFrame || time * 0.005) * 8) * 6;
+
+    // Muscular Feline Paws & Legs
+    ctx.fillStyle = "#8d5b24"; // Tawny base
+    ctx.fillRect(-14 + stalkLeg, -16, 8, 8);
+    ctx.fillRect(8 - stalkLeg, -16, 8, 8);
+    ctx.fillRect(-14 - stalkLeg, 8, 8, 8);
+    ctx.fillRect(8 + stalkLeg, 8, 8, 8);
+
+    // Sleek Muscular Body
+    const bodyGrad = ctx.createLinearGradient(0, -14, 0, 14);
+    bodyGrad.addColorStop(0, "#b47832"); // Golden tawny spine
+    bodyGrad.addColorStop(0.65, "#8d5b24"); // Ribs
+    bodyGrad.addColorStop(1, "#451a03"); // Underbelly shadow
+    ctx.fillStyle = bodyGrad;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 26, 15, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#381a05";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Rosette camouflage coat spots (Sinharaja leopard rosettes)
+    ctx.fillStyle = "rgba(28, 14, 4, 0.75)";
+    [
+      { x: -12, y: -4 }, { x: -6, y: 5 }, { x: 2, y: -6 },
+      { x: 10, y: 3 }, { x: -2, y: 1 }, { x: -15, y: 4 }
+    ].forEach((spot) => {
+      ctx.beginPath();
+      ctx.arc(spot.x, spot.y, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // Twitching Long Tail with black tip
+    const tailWiggle = Math.sin(time * 0.006) * 8;
+    ctx.strokeStyle = "#8d5b24";
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.moveTo(-24, 0);
+    ctx.quadraticCurveTo(-36, tailWiggle * 0.5, -46, tailWiggle);
+    ctx.stroke();
+    ctx.strokeStyle = "#170e08"; // Black tail tip
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.moveTo(-44, tailWiggle * 0.85);
+    ctx.lineTo(-46, tailWiggle);
+    ctx.stroke();
+
+    // Feline Head & Ears
+    ctx.fillStyle = "#a16828";
+    ctx.beginPath();
+    ctx.arc(20, 0, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Pointed ears with black backs
+    ctx.fillStyle = "#1e1008";
+    ctx.beginPath();
+    ctx.moveTo(16, -9); ctx.lineTo(12, -15); ctx.lineTo(21, -11);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(16, 9); ctx.lineTo(12, 15); ctx.lineTo(21, 11);
+    ctx.closePath();
+    ctx.fill();
+
+    // Glowing Amber Eyes (Tapetum Lucidum reflection in the dark!)
+    ctx.fillStyle = "#f59e0b";
+    ctx.shadowColor = "#f59e0b";
+    ctx.shadowBlur = 14;
+    ctx.beginPath();
+    ctx.ellipse(24, -4.5, 3.2, 2, 0.2, 0, Math.PI * 2);
+    ctx.ellipse(24, 4.5, 3.2, 2, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Slit pupils
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(24, -5.5, 1.2, 2.5);
+    ctx.fillRect(24, 3.5, 1.2, 2.5);
+
+    // White muzzle & fangs if charging
+    ctx.fillStyle = "#e2e8f0";
+    ctx.beginPath();
+    ctx.ellipse(26, 0, 4, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (s.state === "charging") {
+      ctx.fillStyle = "#ef4444"; // Open snarling maw
+      ctx.beginPath();
+      ctx.arc(28, 0, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#ffffff"; // Sharp fangs
+      ctx.fillRect(28, -2, 2, 1.5);
+      ctx.fillRect(28, 1, 2, 1.5);
+    }
+
+    ctx.restore();
+  }
+
+  // ── Realistic Green Pit Viper (Trimeresurus trigonocephalus) ──
+  renderRealisticViper(ctx, v, time) {
+    ctx.save();
+    ctx.translate(v.x, v.y);
+
+    const toPlayerAngle = Math.atan2(this.player.y - v.y, this.player.x - v.x);
+    const distToPlayer = Math.hypot(this.player.x - v.x, this.player.y - v.y);
+    const isAlert = distToPlayer < 150;
+
+    // Ground cast shadow
+    ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+    ctx.beginPath();
+    ctx.ellipse(0, 4, 16, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Coiled S-shaped Viper Body (Vibrant Emerald Pit Viper)
+    ctx.strokeStyle = v.state === "retreated" ? "rgba(46, 125, 50, 0.45)" : "#2e7d32";
+    ctx.lineWidth = 6;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.arc(0, 0, 10, 0, Math.PI * 1.5);
+    ctx.stroke();
+
+    ctx.strokeStyle = "#43a047";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(2, -1, 7, 0, Math.PI * 1.4);
+    ctx.stroke();
+
+    // Chevron pattern bands
+    ctx.strokeStyle = "#1b5e20";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Triangular Pit Viper Head pointing toward player
+    ctx.save();
+    ctx.rotate(toPlayerAngle);
+
+    ctx.fillStyle = "#2e7d32";
+    ctx.beginPath();
+    ctx.moveTo(8, -6);
+    ctx.lineTo(19, 0);
+    ctx.lineTo(8, 6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = "#1b5e20";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Golden Yellow Viper Eyes
+    ctx.fillStyle = "#facc15";
+    ctx.beginPath();
+    ctx.arc(12, -3.5, 1.8, 0, Math.PI * 2);
+    ctx.arc(12, 3.5, 1.8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(12, -4, 0.8, 2);
+    ctx.fillRect(12, 2.5, 0.8, 2);
+
+    // Forked Scarlet Tongue flicking when alert
+    if (isAlert && Math.sin(time * 0.015) > 0.25) {
+      ctx.strokeStyle = "#ef4444";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(19, 0); ctx.lineTo(26, 0);
+      ctx.lineTo(29, -2.5);
+      ctx.moveTo(26, 0); ctx.lineTo(29, 2.5);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    ctx.restore();
+  }
+
+  // ── Realistic 3D Ranger Character Model ──
+  renderRealisticPlayer(ctx, time) {
+    ctx.save();
+    ctx.translate(this.player.x, this.player.y);
+    ctx.rotate(this.player.facingAngle);
+
+    // Directional ground shadow under player
+    ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+    ctx.beginPath();
+    ctx.ellipse(-2, 4, 18, 11, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Walking legs & boots animation
+    const isMoving = this.player.isMoving;
+    const legSwing = isMoving ? Math.sin(this.player.walkFrame) * 8 : 0;
+
+    // Left Boot & Leg
+    ctx.fillStyle = "#1e2e1e"; // Pants leg
+    ctx.fillRect(-6 + legSwing, -13, 10, 6);
+    ctx.fillStyle = "#2e1c14"; // Leather boot
+    ctx.fillRect(-2 + legSwing, -14, 8, 7);
+    ctx.fillStyle = "#150a06"; // Boot sole
+    ctx.fillRect(4 + legSwing, -14, 3, 7);
+
+    // Right Boot & Leg
+    ctx.fillStyle = "#1e2e1e";
+    ctx.fillRect(-6 - legSwing, 7, 10, 6);
+    ctx.fillStyle = "#2e1c14";
+    ctx.fillRect(-2 - legSwing, 7, 8, 7);
+    ctx.fillStyle = "#150a06";
+    ctx.fillRect(4 - legSwing, 7, 3, 7);
+
+    // Expedition Tactical Backpack (rear)
+    ctx.fillStyle = "#2d382d";
+    ctx.fillRect(-17, -11, 10, 22);
+    ctx.strokeStyle = "#1b241b";
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(-17, -11, 10, 22);
+
+    // Bedroll strap on top of pack
+    ctx.fillStyle = "#4e342e";
+    ctx.beginPath();
+    ctx.ellipse(-17, 0, 4, 9, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Ranger Torso & Tactical Vest
+    const breath = Math.sin(time * 0.003) * 0.7;
+    ctx.fillStyle = "#2f4d2f"; // Olive ranger uniform
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 11 + breath * 0.5, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#1a2e1a";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Tactical chest harness straps
+    ctx.strokeStyle = "#1c261c";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-8, -9); ctx.lineTo(6, -6);
+    ctx.moveTo(-8, 9); ctx.lineTo(6, 6);
+    ctx.stroke();
+
+    // Ranger Head & Safari Brim Hat
+    ctx.fillStyle = "#dfa968"; // Skin neck
+    ctx.beginPath();
+    ctx.arc(3, 0, 6.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Safari Hat Crown & Wide Brim
+    ctx.fillStyle = "#5c4a30"; // Dark khaki hat brim
+    ctx.beginPath();
+    ctx.ellipse(3, 0, 10, 9, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#705c3d"; // Hat crown
+    ctx.beginPath();
+    ctx.arc(3, 0, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#1e381e"; // Forest green hatband
+    ctx.beginPath();
+    ctx.arc(3, 0, 4.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Left Arm & Wristwatch
+    ctx.fillStyle = "#2f4d2f";
+    ctx.beginPath();
+    ctx.ellipse(3, -11, 5, 3.5, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#dfa968"; // Left hand
+    ctx.beginPath();
+    ctx.arc(7, -11, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#00e5ff"; // Tactical watch LED
+    ctx.fillRect(5, -12, 2, 2);
+
+    // Right Arm & Flashlight / Flare Gun in Hand
+    ctx.fillStyle = "#2f4d2f";
+    ctx.beginPath();
+    ctx.ellipse(4, 11, 5, 3.5, 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#dfa968"; // Right hand
+    ctx.beginPath();
+    ctx.arc(8, 11, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (this.chapter === 2) {
+      // Chapter 2: Handheld EMF Scanner Device with pulse sensor
+      ctx.fillStyle = "#263238";
+      ctx.fillRect(8, 8, 12, 6);
+      ctx.fillStyle = this.hasEmf ? "#00f5d4" : "#ffb300";
+      ctx.shadowColor = this.hasEmf ? "#00f5d4" : "#ffb300";
+      ctx.shadowBlur = this.hasEmf ? 8 : 2;
+      ctx.fillRect(16, 9, 3, 4);
+      ctx.shadowBlur = 0;
+    } else {
+      // Chapter 1: Flashlight Metallic Body in hand
+      ctx.fillStyle = "#37474f";
+      ctx.fillRect(8, 9, 12, 4);
+      ctx.fillStyle = "#78909c";
+      ctx.fillRect(18, 8, 4, 6);
+
+      // Flashlight illuminated bulb tip
+      if (this.torchOn) {
+        ctx.fillStyle = this.uvMode ? "#d500f9" : "#ffeb3b";
+        ctx.shadowColor = this.uvMode ? "#d500f9" : "#ffeb3b";
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(22, 11, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    // Bleeding Blood Drop Pulses
+    if (this.bleeding) {
+      const bloodGlow = Math.sin(time * 0.01) * 0.4 + 0.6;
+      ctx.fillStyle = `rgba(213, 0, 0, ${bloodGlow})`;
+      ctx.beginPath();
+      ctx.arc(-8, -4, 4, 0, Math.PI * 2);
+      ctx.arc(-4, 6, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Magpie Lucky Charm Azure Aura
+    if (this.magpieCharmActive) {
+      const charmPulse = Math.sin(time * 0.006) * 0.2 + 0.35;
+      ctx.strokeStyle = `rgba(0, 229, 255, ${charmPulse})`;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, this.player.radius + 6, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
+  // ── Directional 3D Cast Shadows on Ground Plane ───────────────────────────
+  renderDirectionalCastShadows(ctx) {
+    ctx.save();
+    if (this.chapter === 2) {
+      // CHAPTER 2: High mountain morning sun (sun from top-left, shadows cast down-right)
+      const sunOffsetX = 32;
+      const sunOffsetY = 24;
+
+      ctx.fillStyle = "rgba(0, 0, 0, 0.32)";
+      this.jungleTrees.forEach((t) => {
+        ctx.beginPath();
+        ctx.ellipse(t.x + sunOffsetX, t.y + sunOffsetY, (t.foliageR || 45) * 1.1, (t.foliageR || 45) * 0.55, 0.38, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      this.trees.forEach((t) => {
+        ctx.beginPath();
+        ctx.ellipse(t.x + sunOffsetX * 1.2, t.y + sunOffsetY * 1.2, t.foliageR * 1.2, t.foliageR * 0.6, 0.38, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      this.obstacles.forEach((obs) => {
+        const r = obs.radius || 30;
+        ctx.beginPath();
+        ctx.ellipse(obs.x + sunOffsetX * 0.6, obs.y + sunOffsetY * 0.6, r * 1.1, r * 0.6, 0.38, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    } else if (this.chapter === 5) {
+      // CHAPTER 5: Twilight sunset (dramatic elongated east shadows)
+      const sunOffsetX = 55;
+      const sunOffsetY = 15;
+      ctx.fillStyle = "rgba(18, 8, 4, 0.45)";
+      this.trees.forEach((t) => {
+        ctx.beginPath();
+        ctx.ellipse(t.x + sunOffsetX, t.y + sunOffsetY, t.foliageR * 1.4, t.foliageR * 0.5, 0.15, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    } else {
+      // CHAPTER 1, 3, 4: Night / Cave Flashlight & Ambient Shadows
+      ctx.fillStyle = "rgba(0, 0, 0, 0.42)";
+
+      // Static ground contact shadows under trees
+      this.jungleTrees.forEach((t) => {
+        ctx.beginPath();
+        ctx.ellipse(t.x + 4, t.y + 6, (t.r || 16) * 1.3, (t.r || 16) * 0.8, 0, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      this.trees.forEach((t) => {
+        ctx.beginPath();
+        ctx.ellipse(t.x + 6, t.y + 8, (t.r || 40) * 1.4, (t.r || 40) * 0.85, 0, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Dynamic Flashlight Projection Shadows (Stretching away from player's torch!)
+      if (this.torchOn && this.battery > 0) {
+        const px = this.player.x;
+        const py = this.player.y;
+
+        const shadowCasters = [...this.trees, ...this.obstacles];
+        shadowCasters.forEach((obj) => {
+          const dx = obj.x - px;
+          const dy = obj.y - py;
+          const dist = Math.hypot(dx, dy);
+
+          // Only cast elongated shadow if within flashlight radius (360px)
+          if (dist > 35 && dist < 360) {
+            const angleToObj = Math.atan2(dy, dx);
+            let angleDiff = Math.abs(this.player.facingAngle - angleToObj);
+            if (angleDiff > Math.PI) angleDiff = Math.PI * 2 - angleDiff;
+
+            if (angleDiff < 0.75) {
+              const nx = dx / dist;
+              const ny = dy / dist;
+              const shadowLen = Math.min(130, (360 - dist) * 0.65);
+              const objR = obj.r || obj.radius || 24;
+
+              ctx.fillStyle = `rgba(0, 0, 0, ${(1 - dist / 360) * 0.55})`;
+              ctx.beginPath();
+              const perpX = -ny * objR;
+              const perpY = nx * objR;
+              ctx.moveTo(obj.x + perpX, obj.y + perpY);
+              ctx.lineTo(obj.x + nx * shadowLen + perpX * 1.4, obj.y + ny * shadowLen + perpY * 1.4);
+              ctx.lineTo(obj.x + nx * shadowLen - perpX * 1.4, obj.y + ny * shadowLen - perpY * 1.4);
+              ctx.lineTo(obj.x - perpX, obj.y - perpY);
+              ctx.closePath();
+              ctx.fill();
+            }
+          }
+        });
+      }
+    }
+    ctx.restore();
+  }
+
   // ── 8. Render Loop ────────────────────────────────────────────────────────
   render() {
     const ctx = this.ctx;
@@ -5150,31 +6104,6 @@ export class SinharajaEngine {
         });
         ctx.stroke();
       }
-    });
-
-    // Dense background jungle trees (depth and lush canopy feel)
-    this.jungleTrees.forEach((t) => {
-      ctx.fillStyle = "rgba(0, 0, 0, 0.28)";
-      ctx.beginPath();
-      ctx.ellipse(t.x + 8, t.y + 8, t.fr + 6, t.fr * 0.6, 0.2, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = "#24160e";
-      ctx.beginPath();
-      ctx.arc(t.x, t.y, t.r * 0.45, 0, Math.PI * 2);
-      ctx.fill();
-
-      const sway = Math.sin(performance.now() * 0.0018 + t.phase) * (this.windStrength * 4);
-      const treeLightness = this.chapter === 2 ? t.lightness + 18 : t.lightness;
-      ctx.fillStyle = `hsl(${t.hue}, ${t.saturation}%, ${treeLightness}%)`;
-      ctx.beginPath();
-      ctx.arc(t.x + sway, t.y - 4, t.fr, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = `hsl(${t.hue + 8}, ${t.saturation + 10}%, ${treeLightness + 5}%)`;
-      ctx.beginPath();
-      ctx.arc(t.x + sway - 3, t.y - 8, t.fr * 0.65, 0, Math.PI * 2);
-      ctx.fill();
     });
 
     // Footpaths (Distinct for each of the 5 Chapters)
@@ -5312,36 +6241,8 @@ export class SinharajaEngine {
       }
     });
 
-    // Endemic Trees (Flora with Canopy & Dynamic Lightning Shadows)
-    this.trees.forEach((tree) => {
-      if (tree.x + tree.foliageR < vLeft || tree.x - tree.foliageR > vRight ||
-          tree.y + tree.foliageR < vTop || tree.y - tree.foliageR > vBottom) return;
-      // Tree ambient shadow
-      ctx.fillStyle = "rgba(0, 0, 0, 0.38)";
-      ctx.beginPath();
-      ctx.ellipse(tree.x + 18, tree.y + 18, tree.r + 20, tree.r + 12, 0.3, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Trunk
-      ctx.fillStyle = "#2e1c14";
-      ctx.beginPath();
-      ctx.arc(tree.x, tree.y, tree.r, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = "#170c08";
-      ctx.lineWidth = 4;
-      ctx.stroke();
-
-      // Lush Foliage Canopy (Rustles gently with wind)
-      const rustle = Math.sin(performance.now() * 0.002 + tree.x) * (3 + this.windStrength * 2);
-      ctx.fillStyle = "rgba(18, 55, 22, 0.88)";
-      ctx.beginPath();
-      ctx.arc(tree.x, tree.y - 10 + rustle, tree.foliageR, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = "rgba(30, 85, 36, 0.75)";
-      ctx.beginPath();
-      ctx.arc(tree.x - 10, tree.y - 20 + rustle, tree.foliageR * 0.72, 0, Math.PI * 2);
-      ctx.fill();
-    });
+    // ── 2. Directional 3D Cast Shadows on Ground Plane ──
+    this.renderDirectionalCastShadows(ctx);
 
     // Purple-faced Langurs perched on canopy
     this.langurs.forEach((langur) => {
@@ -5749,68 +6650,6 @@ export class SinharajaEngine {
         ctx.arc(mush.x, mush.y, 4, 0, Math.PI * 2);
         ctx.fill();
       });
-
-      // Emergency Rescue Helipad & Chopper
-      ctx.fillStyle = "#37474f";
-      ctx.beginPath();
-      ctx.arc(2700, 1800, 90, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = "#fbc02d";
-      ctx.lineWidth = 6;
-      ctx.stroke();
-
-      ctx.strokeStyle = "#fbc02d";
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(2700, 1800, 65, 0, Math.PI * 2);
-      ctx.stroke();
-
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 52px 'Share Tech Mono', sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText("H", 2700, 1800);
-
-      const beaconFlash = Math.sin(performance.now() * 0.008) > 0;
-      const beacons = [
-        { x: 2615, y: 1715 },
-        { x: 2785, y: 1715 },
-        { x: 2615, y: 1885 },
-        { x: 2785, y: 1885 },
-      ];
-      beacons.forEach((b) => {
-        ctx.fillStyle = beaconFlash ? "#ff1744" : "#455a64";
-        ctx.beginPath();
-        ctx.arc(b.x, b.y, 6, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      ctx.save();
-      ctx.translate(2700, 1800);
-      ctx.fillStyle = "#2e7d32";
-      ctx.beginPath();
-      ctx.ellipse(0, 5, 22, 45, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = "#1b5e20";
-      ctx.lineWidth = 2.5;
-      ctx.stroke();
-      ctx.fillStyle = "#81d4fa";
-      ctx.beginPath();
-      ctx.ellipse(0, 32, 12, 10, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = "#1b5e20";
-      ctx.fillRect(-4, -60, 8, 40);
-      ctx.fillStyle = "#cfd8dc";
-      ctx.fillRect(-14, -62, 28, 4);
-      ctx.rotate(this.heliRotorAngle);
-      ctx.fillStyle = "rgba(220, 240, 255, 0.85)";
-      ctx.fillRect(-65, -3, 130, 6);
-      ctx.fillRect(-3, -65, 6, 130);
-      ctx.fillStyle = "#ffeb3b";
-      ctx.beginPath();
-      ctx.arc(0, 0, 6, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
     }
 
     // ── Chapter 2 Facilities ──
@@ -6088,13 +6927,114 @@ export class SinharajaEngine {
       ctx.restore();
     }
 
-    // 3. Realistic 3D Campfires
+    // ── 3. Unified 2.5D / 3D Y-Sorted Entity Depth Pipeline ──
     const renderTime = performance.now();
-    this.campfires.forEach((fire) => {
-      this.renderRealisticCampfire(ctx, fire, renderTime);
+    const camCenterX = this.camera.x + (this.canvas.width / (2 * this.zoom));
+    const camCenterY = this.camera.y + (this.canvas.height / (2 * this.zoom));
+    const yEntities = [];
+
+    // A. 3D Jungle Trees & Towering Endemic Giants
+    this.jungleTrees.forEach((t) => {
+      if (t.x >= vLeft - 90 && t.x <= vRight + 90 && t.y >= vTop - 140 && t.y <= vBottom + 140) {
+        yEntities.push({
+          y: t.y,
+          render: () => this.render3DTree(ctx, t, renderTime, camCenterX, camCenterY, false),
+        });
+      }
+    });
+    this.trees.forEach((t) => {
+      if (t.x >= vLeft - 120 && t.x <= vRight + 120 && t.y >= vTop - 180 && t.y <= vBottom + 180) {
+        yEntities.push({
+          y: t.y,
+          render: () => this.render3DTree(ctx, t, renderTime, camCenterX, camCenterY, true),
+        });
+      }
     });
 
-    // Campfire Floating Embers
+    // B. Obstacles & Granite Boulders
+    this.obstacles.forEach((obs) => {
+      const obsY = obs.y + (obs.radius || (obs.h ? obs.h / 2 : 0));
+      yEntities.push({
+        y: obsY,
+        render: () => this.renderRealisticBoulder(ctx, obs),
+      });
+    });
+
+    // C. Realistic 3D Campfires
+    this.campfires.forEach((fire) => {
+      yEntities.push({
+        y: fire.y,
+        render: () => this.renderRealisticCampfire(ctx, fire, renderTime),
+      });
+    });
+
+    // D. Ground Items
+    this.items.forEach((it) => {
+      yEntities.push({
+        y: it.y,
+        render: () => this.renderRealisticGroundItem(ctx, it, renderTime),
+      });
+    });
+
+    // E. Interactive Objects & Props
+    this.interactiveObjects.forEach((obj) => {
+      yEntities.push({
+        y: obj.y,
+        render: () => this.render3DInteractiveObject(ctx, obj, renderTime),
+      });
+    });
+
+    // F. Wildlife (Leeches & Vipers)
+    this.leeches.forEach((l) => {
+      if (l.alive) {
+        yEntities.push({
+          y: l.y,
+          render: () => this.renderRealisticLeech(ctx, l),
+        });
+      }
+    });
+    if (this.vipers) {
+      this.vipers.forEach((v) => {
+        yEntities.push({
+          y: v.y,
+          render: () => this.renderRealisticViper(ctx, v, renderTime),
+        });
+      });
+    }
+
+    // G. Shadow Stalker Leopard (3D Stealth Predator)
+    if (this.shadowStalker && this.shadowStalker.eyesAlpha > 0.04) {
+      yEntities.push({
+        y: this.shadowStalker.y,
+        render: () => this.render3DShadowStalker(ctx, this.shadowStalker, renderTime),
+      });
+    }
+
+    // H. Player Character (3D Ranger Model)
+    yEntities.push({
+      y: this.player.y,
+      render: () => this.renderRealisticPlayer(ctx, renderTime),
+    });
+
+    // I. Chapter 1 Outpost Cabin & Evacuation Helipad Helicopter
+    if (this.chapter === 1) {
+      yEntities.push({
+        y: 740,
+        render: () => this.render3DOutpostCabin(ctx, renderTime),
+      });
+      yEntities.push({
+        y: 1800,
+        render: () => this.render3DHelicopter(ctx, renderTime),
+      });
+    }
+
+    // Sort strictly by Y coordinate (front-to-back depth order)
+    yEntities.sort((a, b) => a.y - b.y);
+
+    // Execute back-to-front render
+    yEntities.forEach((ent) => ent.render());
+
+    // Campfire Floating Embers (render in air above ground)
     this.campfireEmbers.forEach((ember) => {
       ctx.fillStyle = ember.color;
       ctx.globalAlpha = Math.max(0, ember.alpha);
@@ -6103,266 +7043,6 @@ export class SinharajaEngine {
       ctx.fill();
     });
     ctx.globalAlpha = 1.0;
-
-    // 4. Realistic 3D Obstacles (Granite Boulders & Timber Structures)
-    this.obstacles.forEach((obs) => {
-      this.renderRealisticBoulder(ctx, obs);
-    });
-
-    // 5. Realistic 3D Ground Items (No flat emojis!)
-    this.items.forEach((it) => {
-      this.renderRealisticGroundItem(ctx, it, renderTime);
-    });
-
-    // 6. Realistic 3D Interactive Objects, Props & NPCs
-    this.interactiveObjects.forEach((obj) => {
-      this.render3DInteractiveObject(ctx, obj, renderTime);
-    });
-
-    // 7. Realistic Segmented Jungle Leeches
-    this.leeches.forEach((l) => {
-      this.renderRealisticLeech(ctx, l);
-    });
-
-    // 7.1 Green Pit Vipers (පළා පොළඟුන්)
-    if (this.vipers) {
-      this.vipers.forEach((v) => {
-        ctx.save();
-        ctx.translate(v.x, v.y);
-        ctx.fillStyle = v.state === "retreated" ? "rgba(46, 125, 50, 0.45)" : "#2e7d32";
-        ctx.strokeStyle = "#1b5e20";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(0, 0, 10, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.fillStyle = "#43a047";
-        ctx.beginPath();
-        ctx.arc(2, -2, 6, 0, Math.PI * 2);
-        ctx.fill();
-
-        const toPlayerAngle = Math.atan2(this.player.y - v.y, this.player.x - v.x);
-        ctx.rotate(toPlayerAngle);
-        ctx.fillStyle = "#66bb6a";
-        ctx.beginPath();
-        ctx.moveTo(8, -5);
-        ctx.lineTo(16, 0);
-        ctx.lineTo(8, 5);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.fillStyle = "#ffeb3b";
-        ctx.fillRect(9, -3, 2, 2);
-        ctx.fillRect(9, 1, 2, 2);
-
-        if (Math.hypot(this.player.x - v.x, this.player.y - v.y) < 140 && Math.sin(performance.now() * 0.015) > 0.3) {
-          ctx.strokeStyle = "#ef4444";
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(16, 0);
-          ctx.lineTo(22, 0);
-          ctx.lineTo(24, -2);
-          ctx.moveTo(22, 0);
-          ctx.lineTo(24, 2);
-          ctx.stroke();
-        }
-        ctx.restore();
-      });
-    }
-
-    // 7.2 Sinharaja Shadow Stalker (Apex Jungle Leopard) Amber Eyes & Silhouette
-    if (this.shadowStalker && this.shadowStalker.eyesAlpha > 0.05) {
-      const s = this.shadowStalker;
-      ctx.save();
-      ctx.translate(s.x, s.y);
-      const toPlayer = Math.atan2(this.player.y - s.y, this.player.x - s.x);
-      ctx.rotate(toPlayer);
-
-      ctx.fillStyle = `rgba(8, 12, 8, ${s.eyesAlpha * 0.85})`;
-      ctx.beginPath();
-      ctx.ellipse(0, 0, 26, 16, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = `rgba(245, 158, 11, ${s.eyesAlpha})`;
-      ctx.shadowColor = "#f59e0b";
-      ctx.shadowBlur = 10;
-      ctx.beginPath();
-      ctx.ellipse(12, -7, 4, 2.5, 0.2, 0, Math.PI * 2);
-      ctx.ellipse(12, 7, 4, 2.5, -0.2, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = `rgba(0, 0, 0, ${s.eyesAlpha})`;
-      ctx.fillRect(12, -8, 1.5, 3);
-      ctx.fillRect(12, 6, 1.5, 3);
-      ctx.restore();
-    }
-
-    // 8. Fireflies
-    this.fireflies.forEach((f) => {
-      const glow = Math.sin(f.phase) * 0.4 + 0.6;
-      ctx.fillStyle = `rgba(220, 255, 100, ${glow})`;
-      ctx.beginPath();
-      ctx.arc(f.x, f.y, f.radius, 0, Math.PI * 2);
-      ctx.fill();
-    });
-
-    // 9. AAA Animated Ranger Player Character
-    ctx.save();
-    ctx.translate(this.player.x, this.player.y);
-    ctx.rotate(this.player.facingAngle);
-
-    // Dynamic ground shadow under player
-    ctx.fillStyle = "rgba(0, 0, 0, 0.42)";
-    ctx.beginPath();
-    ctx.ellipse(0, 4, 18, 12, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Walking legs & boots animation
-    const isMoving = this.player.isMoving;
-    const legSwing = isMoving ? Math.sin(this.player.walkFrame) * 8 : 0;
-
-    // Left Boot & Leg
-    ctx.fillStyle = "#1e2e1e"; // Pants leg
-    ctx.fillRect(-6 + legSwing, -13, 10, 6);
-    ctx.fillStyle = "#2e1c14"; // Leather boot
-    ctx.fillRect(-2 + legSwing, -14, 8, 7);
-    ctx.fillStyle = "#150a06"; // Boot sole
-    ctx.fillRect(4 + legSwing, -14, 3, 7);
-
-    // Right Boot & Leg
-    ctx.fillStyle = "#1e2e1e";
-    ctx.fillRect(-6 - legSwing, 7, 10, 6);
-    ctx.fillStyle = "#2e1c14";
-    ctx.fillRect(-2 - legSwing, 7, 8, 7);
-    ctx.fillStyle = "#150a06";
-    ctx.fillRect(4 - legSwing, 7, 3, 7);
-
-    // Expedition Tactical Backpack (rear)
-    ctx.fillStyle = "#2d382d";
-    ctx.fillRect(-17, -11, 10, 22);
-    ctx.strokeStyle = "#1b241b";
-    ctx.lineWidth = 1.5;
-    ctx.strokeRect(-17, -11, 10, 22);
-
-    // Bedroll strap on top of pack
-    ctx.fillStyle = "#4e342e";
-    ctx.beginPath();
-    ctx.ellipse(-17, 0, 4, 9, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Ranger Torso & Tactical Vest
-    const breath = Math.sin(performance.now() * 0.003) * 0.7;
-    ctx.fillStyle = "#2f4d2f"; // Olive ranger uniform
-    ctx.beginPath();
-    ctx.ellipse(0, 0, 11 + breath * 0.5, 12, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = "#1a2e1a";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // Tactical chest harness straps
-    ctx.strokeStyle = "#1c261c";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(-8, -9); ctx.lineTo(6, -6);
-    ctx.moveTo(-8, 9); ctx.lineTo(6, 6);
-    ctx.stroke();
-
-    // Ranger Head & Safari Brim Hat
-    ctx.fillStyle = "#dfa968"; // Skin neck
-    ctx.beginPath();
-    ctx.arc(3, 0, 6.5, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Safari Hat Crown & Wide Brim
-    ctx.fillStyle = "#5c4a30"; // Dark khaki hat brim
-    ctx.beginPath();
-    ctx.ellipse(3, 0, 10, 9, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = "#705c3d"; // Hat crown
-    ctx.beginPath();
-    ctx.arc(3, 0, 6, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = "#1e381e"; // Forest green hatband
-    ctx.beginPath();
-    ctx.arc(3, 0, 4.5, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Left Arm & Wristwatch
-    ctx.fillStyle = "#2f4d2f";
-    ctx.beginPath();
-    ctx.ellipse(3, -11, 5, 3.5, -0.2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#dfa968"; // Left hand
-    ctx.beginPath();
-    ctx.arc(7, -11, 3.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#00e5ff"; // Tactical watch LED
-    ctx.fillRect(5, -12, 2, 2);
-
-    // Right Arm & Flashlight / Flare Gun in Hand
-    ctx.fillStyle = "#2f4d2f";
-    ctx.beginPath();
-    ctx.ellipse(4, 11, 5, 3.5, 0.2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#dfa968"; // Right hand
-    ctx.beginPath();
-    ctx.arc(8, 11, 3.5, 0, Math.PI * 2);
-    ctx.fill();
-
-    if (this.chapter === 2) {
-      // Chapter 2: Handheld EMF Scanner Device with pulse sensor
-      ctx.fillStyle = "#263238";
-      ctx.fillRect(8, 8, 12, 6);
-      ctx.fillStyle = this.hasEmf ? "#00f5d4" : "#ffb300";
-      ctx.shadowColor = this.hasEmf ? "#00f5d4" : "#ffb300";
-      ctx.shadowBlur = this.hasEmf ? 8 : 2;
-      ctx.fillRect(16, 9, 3, 4);
-      ctx.shadowBlur = 0;
-    } else {
-      // Chapter 1: Flashlight Metallic Body in hand
-      ctx.fillStyle = "#37474f";
-      ctx.fillRect(8, 9, 12, 4);
-      ctx.fillStyle = "#78909c";
-      ctx.fillRect(18, 8, 4, 6);
-
-      // Flashlight illuminated bulb tip
-      if (this.torchOn) {
-        ctx.fillStyle = this.uvMode ? "#d500f9" : "#ffeb3b";
-        ctx.shadowColor = this.uvMode ? "#d500f9" : "#ffeb3b";
-        ctx.shadowBlur = 10;
-        ctx.beginPath();
-        ctx.arc(22, 11, 3.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
-      }
-    }
-
-    // Bleeding Blood Drop Pulses
-    if (this.bleeding) {
-      const bloodGlow = Math.sin(performance.now() * 0.01) * 0.4 + 0.6;
-      ctx.fillStyle = `rgba(213, 0, 0, ${bloodGlow})`;
-      ctx.beginPath();
-      ctx.arc(-8, -4, 4, 0, Math.PI * 2);
-      ctx.arc(-4, 6, 3, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // Magpie Lucky Charm Azure Aura
-    if (this.magpieCharmActive) {
-      const charmPulse = Math.sin(performance.now() * 0.006) * 0.2 + 0.35;
-      ctx.strokeStyle = `rgba(0, 229, 255, ${charmPulse})`;
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.arc(0, 0, this.player.radius + 6, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-
-    ctx.restore();
 
     // ═══ AAA: Butterflies Fluttering in Forest ════════════════════════════
     this.butterflies.forEach((b) => {
