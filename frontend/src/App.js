@@ -60,6 +60,11 @@ export const Icons = {
       <path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
     </svg>
   ),
+  Crosshair: (props) => (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" {...props}>
+      <path d="M11 2v2.07c-3.95.49-7 3.85-7.43 7.93H1.5v2h2.07c.43 4.08 3.48 7.44 7.43 7.93V24h2v-2.07c3.95-.49 7-3.85 7.43-7.93h2.07v-2h-2.07c-.43-4.08-3.48-7.44-7.43-7.93V2h-2zm1 4c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6 2.69-6 6-6zm0 4a2 2 0 100 4 2 2 0 000-4z"/>
+    </svg>
+  ),
   UV: (props) => (
     <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" {...props}>
       <path d="M12 2a7 7 0 00-7 7c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 00-7-7zm-3 18h6v1c0 .55-.45 1-1 1h-4c-.55 0-1-.45-1-1v-1zm4-12.87V13h-2V7.13C9.82 7.55 9 8.68 9 10c0 1.66 1.34 3 3 3s3-1.34 3-3c0-1.32-.82-2.45-2-2.87z"/>
@@ -1196,6 +1201,9 @@ export default function App() {
     }
     if (action === "hud") {
       setIsImmersiveHud((prev) => !prev);
+    }
+    if (action === "viewMode") {
+      engineRef.current.toggleViewMode();
     }
   };
 
@@ -3090,6 +3098,16 @@ export default function App() {
           <span className="belt-tag">{I18N[lang].zoom}</span>
         </div>
 
+        <div
+          className={`belt-slot ${stats.viewMode === "fps" ? "belt-fps-active" : ""}`}
+          onClick={() => handleVirtualAction("viewMode")}
+          title="දසුන වෙනස් කරන්න (1st Person IGI / 2.5D Isometric) [V]"
+        >
+          <span className="belt-hotkey">[V]</span>
+          <span className="belt-icon"><Icons.Crosshair className="tactical-svg-icon" /></span>
+          <span className="belt-tag">{stats.viewMode === "fps" ? "1ST PERSON" : "2.5D VIEW"}</span>
+        </div>
+
         <div className="belt-slot" onClick={() => setShowEvidenceBoard(true)}>
           <span className="belt-hotkey">[5]</span>
           <span className="belt-icon"><Icons.Evidence className="tactical-svg-icon" /></span>
@@ -4222,6 +4240,13 @@ export default function App() {
               {stats.uvMode ? "[UV ON]" : "[UV]"}
             </button>
           )}
+          <button
+            className={`touch-action-btn cam-touch ${stats.viewMode === "fps" ? "active-fps-btn" : ""}`}
+            onClick={() => handleVirtualAction("viewMode")}
+            title="1st Person IGI / 2.5D Isometric [V]"
+          >
+            {stats.viewMode === "fps" ? "[1ST PERSON]" : "[2.5D]"}
+          </button>
           <button
             className="touch-action-btn cam-touch"
             onClick={() => handleVirtualAction("camera")}

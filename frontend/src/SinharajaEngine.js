@@ -19,6 +19,20 @@ export class SinharajaEngine {
     this.zoom = 1.0;
     this.targetZoom = 1.0;
 
+    // Camera View Mode: "fps" (First-Person Tactical I.G.I. Mode) vs "isometric" (2.5D Expedition View)
+    this.viewMode = "fps"; // Default to authentic First-Person I.G.I. Eye-Level experience!
+    this.headBob = 0;
+    this.fpsRainVisor = [];
+    for (let i = 0; i < 28; i++) {
+      this.fpsRainVisor.push({
+        x: Math.random(),
+        y: Math.random(),
+        len: 14 + Math.random() * 22,
+        speed: 0.8 + Math.random() * 1.5,
+        alpha: 0.18 + Math.random() * 0.35,
+      });
+    }
+
     // Player Entity
     this.player = {
       x: this.chapter === 2 ? 300 : 250,
@@ -2858,9 +2872,9 @@ export class SinharajaEngine {
         this.targetZoom = this.targetZoom === 1.0 ? 0.75 : 1.0;
         this.cb.onNotify(this.targetZoom < 1.0 ? "🔭 දූරදර්ශකය: පුළුල් දසුන (Wide Field View)" : "🔭 සාමාන්‍ය දසුන (Normal View)");
       }
-      // V -> Toggle Immersive HUD Mode
+      // V -> Toggle View Mode (1st Person I.G.I. Mode vs 2.5D Isometric Mode)
       if (e.key.toLowerCase() === "v") {
-        if (this.cb.onToggleHud) this.cb.onToggleHud();
+        this.toggleViewMode();
       }
       // Escape -> Pause Menu
       if (e.key === "Escape") {
@@ -2888,14 +2902,39 @@ export class SinharajaEngine {
       this.mouse.worldX = this.mouse.x / this.zoom + this.camera.x;
       this.mouse.worldY = this.mouse.y / this.zoom + this.camera.y;
 
-      const dx = this.mouse.worldX - this.player.x;
-      const dy = this.mouse.worldY - this.player.y;
-      this.player.facingAngle = Math.atan2(dy, dx);
+      if (this.viewMode === "fps") {
+        // In FPS Mode, horizontal mouse movement turns camera smoothly (IGI style mouse look)
+        const deltaX = (e.movementX !== undefined && Math.abs(e.movementX) < 120)
+          ? e.movementX * 0.004
+          : ((this.mouse.x - rect.width / 2) / (rect.width / 2)) * 0.035;
+        this.player.facingAngle += deltaX;
+      } else {
+        const dx = this.mouse.worldX - this.player.x;
+        const dy = this.mouse.worldY - this.player.y;
+        this.player.facingAngle = Math.atan2(dy, dx);
+      }
     });
 
     this.canvas.addEventListener("mousedown", (e) => {
       if (e.button === 0) {
-        // 1. Check if clicked directly on an interactive object
+        // Check if clicked the Camera Mode Toggle pill in top-right
+        const rect = this.canvas.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
+        if (clickX >= this.canvas.width - 220 && clickX <= this.canvas.width - 15 && clickY >= 12 && clickY <= 52) {
+          this.toggleViewMode();
+          return;
+        }
+
+        if (this.viewMode === "fps") {
+          // In FPS mode, clicking interacts with whatever is in front of the crosshair!
+          if (this.interactNearest()) {
+            return;
+          }
+          return;
+        }
+
+        // 1. Check if clicked directly on an interactive object (in isometric mode)
         const clickedObj = this.interactiveObjects.find((obj) => {
           const d = Math.hypot(obj.x - this.mouse.worldX, obj.y - this.mouse.worldY);
           return d < obj.radius + 30;
@@ -3100,10 +3139,43 @@ export class SinharajaEngine {
     }
   }
 
+  toggleViewMode() {
+    this.viewMode = this.viewMode === "fps" ? "isometric" : "fps";
+    this.cb.onNotify(
+      this.viewMode === "fps"
+        ? "🎯 ප්‍රථම-පුද්ගල දසුන (1st Person I.G.I. Mode) සක්‍රියයි! [V] ඔබන්න"
+        : "🗺️ 2.5D උපායශීලී දසුන (Isometric View) සක්‍රියයි! [V] ඔබන්න"
+    );
+  }
+
   interactNearest() {
+    // 1. In FPS mode: prioritize object in front of the crosshair
+    if (this.viewMode === "fps") {
+      let bestObj = null;
+      let minAngleDiff = 0.65;
+      for (let obj of this.interactiveObjects) {
+        const dist = Math.hypot(obj.x - this.player.x, obj.y - this.player.y);
+        if (dist < (obj.radius || 35) + 85) {
+          const angleToObj = Math.atan2(obj.y - this.player.y, obj.x - this.player.x);
+          let diff = angleToObj - this.player.facingAngle;
+          while (diff < -Math.PI) diff += Math.PI * 2;
+          while (diff > Math.PI) diff -= Math.PI * 2;
+          if (Math.abs(diff) < minAngleDiff) {
+            minAngleDiff = Math.abs(diff);
+            bestObj = obj;
+          }
+        }
+      }
+      if (bestObj) {
+        bestObj.action(bestObj);
+        return true;
+      }
+    }
+
+    // 2. Standard radius check
     for (let obj of this.interactiveObjects) {
       const dist = Math.hypot(obj.x - this.player.x, obj.y - this.player.y);
-      if (dist < obj.radius + 35) {
+      if (dist < obj.radius + 45) {
         obj.action(obj);
         return true;
       }
@@ -3262,14 +3334,53 @@ export class SinharajaEngine {
       }
     } else if (isKeyMoving) {
       this.moveTarget = null; // Keyboard overrides click-to-move
-      if (this.keys["w"] || this.keys["arrowup"]) dy -= 1;
-      if (this.keys["s"] || this.keys["arrowdown"]) dy += 1;
-      if (this.keys["a"] || this.keys["arrowleft"]) dx -= 1;
-      if (this.keys["d"] || this.keys["arrowright"]) dx += 1;
+      if (this.viewMode === "fps") {
+        // ── First-Person I.G.I. Tactical Movement & Turning ──
+        if (this.keys["arrowleft"]) {
+          this.player.facingAngle -= 2.5 * dt;
+        }
+        if (this.keys["arrowright"]) {
+          this.player.facingAngle += 2.5 * dt;
+        }
 
-      if (dx !== 0 && dy !== 0) {
-        dx *= 0.7071;
-        dy *= 0.7071;
+        // Forward & Backward in look direction
+        if (this.keys["w"] || this.keys["arrowup"]) {
+          dx += Math.cos(this.player.facingAngle);
+          dy += Math.sin(this.player.facingAngle);
+        }
+        if (this.keys["s"] || this.keys["arrowdown"]) {
+          dx -= Math.cos(this.player.facingAngle);
+          dy -= Math.sin(this.player.facingAngle);
+        }
+
+        // Tactical Strafe Left & Right
+        if (this.keys["a"]) {
+          dx += Math.cos(this.player.facingAngle - Math.PI / 2);
+          dy += Math.sin(this.player.facingAngle - Math.PI / 2);
+        }
+        if (this.keys["d"]) {
+          dx += Math.cos(this.player.facingAngle + Math.PI / 2);
+          dy += Math.sin(this.player.facingAngle + Math.PI / 2);
+        }
+
+        if (dx !== 0 && dy !== 0) {
+          const mag = Math.hypot(dx, dy);
+          if (mag > 0.001) {
+            dx /= mag;
+            dy /= mag;
+          }
+        }
+      } else {
+        // ── Classic 2.5D Isometric Movement ──
+        if (this.keys["w"] || this.keys["arrowup"]) dy -= 1;
+        if (this.keys["s"] || this.keys["arrowdown"]) dy += 1;
+        if (this.keys["a"] || this.keys["arrowleft"]) dx -= 1;
+        if (this.keys["d"] || this.keys["arrowright"]) dx += 1;
+
+        if (dx !== 0 && dy !== 0) {
+          dx *= 0.7071;
+          dy *= 0.7071;
+        }
       }
     } else if (this.moveTarget) {
       const tdx = this.moveTarget.x - this.player.x;
@@ -4253,6 +4364,7 @@ export class SinharajaEngine {
         noiseLevel: Math.round(this.noiseLevel || 15),
         stalkerAlert: this.shadowStalker?.state || "lurking",
         stalkerEyes: (this.shadowStalker?.eyesAlpha || 0) > 0.25,
+        viewMode: this.viewMode,
         difficulty: this.difficulty || "tactical",
         tasks: { ...this.tasks },
       });
@@ -6396,8 +6508,922 @@ export class SinharajaEngine {
     ctx.restore();
   }
 
-  // ── 8. Render Loop ────────────────────────────────────────────────────────
+  // ── 8. First-Person Tactical I.G.I. Mode (True 3D Eye-Level Perspective Engine) ──
+  renderFirstPersonIGI(ctx) {
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    ctx.clearRect(0, 0, w, h);
+    const time = performance.now();
+
+    // 1. Camera Eye-Level & Dynamic Head-Bobbing
+    this.headBob = (this.headBob || 0);
+    if (this.player.isMoving) {
+      this.headBob += 0.15 * (this.player.isSprinting ? 1.55 : 1.0);
+    }
+    const bobX = this.player.isMoving
+      ? Math.cos(this.headBob * 0.5) * (this.player.isSprinting ? 7 : 4)
+      : Math.sin(time * 0.002) * 1.0;
+    const bobY = this.player.isMoving
+      ? Math.sin(this.headBob) * (this.player.isSprinting ? 9 : 5)
+      : Math.sin(time * 0.0028) * 1.5;
+    const shakeX = this.screenShake?.x || 0;
+    const shakeY = this.screenShake?.y || 0;
+
+    const horizonY = h * 0.50 + bobY + shakeY;
+    const camZ = 34; // Eye height in units above ground plane
+    const fovRad = 74 * (Math.PI / 180);
+    const F = (w * 0.5) / Math.tan(fovRad * 0.5); // Perspective focal distance
+    const camX = this.player.x;
+    const camY = this.player.y;
+    const yaw = this.player.facingAngle || 0;
+    const cosYaw = Math.cos(yaw);
+    const sinYaw = Math.sin(yaw);
+
+    // 2. Nocturnal Rainforest Sky Dome & Parallax Mountain Horizon
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, horizonY);
+    if (this.chapter === 2) {
+      skyGrad.addColorStop(0, "#020814");
+      skyGrad.addColorStop(0.65, "#0a1e30");
+      skyGrad.addColorStop(1, "#163852");
+    } else if (this.chapter === 3) {
+      skyGrad.addColorStop(0, "#010106");
+      skyGrad.addColorStop(0.65, "#0b0817");
+      skyGrad.addColorStop(1, "#17102e");
+    } else if (this.chapter === 4) {
+      skyGrad.addColorStop(0, "#04070a");
+      skyGrad.addColorStop(0.65, "#0d1620");
+      skyGrad.addColorStop(1, "#192634");
+    } else if (this.chapter === 5) {
+      skyGrad.addColorStop(0, "#0b0407");
+      skyGrad.addColorStop(0.6, "#220c15");
+      skyGrad.addColorStop(1, "#451c14");
+    } else {
+      skyGrad.addColorStop(0, "#020a04");
+      skyGrad.addColorStop(0.65, "#08200f");
+      skyGrad.addColorStop(1, "#0f361a");
+    }
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, w, horizonY + 2);
+
+    // Parallax Mountain Ranges (Rotates as player turns view)
+    ctx.fillStyle = this.chapter === 2 ? "#061320" : (this.chapter === 3 ? "#07040f" : "#041008");
+    ctx.beginPath();
+    ctx.moveTo(0, horizonY);
+    const step = 20;
+    for (let x = 0; x <= w + step; x += step) {
+      const peak = Math.sin((x / w) * 10 + yaw * 2.2) * 32 + Math.cos((x / w) * 5 + yaw * 1.4) * 18;
+      ctx.lineTo(x, horizonY - 18 - peak);
+    }
+    ctx.lineTo(w, horizonY);
+    ctx.closePath();
+    ctx.fill();
+
+    // Thunder Flash
+    if (this.stormActive && Math.random() < 0.012) {
+      ctx.fillStyle = "rgba(220, 245, 255, 0.4)";
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    // 3. Perspective Ground Plane (Rainforest Soil / Mud / Moss)
+    const groundGrad = ctx.createLinearGradient(0, horizonY, 0, h);
+    if (this.chapter === 2) {
+      groundGrad.addColorStop(0, "#101e14");
+      groundGrad.addColorStop(0.4, "#213d28");
+      groundGrad.addColorStop(1, "#32573d");
+    } else if (this.chapter === 3) {
+      groundGrad.addColorStop(0, "#08060e");
+      groundGrad.addColorStop(0.5, "#140f21");
+      groundGrad.addColorStop(1, "#1e1830");
+    } else if (this.chapter === 4) {
+      groundGrad.addColorStop(0, "#0a0f14");
+      groundGrad.addColorStop(0.5, "#162029");
+      groundGrad.addColorStop(1, "#22303c");
+    } else if (this.chapter === 5) {
+      groundGrad.addColorStop(0, "#140905");
+      groundGrad.addColorStop(0.5, "#2c150c");
+      groundGrad.addColorStop(1, "#442416");
+    } else {
+      groundGrad.addColorStop(0, "#051105");
+      groundGrad.addColorStop(0.35, "#0c240c");
+      groundGrad.addColorStop(0.75, "#143314");
+      groundGrad.addColorStop(1, "#1a421a");
+    }
+    ctx.fillStyle = groundGrad;
+    ctx.fillRect(0, horizonY, w, h - horizonY);
+
+    // Perspective depth terrain stripes (Mud footpaths & wet soil)
+    const numStripes = 14;
+    for (let i = 0; i < numStripes; i++) {
+      const t = (i + 1) / numStripes;
+      const sy = horizonY + (h - horizonY) * (t * t);
+      const bandHeight = (h - horizonY) * (0.05 + t * 0.12);
+      ctx.fillStyle = i % 2 === 0 ? "rgba(0, 0, 0, 0.15)" : "rgba(30, 60, 25, 0.12)";
+      ctx.fillRect(0, sy, w, bandHeight);
+    }
+
+    // Volumetric Flashlight Ground Spot
+    if (this.torchOn) {
+      const spotX = w * 0.5 + bobX * 0.6;
+      const spotY = h * 0.74 + bobY;
+      const spotGrad = ctx.createRadialGradient(spotX, spotY, 25, spotX, spotY, w * 0.44);
+      if (this.uvMode) {
+        spotGrad.addColorStop(0, "rgba(168, 85, 247, 0.55)");
+        spotGrad.addColorStop(0.4, "rgba(56, 189, 248, 0.28)");
+        spotGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+      } else {
+        spotGrad.addColorStop(0, "rgba(255, 250, 220, 0.62)");
+        spotGrad.addColorStop(0.35, "rgba(230, 215, 165, 0.32)");
+        spotGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+      }
+      ctx.fillStyle = spotGrad;
+      ctx.fillRect(0, horizonY, w, h - horizonY);
+    }
+
+    // 4. Transform & Project All Game Entities into 3D Depth
+    const fpsEntities = [];
+
+    // Helper to transform world coords (ox, oy, oz) to camera space
+    const projectPoint = (ox, oy, oz = 0) => {
+      const dx = ox - camX;
+      const dy = oy - camY;
+      const fwd = dx * cosYaw + dy * sinYaw;
+      const rgt = -dx * sinYaw + dy * cosYaw;
+      if (fwd < 10 || fwd > 950) return null;
+      const scale = F / fwd;
+      const Sx = w * 0.5 + rgt * scale + bobX + shakeX;
+      const Sy = horizonY + (camZ - oz) * scale;
+      const angle = Math.atan2(rgt, fwd);
+      const inTorch = this.torchOn && Math.abs(angle) < 0.40;
+      const fog = Math.max(0, Math.min(1.0, 1.0 - (fwd - 60) / 800));
+      const light = Math.min(1.0, 0.22 + (inTorch ? Math.max(0.3, 1.0 - (fwd / 520)) * 0.85 : 0));
+      return { fwd, rgt, scale, Sx, Sy, fog, light, inTorch, angle };
+    };
+
+    // A. Trees
+    const allTrees = [...(this.ambientTrees || []), ...(this.trees || [])];
+    allTrees.forEach((t) => {
+      const p = projectPoint(t.x, t.y, 0);
+      if (p) {
+        fpsEntities.push({
+          type: "tree",
+          fwd: p.fwd,
+          p,
+          tree: t,
+        });
+      }
+    });
+
+    // B. Boulders & Obstacles
+    (this.obstacles || []).forEach((obs) => {
+      const p = projectPoint(obs.x, obs.y, 0);
+      if (p) {
+        fpsEntities.push({
+          type: "boulder",
+          fwd: p.fwd,
+          p,
+          obs,
+        });
+      }
+    });
+
+    // C. Campfires
+    (this.campfires || []).forEach((fire) => {
+      const p = projectPoint(fire.x, fire.y, 0);
+      if (p) {
+        fpsEntities.push({
+          type: "campfire",
+          fwd: p.fwd,
+          p,
+          fire,
+        });
+      }
+    });
+
+    // D. Interactive Objects (Cabin, Gunadasa, Crates, Keys, Slates, etc.)
+    (this.interactiveObjects || []).forEach((obj) => {
+      const p = projectPoint(obj.x, obj.y, 0);
+      if (p) {
+        fpsEntities.push({
+          type: "interactive",
+          fwd: p.fwd,
+          p,
+          obj,
+        });
+      }
+    });
+
+    // E. Ground Items (Salt, Herbs, Tea, Flares)
+    (this.items || []).forEach((it) => {
+      const p = projectPoint(it.x, it.y, 0);
+      if (p) {
+        fpsEntities.push({
+          type: "item",
+          fwd: p.fwd,
+          p,
+          item: it,
+        });
+      }
+    });
+
+    // F. Fauna: Shadow Stalker Leopard
+    if (this.shadowStalker) {
+      const p = projectPoint(this.shadowStalker.x, this.shadowStalker.y, 0);
+      if (p) {
+        fpsEntities.push({
+          type: "stalker",
+          fwd: p.fwd,
+          p,
+          stalker: this.shadowStalker,
+        });
+      }
+    }
+
+    // G. Fauna: Leeches & Vipers
+    (this.leeches || []).forEach((l) => {
+      const p = projectPoint(l.x, l.y, 0);
+      if (p && p.fwd < 260) {
+        fpsEntities.push({
+          type: "leech",
+          fwd: p.fwd,
+          p,
+          leech: l,
+        });
+      }
+    });
+    (this.vipers || []).forEach((v) => {
+      const p = projectPoint(v.x, v.y, 0);
+      if (p && p.fwd < 340) {
+        fpsEntities.push({
+          type: "viper",
+          fwd: p.fwd,
+          p,
+          viper: v,
+        });
+      }
+    });
+
+    // Sort entities descending by distance (Painter's Algorithm: Far -> Near)
+    fpsEntities.sort((a, b) => b.fwd - a.fwd);
+
+    // Keep track of the entity closest to the center crosshair for interaction
+    let crosshairTarget = null;
+    let minCrosshairDist = 75;
+
+    // 5. Render 3D Entities
+    fpsEntities.forEach((ent) => {
+      const { p } = ent;
+      const { Sx, Sy, scale, light, fog } = p;
+
+      // ── Tree ──
+      if (ent.type === "tree") {
+        const t = ent.tree;
+        const trunkR = (t.r || 18) * scale;
+        const treeH = (t.height || 135) * scale;
+        const foliageR = (t.foliageR || 72) * scale;
+        const sway = Math.sin(time * 0.0018 + t.x * 0.01) * (10 * scale);
+
+        ctx.save();
+        ctx.globalAlpha = fog;
+
+        // Tree contact shadow
+        ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+        ctx.beginPath();
+        ctx.ellipse(Sx, Sy, trunkR * 1.5, trunkR * 0.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Buttress Roots
+        ctx.fillStyle = `rgba(${Math.round(40 * light)}, ${Math.round(25 * light)}, ${Math.round(15 * light)}, 1)`;
+        ctx.beginPath();
+        ctx.moveTo(Sx - trunkR * 1.8, Sy + 2);
+        ctx.lineTo(Sx, Sy - treeH * 0.15);
+        ctx.lineTo(Sx + trunkR * 1.8, Sy + 2);
+        ctx.closePath();
+        ctx.fill();
+
+        // Cylindrical Trunk
+        const trunkGrad = ctx.createLinearGradient(Sx - trunkR, 0, Sx + trunkR, 0);
+        trunkGrad.addColorStop(0, `rgb(${Math.round(90 * light)}, ${Math.round(60 * light)}, ${Math.round(40 * light)})`);
+        trunkGrad.addColorStop(0.4, `rgb(${Math.round(60 * light)}, ${Math.round(38 * light)}, ${Math.round(24 * light)})`);
+        trunkGrad.addColorStop(1, `rgb(${Math.round(25 * light)}, ${Math.round(15 * light)}, ${Math.round(10 * light)})`);
+        ctx.fillStyle = trunkGrad;
+        ctx.fillRect(Sx - trunkR, Sy - treeH, trunkR * 2, treeH);
+
+        // Climbing Lianas & Epiphytes
+        ctx.strokeStyle = `rgba(${Math.round(50 * light)}, ${Math.round(90 * light)}, ${Math.round(40 * light)}, 0.8)`;
+        ctx.lineWidth = Math.max(1, 2 * scale);
+        ctx.beginPath();
+        ctx.moveTo(Sx - trunkR * 0.5, Sy);
+        ctx.quadraticCurveTo(Sx + trunkR * 0.7, Sy - treeH * 0.5, Sx - trunkR * 0.3, Sy - treeH);
+        ctx.stroke();
+
+        // Towering Foliage Canopy
+        const canopyY = Sy - treeH;
+        ctx.fillStyle = `rgb(${Math.round(18 * light)}, ${Math.round(45 * light)}, ${Math.round(22 * light)})`;
+        ctx.beginPath();
+        ctx.arc(Sx + sway, canopyY, foliageR, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = `rgb(${Math.round(28 * light)}, ${Math.round(70 * light)}, ${Math.round(35 * light)})`;
+        ctx.beginPath();
+        ctx.arc(Sx + sway - foliageR * 0.25, canopyY - foliageR * 0.15, foliageR * 0.75, 0, Math.PI * 2);
+        ctx.arc(Sx + sway + foliageR * 0.25, canopyY - foliageR * 0.1, foliageR * 0.7, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      // ── Boulder / Granite Rock ──
+      else if (ent.type === "boulder") {
+        const obs = ent.obs;
+        const bR = (obs.radius || 28) * scale;
+        ctx.save();
+        ctx.globalAlpha = fog;
+
+        ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+        ctx.beginPath();
+        ctx.ellipse(Sx, Sy, bR * 1.3, bR * 0.45, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        const rockGrad = ctx.createRadialGradient(Sx - bR * 0.3, Sy - bR * 0.6, bR * 0.1, Sx, Sy - bR * 0.4, bR);
+        rockGrad.addColorStop(0, `rgb(${Math.round(140 * light)}, ${Math.round(145 * light)}, ${Math.round(140 * light)})`);
+        rockGrad.addColorStop(0.7, `rgb(${Math.round(75 * light)}, ${Math.round(80 * light)}, ${Math.round(75 * light)})`);
+        rockGrad.addColorStop(1, `rgb(${Math.round(35 * light)}, ${Math.round(40 * light)}, ${Math.round(35 * light)})`);
+        ctx.fillStyle = rockGrad;
+        ctx.beginPath();
+        ctx.ellipse(Sx, Sy - bR * 0.5, bR, bR * 0.7, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // ── Campfire ──
+      else if (ent.type === "campfire") {
+        const cRad = (ent.fire?.radius || 36) * scale;
+        ctx.save();
+        ctx.globalAlpha = fog;
+
+        // Ground Glow
+        const fireGlow = ctx.createRadialGradient(Sx, Sy, 5, Sx, Sy, cRad * 3.5);
+        fireGlow.addColorStop(0, "rgba(255, 140, 20, 0.55)");
+        fireGlow.addColorStop(0.5, "rgba(220, 80, 10, 0.2)");
+        fireGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
+        ctx.fillStyle = fireGlow;
+        ctx.beginPath();
+        ctx.ellipse(Sx, Sy, cRad * 3.5, cRad * 1.2, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Charred Stone Circle & Wood
+        ctx.fillStyle = "#271b12";
+        ctx.beginPath();
+        ctx.ellipse(Sx, Sy, cRad, cRad * 0.38, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Animated Flame Petals
+        const flameH = (32 + Math.sin(time * 0.02) * 8) * scale;
+        const flameGrad = ctx.createLinearGradient(Sx, Sy, Sx, Sy - flameH);
+        flameGrad.addColorStop(0, "#ff4500");
+        flameGrad.addColorStop(0.5, "#ffaa00");
+        flameGrad.addColorStop(1, "#fff7cc");
+        ctx.fillStyle = flameGrad;
+        ctx.beginPath();
+        ctx.moveTo(Sx - cRad * 0.45, Sy);
+        ctx.quadraticCurveTo(Sx - cRad * 0.2, Sy - flameH * 0.6, Sx, Sy - flameH);
+        ctx.quadraticCurveTo(Sx + cRad * 0.2, Sy - flameH * 0.6, Sx + cRad * 0.45, Sy);
+        ctx.closePath();
+        ctx.fill();
+
+        // Sparks Floating into Air
+        ctx.fillStyle = "#ffd166";
+        for (let i = 0; i < 4; i++) {
+          const spX = Sx + Math.sin(time * 0.005 + i * 2) * (cRad * 0.6);
+          const spY = Sy - flameH - ((time * 0.04 + i * 15) % 40) * scale;
+          ctx.beginPath();
+          ctx.arc(spX, spY, Math.max(1, 2 * scale), 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      // ── Interactive Objects ──
+      else if (ent.type === "interactive") {
+        const obj = ent.obj;
+        const id = obj.id || "";
+        ctx.save();
+        ctx.globalAlpha = fog;
+
+        // Check if aimed near crosshair (center of screen)
+        const distToCenter = Math.hypot(Sx - w * 0.5, (Sy - 25 * scale) - h * 0.5);
+        if (distToCenter < minCrosshairDist && p.fwd < 160) {
+          minCrosshairDist = distToCenter;
+          crosshairTarget = obj;
+        }
+
+        // 1. Old Ranger Gunadasa (ගුණදාස මාමා)
+        if (id === "gunadasa_npc" || id === "npc") {
+          const gH = 68 * scale;
+          const gW = 28 * scale;
+
+          // Soft ground shadow
+          ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+          ctx.beginPath();
+          ctx.ellipse(Sx, Sy, gW * 0.9, gW * 0.35, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Tall Bamboo Staff
+          ctx.fillStyle = "#eed088";
+          ctx.fillRect(Sx + gW * 0.42, Sy - gH * 0.85, Math.max(2, 3.5 * scale), gH * 0.88);
+          ctx.fillStyle = "#5d4037";
+          ctx.fillRect(Sx + gW * 0.38, Sy - gH * 0.4, Math.max(3, 5 * scale), 2 * scale);
+
+          // Traditional Sarong
+          ctx.fillStyle = `rgb(${Math.round(45 * light)}, ${Math.round(68 * light)}, ${Math.round(42 * light)})`;
+          ctx.fillRect(Sx - gW * 0.38, Sy - gH * 0.46, gW * 0.76, gH * 0.44);
+
+          // Khaki Safari Jacket
+          const jacketY = Sy - gH * 0.76;
+          ctx.fillStyle = `rgb(${Math.round(85 * light)}, ${Math.round(98 * light)}, ${Math.round(75 * light)})`;
+          ctx.fillRect(Sx - gW * 0.42, jacketY, gW * 0.84, gH * 0.32);
+
+          // Silver Elder Beard & Face
+          const headY = jacketY - gH * 0.12;
+          ctx.fillStyle = `rgb(${Math.round(198 * light)}, ${Math.round(138 * light)}, ${Math.round(76 * light)})`;
+          ctx.beginPath();
+          ctx.arc(Sx, headY, gW * 0.28, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Flowing Silver-White Beard
+          ctx.fillStyle = "#f1f5f9";
+          ctx.beginPath();
+          ctx.moveTo(Sx - gW * 0.2, headY + 2 * scale);
+          ctx.lineTo(Sx, headY + gH * 0.22);
+          ctx.lineTo(Sx + gW * 0.2, headY + 2 * scale);
+          ctx.closePath();
+          ctx.fill();
+
+          // Safari Ranger Hat
+          ctx.fillStyle = "#4a3c28";
+          ctx.beginPath();
+          ctx.ellipse(Sx, headY - 4 * scale, gW * 0.55, gW * 0.2, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = "#635035";
+          ctx.fillRect(Sx - gW * 0.25, headY - gH * 0.12, gW * 0.5, gH * 0.08);
+
+          // Floating Dialogue Indicator
+          if (!this.npc.helped) {
+            const beaconPulse = Math.sin(time * 0.005) * 4 * scale;
+            ctx.fillStyle = "#4ade80";
+            ctx.beginPath();
+            ctx.arc(Sx, headY - gH * 0.22 - beaconPulse, Math.max(3, 5 * scale), 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        // 2. Outpost Cabin (Chapter 1 Outpost)
+        else if (id.includes("cabin") || id.includes("outpost") || id.includes("shelter")) {
+          const cW = 120 * scale;
+          const cH = 80 * scale;
+
+          // Timber Walls
+          ctx.fillStyle = `rgb(${Math.round(78 * light)}, ${Math.round(52 * light)}, ${Math.round(46 * light)})`;
+          ctx.fillRect(Sx - cW * 0.5, Sy - cH, cW, cH);
+
+          // Sloped Tin Roof
+          ctx.fillStyle = `rgb(${Math.round(110 * light)}, ${Math.round(118 * light)}, ${Math.round(124 * light)})`;
+          ctx.beginPath();
+          ctx.moveTo(Sx - cW * 0.58, Sy - cH);
+          ctx.lineTo(Sx, Sy - cH * 1.35);
+          ctx.lineTo(Sx + cW * 0.58, Sy - cH);
+          ctx.closePath();
+          ctx.fill();
+
+          // Warm Glowing Lantern Window
+          ctx.fillStyle = "#ffb703";
+          ctx.fillRect(Sx + cW * 0.12, Sy - cH * 0.7, cW * 0.25, cH * 0.35);
+          ctx.strokeStyle = "#4e342e";
+          ctx.lineWidth = Math.max(1, 2 * scale);
+          ctx.strokeRect(Sx + cW * 0.12, Sy - cH * 0.7, cW * 0.25, cH * 0.35);
+
+          // Front Door
+          ctx.fillStyle = "#3e2723";
+          ctx.fillRect(Sx - cW * 0.35, Sy - cH * 0.75, cW * 0.28, cH * 0.75);
+        }
+        // 3. Supply Crates & Chests
+        else if (id.includes("chest") || id.includes("crate") || id.includes("box")) {
+          const bW = 34 * scale;
+          const bH = 24 * scale;
+          ctx.fillStyle = `rgb(${Math.round(92 * light)}, ${Math.round(64 * light)}, ${Math.round(51 * light)})`;
+          ctx.fillRect(Sx - bW * 0.5, Sy - bH, bW, bH);
+          ctx.fillStyle = "#d4af37"; // Brass lock
+          ctx.beginPath();
+          ctx.arc(Sx, Sy - bH * 0.5, Math.max(2, 3.5 * scale), 0, Math.PI * 2);
+          ctx.fill();
+        }
+        // 4. Heavy Generator / Breaker
+        else if (id.includes("generator") || id.includes("breaker") || id.includes("terminal")) {
+          const gW = 42 * scale;
+          const gH = 34 * scale;
+          ctx.fillStyle = `rgb(${Math.round(71 * light)}, ${Math.round(85 * light)}, ${Math.round(105 * light)})`;
+          ctx.fillRect(Sx - gW * 0.5, Sy - gH, gW, gH);
+          // Blinking status diode
+          ctx.fillStyle = this.generatorOn ? "#22c55e" : "#ef4444";
+          ctx.beginPath();
+          ctx.arc(Sx + gW * 0.3, Sy - gH * 0.7, Math.max(2, 3 * scale), 0, Math.PI * 2);
+          ctx.fill();
+        }
+        // 5. General Pickups (Keys, Slates, Gems, DNA Core)
+        else {
+          const itR = 14 * scale;
+          ctx.fillStyle = "#f59e0b";
+          ctx.beginPath();
+          ctx.arc(Sx, Sy - itR, itR, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.restore();
+      }
+
+      // ── Ground Item ──
+      else if (ent.type === "item") {
+        const it = ent.item;
+        const iR = 10 * scale;
+        ctx.save();
+        ctx.globalAlpha = fog;
+        ctx.fillStyle = it?.type === "salt" ? "#f8fafc" : (it?.type === "herb" ? "#4ade80" : "#38bdf8");
+        ctx.beginPath();
+        ctx.arc(Sx, Sy - iR, Math.max(2, iR), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // ── Shadow Stalker Leopard (3D Prowler in the Mist) ──
+      else if (ent.type === "stalker") {
+        const stalker = ent.stalker;
+        const catH = 36 * scale;
+        const catW = 48 * scale;
+        ctx.save();
+        ctx.globalAlpha = fog;
+
+        // Shadow under cat
+        ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+        ctx.beginPath();
+        ctx.ellipse(Sx, Sy, catW * 0.65, catH * 0.25, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Sleek Melanistic Black Leopard Body
+        ctx.fillStyle = `rgb(${Math.round(18 * light)}, ${Math.round(16 * light)}, ${Math.round(14 * light)})`;
+        ctx.beginPath();
+        ctx.ellipse(Sx, Sy - catH * 0.5, catW * 0.45, catH * 0.35, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Feline Head
+        const catHeadX = Sx + catW * 0.38;
+        const catHeadY = Sy - catH * 0.65;
+        ctx.beginPath();
+        ctx.arc(catHeadX, catHeadY, catH * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Glowing Predatory Amber Eyes (Gleams when player flashlight hits it!)
+        const eyeGlow = p.inTorch ? 1.0 : (stalker.eyesAlpha || 0.4);
+        ctx.fillStyle = `rgba(251, 191, 36, ${eyeGlow})`;
+        ctx.shadowColor = "#fbbf24";
+        ctx.shadowBlur = 10 * scale;
+        ctx.beginPath();
+        ctx.arc(catHeadX - 2 * scale, catHeadY - 2 * scale, Math.max(1.5, 2.5 * scale), 0, Math.PI * 2);
+        ctx.arc(catHeadX + 5 * scale, catHeadY - 2 * scale, Math.max(1.5, 2.5 * scale), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        ctx.restore();
+      }
+
+      // ── Leeches & Vipers ──
+      else if (ent.type === "leech") {
+        const lR = 6 * scale;
+        ctx.save();
+        ctx.globalAlpha = fog;
+        ctx.fillStyle = "#4a0404";
+        ctx.beginPath();
+        ctx.ellipse(Sx, Sy - lR * 0.5, lR * 1.5, lR * 0.6, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+      else if (ent.type === "viper") {
+        const vR = 8 * scale;
+        ctx.save();
+        ctx.globalAlpha = fog;
+        ctx.fillStyle = "#854d0e";
+        ctx.beginPath();
+        ctx.arc(Sx, Sy - vR, Math.max(2, vR), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    });
+
+    // 6. Volumetric Night Darkness & Rainforest Vignette
+    ctx.save();
+    const vigGrad = ctx.createRadialGradient(w * 0.5, h * 0.5, w * 0.28, w * 0.5, h * 0.5, w * 0.72);
+    vigGrad.addColorStop(0, "rgba(0, 0, 0, 0)");
+    vigGrad.addColorStop(0.7, "rgba(0, 0, 0, 0.45)");
+    vigGrad.addColorStop(1, "rgba(0, 0, 0, 0.88)");
+    ctx.fillStyle = vigGrad;
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+
+    // 7. First-Person Viewmodel: I.G.I. Tactical Hands & Military Torch
+    ctx.save();
+    const handBobX = bobX * 0.85;
+    const handBobY = bobY * 0.85;
+    const torchBaseX = w * 0.72 + handBobX;
+    const torchBaseY = h * 0.82 + handBobY;
+
+    // Volumetric Flashlight Beam Emanating from Torch Head
+    if (this.torchOn) {
+      const beamGrad = ctx.createRadialGradient(
+        w * 0.5, h * 0.5, 10,
+        torchBaseX - 35, torchBaseY - 45, w * 0.65
+      );
+      if (this.uvMode) {
+        beamGrad.addColorStop(0, "rgba(168, 85, 247, 0.35)");
+        beamGrad.addColorStop(0.5, "rgba(56, 189, 248, 0.12)");
+        beamGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+      } else {
+        beamGrad.addColorStop(0, "rgba(255, 248, 220, 0.40)");
+        beamGrad.addColorStop(0.4, "rgba(220, 205, 160, 0.15)");
+        beamGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+      }
+      ctx.fillStyle = beamGrad;
+      ctx.beginPath();
+      ctx.moveTo(torchBaseX - 30, torchBaseY - 40);
+      ctx.lineTo(w * 0.05, h * 0.15);
+      ctx.lineTo(w * 0.95, h * 0.15);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Heavy-Duty Tactical Flashlight Body (Anodized Aluminum Maglite)
+    const torchAngle = -0.42;
+    ctx.translate(torchBaseX, torchBaseY);
+    ctx.rotate(torchAngle);
+
+    // Tactical Gloved Hand Gripping Torch
+    ctx.fillStyle = "#1e2920"; // Tactical green glove
+    ctx.beginPath();
+    ctx.roundRect(-25, -20, 50, 65, 8);
+    ctx.fill();
+    ctx.fillStyle = "#111812"; // Carbon knuckle pad
+    ctx.fillRect(-22, -16, 44, 14);
+
+    // Aluminum Torch Barrel
+    const barrelGrad = ctx.createLinearGradient(-14, 0, 14, 0);
+    barrelGrad.addColorStop(0, "#475569");
+    barrelGrad.addColorStop(0.35, "#94a3b8");
+    barrelGrad.addColorStop(0.7, "#334155");
+    barrelGrad.addColorStop(1, "#1e293b");
+    ctx.fillStyle = barrelGrad;
+    ctx.fillRect(-14, -90, 28, 90);
+
+    // Bezel Head
+    ctx.fillStyle = "#1e293b";
+    ctx.fillRect(-18, -112, 36, 22);
+
+    // Glowing Lens
+    if (this.torchOn) {
+      ctx.fillStyle = this.uvMode ? "#a855f7" : "#fef08a";
+      ctx.shadowColor = this.uvMode ? "#a855f7" : "#fde047";
+      ctx.shadowBlur = 18;
+      ctx.fillRect(-16, -115, 32, 4);
+      ctx.shadowBlur = 0;
+    } else {
+      ctx.fillStyle = "#334155";
+      ctx.fillRect(-16, -115, 32, 4);
+    }
+
+    ctx.restore();
+
+    // 8. Project I.G.I. Tactical HUD Overlay
+
+    // A. Top Center Military Compass Tape
+    ctx.save();
+    const compW = 260;
+    const compH = 26;
+    const compX = (w - compW) * 0.5;
+    const compY = 16;
+
+    ctx.fillStyle = "rgba(15, 23, 42, 0.75)";
+    ctx.strokeStyle = "rgba(74, 222, 128, 0.4)";
+    ctx.lineWidth = 1.2;
+    ctx.fillRect(compX, compY, compW, compH);
+    ctx.strokeRect(compX, compY, compW, compH);
+
+    // Compass Tape Marks
+    const degYaw = Math.round(((yaw * (180 / Math.PI)) % 360 + 360) % 360);
+    const cardinals = [
+      { deg: 0, label: "E" },
+      { deg: 45, label: "SE" },
+      { deg: 90, label: "S" },
+      { deg: 135, label: "SW" },
+      { deg: 180, label: "W" },
+      { deg: 225, label: "NW" },
+      { deg: 270, label: "N" },
+      { deg: 315, label: "NE" },
+    ];
+    ctx.fillStyle = "#4ade80";
+    ctx.font = "bold 11px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    cardinals.forEach((c) => {
+      let diff = c.deg - degYaw;
+      while (diff < -180) diff += 360;
+      while (diff > 180) diff -= 360;
+      if (Math.abs(diff) < 55) {
+        const markX = compX + compW * 0.5 + (diff / 55) * (compW * 0.45);
+        ctx.fillText(c.label, markX, compY + compH * 0.5);
+      }
+    });
+
+    // Center Compass Reticle Arrow
+    ctx.fillStyle = "#ef4444";
+    ctx.beginPath();
+    ctx.moveTo(compX + compW * 0.5, compY + compH - 2);
+    ctx.lineTo(compX + compW * 0.5 - 5, compY + compH + 5);
+    ctx.lineTo(compX + compW * 0.5 + 5, compY + compH + 5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    // B. Center Crosshair (Reticle) & Interactive Action Banner
+    ctx.save();
+    const cx = w * 0.5;
+    const cy = h * 0.5;
+    const hasTarget = !!crosshairTarget;
+
+    ctx.strokeStyle = hasTarget ? "#f59e0b" : "rgba(74, 222, 128, 0.75)";
+    ctx.lineWidth = 1.5;
+
+    // Reticle Brackets
+    const rSize = hasTarget ? 14 : 9;
+    ctx.beginPath();
+    // Dot
+    ctx.arc(cx, cy, hasTarget ? 2.5 : 1.5, 0, Math.PI * 2);
+    // 4 brackets
+    ctx.moveTo(cx - rSize - 4, cy); ctx.lineTo(cx - 4, cy);
+    ctx.moveTo(cx + 4, cy); ctx.lineTo(cx + rSize + 4, cy);
+    ctx.moveTo(cx, cy - rSize - 4); ctx.lineTo(cx, cy - 4);
+    ctx.moveTo(cx, cy + 4); ctx.lineTo(cx, cy + rSize + 4);
+    ctx.stroke();
+
+    // Contextual Action Prompt
+    if (hasTarget) {
+      const promptText = crosshairTarget.prompt || "[E] පරීක්ෂා කරන්න";
+      const titleText = crosshairTarget.title || "අන්තර්ක්‍රියාකාරී වස්තුව";
+
+      ctx.fillStyle = "rgba(15, 23, 42, 0.88)";
+      ctx.strokeStyle = "#f59e0b";
+      ctx.lineWidth = 1.2;
+      const bW = 240;
+      const bH = 38;
+      ctx.fillRect(cx - bW * 0.5, cy + 24, bW, bH);
+      ctx.strokeRect(cx - bW * 0.5, cy + 24, bW, bH);
+
+      ctx.fillStyle = "#f59e0b";
+      ctx.font = "bold 12px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(promptText, cx, cy + 39);
+      ctx.fillStyle = "#94a3b8";
+      ctx.font = "10px sans-serif";
+      ctx.fillText(titleText, cx, cy + 54);
+    }
+    ctx.restore();
+
+    // C. Bottom-Left: Project I.G.I. Tactical GPS Radar PDA
+    ctx.save();
+    const radarR = 56;
+    const radarX = 22 + radarR;
+    const radarY = h - 22 - radarR;
+
+    // Outer PDA Bezel
+    ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
+    ctx.strokeStyle = "#334155";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(radarX, radarY, radarR + 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Radar Screen Grid
+    ctx.fillStyle = "rgba(6, 78, 59, 0.45)";
+    ctx.beginPath();
+    ctx.arc(radarX, radarY, radarR, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(74, 222, 128, 0.35)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(radarX, radarY, radarR * 0.5, 0, Math.PI * 2);
+    ctx.arc(radarX, radarY, radarR, 0, Math.PI * 2);
+    ctx.moveTo(radarX - radarR, radarY); ctx.lineTo(radarX + radarR, radarY);
+    ctx.moveTo(radarX, radarY - radarR); ctx.lineTo(radarX + radarR, radarY);
+    ctx.stroke();
+
+    // Radar Rotating Sweep Beam
+    const sweepAngle = (time * 0.003) % (Math.PI * 2);
+    ctx.strokeStyle = "rgba(74, 222, 128, 0.8)";
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(radarX, radarY);
+    ctx.lineTo(radarX + Math.cos(sweepAngle) * radarR, radarY + Math.sin(sweepAngle) * radarR);
+    ctx.stroke();
+
+    // Player Direction Arrow
+    ctx.fillStyle = "#38bdf8";
+    ctx.beginPath();
+    ctx.moveTo(radarX + Math.cos(yaw) * 8, radarY + Math.sin(yaw) * 8);
+    ctx.lineTo(radarX + Math.cos(yaw + 2.5) * 6, radarY + Math.sin(yaw + 2.5) * 6);
+    ctx.lineTo(radarX, radarY);
+    ctx.lineTo(radarX + Math.cos(yaw - 2.5) * 6, radarY + Math.sin(yaw - 2.5) * 6);
+    ctx.closePath();
+    ctx.fill();
+
+    // Radar Blips for Campfires & Objectives
+    (this.campfires || []).forEach((cf) => {
+      const rx = (cf.x - camX) * 0.08;
+      const ry = (cf.y - camY) * 0.08;
+      if (Math.hypot(rx, ry) < radarR - 4) {
+        ctx.fillStyle = "#f59e0b";
+        ctx.beginPath();
+        ctx.arc(radarX + rx, radarY + ry, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    });
+
+    // Stealth Noise Level Waves (I.G.I. Acoustic Detection Sensor)
+    const noiseNorm = Math.min(1.0, (this.noiseLevel || 15) / 100);
+    ctx.strokeStyle = noiseNorm > 0.65 ? "#ef4444" : (noiseNorm > 0.35 ? "#f59e0b" : "#4ade80");
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(radarX, radarY, radarR + 6 + noiseNorm * 8, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "bold 9px monospace";
+    ctx.textAlign = "center";
+    ctx.fillText("I.G.I. GPS // RADAR", radarX, radarY + radarR + 15);
+    ctx.restore();
+
+    // D. Rain Droplets on Visor / Camera Lens during storms
+    if (this.stormActive && this.fpsRainVisor) {
+      ctx.save();
+      ctx.strokeStyle = "rgba(186, 230, 253, 0.35)";
+      ctx.lineWidth = 1.2;
+      this.fpsRainVisor.forEach((drop) => {
+        drop.y += drop.speed * 0.015;
+        if (drop.y > 1.0) {
+          drop.y = 0;
+          drop.x = Math.random();
+        }
+        const dx = drop.x * w;
+        const dy = drop.y * h;
+        ctx.beginPath();
+        ctx.moveTo(dx, dy);
+        ctx.lineTo(dx + 2, dy + drop.len);
+        ctx.stroke();
+      });
+      ctx.restore();
+    }
+
+    // E. Top-Right Clickable Camera Mode Pill Button
+    ctx.save();
+    const pillW = 195;
+    const pillH = 34;
+    const pillX = w - pillW - 20;
+    const pillY = 16;
+
+    ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
+    ctx.strokeStyle = "#38bdf8";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(pillX, pillY, pillW, pillH, 6);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#38bdf8";
+    ctx.font = "bold 11px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("🎯 [V] 1ST PERSON (I.G.I.)", pillX + pillW * 0.5, pillY + pillH * 0.5);
+    ctx.restore();
+  }
+
+  // ── 9. Main Render Dispatcher ─────────────────────────────────────────────
   render() {
+    if (this.viewMode === "fps") {
+      this.renderFirstPersonIGI(this.ctx);
+    } else {
+      this.renderIsometric();
+    }
+  }
+
+  // ── 10. 2.5D Isometric Render Loop (Tactical Expedition Mode) ──────────────
+  renderIsometric() {
     const ctx = this.ctx;
     const w = this.canvas.width;
     const h = this.canvas.height;
