@@ -21,6 +21,9 @@ export class SinharajaEngine {
 
     // Camera View Mode: "fps" (First-Person Tactical I.G.I. Mode) vs "isometric" (2.5D Expedition View)
     this.viewMode = "fps"; // Default to authentic First-Person I.G.I. Eye-Level experience!
+    this.camPitch = 0; // Vertical pitch in radians (-0.75 looking up to +0.75 looking down)
+    this.kudawaDoorOpen = false; // Outpost cabin entrance door state (opened / closed)
+    this.activeCrosshairTarget = null; // Exact object / item / door currently targeted by crosshair
     this.headBob = 0;
     this.fpsRainVisor = [];
     for (let i = 0; i < 28; i++) {
@@ -437,6 +440,31 @@ export class SinharajaEngine {
       gain.connect(this.audioCtx.destination);
       osc.start(t);
       osc.stop(t + 0.25);
+    } else if (type === "door_open" || type === "door_creak") {
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(85, t);
+      osc.frequency.linearRampToValueAtTime(145, t + 0.18);
+      osc.frequency.linearRampToValueAtTime(70, t + 0.35);
+      gain.gain.setValueAtTime(0.2, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
+      osc.connect(gain);
+      gain.connect(this.audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + 0.38);
+    } else if (type === "door_close") {
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(120, t);
+      osc.frequency.exponentialRampToValueAtTime(35, t + 0.15);
+      gain.gain.setValueAtTime(0.25, t);
+      gain.gain.linearRampToValueAtTime(0.001, t + 0.15);
+      osc.connect(gain);
+      gain.connect(this.audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + 0.15);
     } else if (type === "thunder") {
       const osc = this.audioCtx.createOscillator();
       const gain = this.audioCtx.createGain();
@@ -2048,12 +2076,13 @@ export class SinharajaEngine {
 
     // 2. Obstacles (Boulders, Giant Trees, Cabin Walls)
     this.obstacles = [
-      // Outpost cabin walls
+      // Outpost cabin walls & entrance doorway
       { x: 420, y: 650, w: 220, h: 15 },
       { x: 420, y: 650, w: 15, h: 180 },
       { x: 625, y: 650, w: 15, h: 180 },
       { x: 420, y: 820, w: 90, h: 15 },
       { x: 550, y: 820, w: 90, h: 15 },
+      { x: 510, y: 818, w: 40, h: 18, isDoor: true }, // Cabin door obstacle (passable when open)
       // Big boulders
       { x: 1200, y: 350, r: 60 },
       { x: 1450, y: 620, r: 75 },
@@ -2118,6 +2147,19 @@ export class SinharajaEngine {
               speaker: "GUNADASA MAMA (RANGER)",
             });
           }
+        },
+      },
+      {
+        id: "kudawa_outpost_door",
+        x: 530,
+        y: 820,
+        radius: 36,
+        isDoor: true,
+        title: "කුඩව මුරපොළ ප්‍රධාන දොරටුව (Outpost Door)",
+        prompt: "[E] දොර අරින්න / වහන්න",
+        icon: "🚪",
+        action: () => {
+          this.toggleCabinDoor();
         },
       },
       {
@@ -2811,7 +2853,7 @@ export class SinharajaEngine {
       }
       // E -> Interact
       if (e.key.toLowerCase() === "e") {
-        this.interactNearest();
+        this.interactTarget();
       }
       // H -> Consume Herb to Heal
       if (e.key.toLowerCase() === "h") {
@@ -2829,7 +2871,7 @@ export class SinharajaEngine {
         this.playSfx("step");
       }
       if (e.key === "4") {
-        this.interactNearest();
+        this.interactTarget();
       }
       // 5 -> Evidence Board
       if (e.key === "5") {
@@ -2903,11 +2945,19 @@ export class SinharajaEngine {
       this.mouse.worldY = this.mouse.y / this.zoom + this.camera.y;
 
       if (this.viewMode === "fps") {
-        // In FPS Mode, horizontal mouse movement turns camera smoothly (IGI style mouse look)
-        const deltaX = (e.movementX !== undefined && Math.abs(e.movementX) < 120)
-          ? e.movementX * 0.004
-          : ((this.mouse.x - rect.width / 2) / (rect.width / 2)) * 0.035;
-        this.player.facingAngle += deltaX;
+        // In FPS Mode, mouse movement provides unrestricted 360° turning (yaw) and smooth vertical look (pitch)
+        if (document.pointerLockElement === this.canvas) {
+          this.player.facingAngle += e.movementX * 0.0032;
+          this.camPitch = Math.max(-0.75, Math.min(0.75, (this.camPitch || 0) - e.movementY * 0.0032));
+        } else {
+          const deltaX = (e.movementX !== undefined && Math.abs(e.movementX) < 120)
+            ? e.movementX * 0.0035
+            : ((this.mouse.x - rect.width / 2) / (rect.width / 2)) * 0.035;
+          this.player.facingAngle += deltaX;
+          if (e.movementY !== undefined && Math.abs(e.movementY) < 120) {
+            this.camPitch = Math.max(-0.75, Math.min(0.75, (this.camPitch || 0) - e.movementY * 0.0032));
+          }
+        }
       } else {
         const dx = this.mouse.worldX - this.player.x;
         const dy = this.mouse.worldY - this.player.y;
@@ -2927,8 +2977,14 @@ export class SinharajaEngine {
         }
 
         if (this.viewMode === "fps") {
-          // In FPS mode, clicking interacts with whatever is in front of the crosshair!
-          if (this.interactNearest()) {
+          // Lock pointer on click for authentic I.G.I. mouse look without screen borders
+          if (document.pointerLockElement !== this.canvas) {
+            try {
+              this.canvas.requestPointerLock();
+            } catch (err) {}
+          }
+          // In FPS mode, clicking interacts with whatever is in the crosshair!
+          if (this.interactTarget()) {
             return;
           }
           return;
@@ -3148,34 +3204,127 @@ export class SinharajaEngine {
     );
   }
 
-  interactNearest() {
-    // 1. In FPS mode: prioritize object in front of the crosshair
-    if (this.viewMode === "fps") {
-      let bestObj = null;
-      let minAngleDiff = 0.65;
-      for (let obj of this.interactiveObjects) {
-        const dist = Math.hypot(obj.x - this.player.x, obj.y - this.player.y);
-        if (dist < (obj.radius || 35) + 85) {
-          const angleToObj = Math.atan2(obj.y - this.player.y, obj.x - this.player.x);
-          let diff = angleToObj - this.player.facingAngle;
-          while (diff < -Math.PI) diff += Math.PI * 2;
-          while (diff > Math.PI) diff -= Math.PI * 2;
-          if (Math.abs(diff) < minAngleDiff) {
-            minAngleDiff = Math.abs(diff);
-            bestObj = obj;
-          }
-        }
+  toggleCabinDoor() {
+    this.kudawaDoorOpen = !this.kudawaDoorOpen;
+    if (this.kudawaDoorOpen) {
+      this.playSfx("door_open");
+      this.cb.onNotify("🚪 කුඩව මුරපොළේ ප්‍රධාන ලී දොර විවෘත කළා! ඇතුළට ගොස් පරීක්ෂා කරන්න.");
+    } else {
+      this.playSfx("door_close");
+      this.cb.onNotify("🚪 කුඩව මුරපොළේ ලී දොර වැසුවා.");
+    }
+    if (this.cb.onAutosave) this.cb.onAutosave();
+  }
+
+  pickupItem(index) {
+    if (index < 0 || index >= (this.items || []).length) return false;
+    const it = this.items[index];
+    this.playSfx("pickup");
+    if (it.type === "salt") {
+      this.saltCount += 2;
+      this.spawnFloatingText(it.x, it.y - 20, "+2 ලුණු කුඩු 🧂", "#ffffff");
+      this.cb.onNotify("🧂 ලුණු කුඩු පැකට් 2ක් බඩු මල්ලට එක්විය!");
+    } else if (it.type === "herb") {
+      this.herbCount += 1;
+      this.spawnFloatingText(it.x, it.y - 20, "+1 ඖෂධීය පැළෑටිය 🌿", "#76ff03");
+      this.cb.onNotify("🌿 ඖෂධීය පැළෑටියක් එකතු කරගත්තා! (H ඔබා සුවපත් වන්න)");
+    } else if (it.type === "feather") {
+      this.sanity = Math.min(100, this.sanity + 25);
+      this.spawnFloatingText(it.x, it.y - 20, "+1 කැහිබෙලි පිහාටුව ✨", "#00e5ff");
+      this.cb.onNotify("🪶 අලංකාර කැහිබෙලි පිහාටුවක් හමුවිය! (Sanity +25)");
+      if (this.cb.onAchievementUnlocked) {
+        this.cb.onAchievementUnlocked("magpie_feather", "නිල් කැහිබෙල්ලා (Magpie Seeker)", "🪶");
       }
-      if (bestObj) {
-        bestObj.action(bestObj);
+    } else if (it.type === "ginger_tea") {
+      this.gingerTeaCount = (this.gingerTeaCount || 0) + 1;
+      this.temperature = Math.min(100, (this.temperature || 100) + 25);
+      this.spawnFloatingText(it.x, it.y - 20, "+1 ඉඟුරු තේ 🫖", "#ffb300");
+      this.cb.onNotify("🫖 උණුසුම් ඉඟුරු තේ බෝතලයක් හමුවිය! [G] ඔබා පානය කරන්න.");
+    }
+    this.items.splice(index, 1);
+    this.activeCrosshairTarget = null;
+    if (this.cb.onAutosave) this.cb.onAutosave();
+    return true;
+  }
+
+  interactTarget() {
+    if (this.viewMode === "fps" && this.activeCrosshairTarget) {
+      const target = this.activeCrosshairTarget;
+      if (target.isDoor) {
+        this.toggleCabinDoor();
+        return true;
+      }
+      if (target.isItem) {
+        return this.pickupItem(target.itemIndex);
+      }
+      if (target.action) {
+        target.action(target);
+        return true;
+      }
+    }
+    return this.interactNearest();
+  }
+
+  interactNearest() {
+    // 1. In FPS mode: prioritize active crosshair target
+    if (this.viewMode === "fps" && this.activeCrosshairTarget) {
+      const target = this.activeCrosshairTarget;
+      if (target.isDoor) {
+        this.toggleCabinDoor();
+        return true;
+      }
+      if (target.isItem) {
+        return this.pickupItem(target.itemIndex);
+      }
+      if (target.action) {
+        target.action(target);
         return true;
       }
     }
 
-    // 2. Standard radius check
-    for (let obj of this.interactiveObjects) {
+    // 2. Outpost cabin door check (Chapter 1)
+    if (this.chapter === 1) {
+      const doorDist = Math.hypot(this.player.x - 530, this.player.y - 820);
+      if (doorDist < 55) {
+        this.toggleCabinDoor();
+        return true;
+      }
+    }
+
+    // 3. Ground items proximity check
+    for (let i = 0; i < (this.items || []).length; i++) {
+      const it = this.items[i];
+      const dist = Math.hypot(it.x - this.player.x, it.y - this.player.y);
+      if (dist < (this.player.radius || 20) + 48) {
+        return this.pickupItem(i);
+      }
+    }
+
+    // 4. Interactive objects in front of player
+    let bestObj = null;
+    let minAngleDiff = 0.70;
+    for (let obj of (this.interactiveObjects || [])) {
       const dist = Math.hypot(obj.x - this.player.x, obj.y - this.player.y);
-      if (dist < obj.radius + 45) {
+      if (dist < (obj.radius || 35) + 65) {
+        const angleToObj = Math.atan2(obj.y - this.player.y, obj.x - this.player.x);
+        let diff = angleToObj - this.player.facingAngle;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        if (Math.abs(diff) < minAngleDiff) {
+          minAngleDiff = Math.abs(diff);
+          bestObj = obj;
+        }
+      }
+    }
+    if (bestObj) {
+      bestObj.action(bestObj);
+      return true;
+    }
+
+    // 5. Radius fallback
+    for (let obj of (this.interactiveObjects || [])) {
+      const dist = Math.hypot(obj.x - this.player.x, obj.y - this.player.y);
+      if (dist < (obj.radius || 35) + 40) {
         obj.action(obj);
         return true;
       }
@@ -4305,7 +4454,15 @@ export class SinharajaEngine {
 
       let nearInteractable = null;
       let minInteractDist = 9999;
-      if (this.interactiveObjects) {
+
+      if (this.viewMode === "fps" && this.activeCrosshairTarget) {
+        nearInteractable = {
+          id: this.activeCrosshairTarget.id,
+          title: this.activeCrosshairTarget.title,
+          prompt: this.activeCrosshairTarget.prompt,
+          icon: this.activeCrosshairTarget.icon || "🔍"
+        };
+      } else if (this.interactiveObjects) {
         for (let obj of this.interactiveObjects) {
           const d = Math.hypot(this.player.x - obj.x, this.player.y - obj.y);
           const interactRadius = (obj.radius || 35) + 65;
@@ -4373,6 +4530,7 @@ export class SinharajaEngine {
 
   checkCollision(x, y) {
     for (let obs of this.obstacles) {
+      if (obs.isDoor && this.kudawaDoorOpen) continue; // Outpost cabin door is swung open!
       if (obs.radius) {
         if (Math.hypot(x - obs.x, y - obs.y) < obs.radius + this.player.radius) return true;
       } else if (obs.w && obs.h) {
@@ -6529,163 +6687,253 @@ export class SinharajaEngine {
     const shakeX = this.screenShake?.x || 0;
     const shakeY = this.screenShake?.y || 0;
 
-    const horizonY = h * 0.50 + bobY + shakeY;
     const camZ = 34; // Eye height in units above ground plane
     const fovRad = 74 * (Math.PI / 180);
     const F = (w * 0.5) / Math.tan(fovRad * 0.5); // Perspective focal distance
+    const pitchOffset = Math.tan(this.camPitch || 0) * F;
+    const horizonY = h * 0.50 + pitchOffset + bobY + shakeY;
     const camX = this.player.x;
     const camY = this.player.y;
     const yaw = this.player.facingAngle || 0;
     const cosYaw = Math.cos(yaw);
     const sinYaw = Math.sin(yaw);
 
-    // 2. Nocturnal Rainforest Sky Dome & Parallax Mountain Horizon
-    const skyGrad = ctx.createLinearGradient(0, 0, 0, horizonY);
-    if (this.chapter === 2) {
-      skyGrad.addColorStop(0, "#020814");
-      skyGrad.addColorStop(0.65, "#0a1e30");
-      skyGrad.addColorStop(1, "#163852");
-    } else if (this.chapter === 3) {
-      skyGrad.addColorStop(0, "#010106");
-      skyGrad.addColorStop(0.65, "#0b0817");
-      skyGrad.addColorStop(1, "#17102e");
-    } else if (this.chapter === 4) {
-      skyGrad.addColorStop(0, "#04070a");
-      skyGrad.addColorStop(0.65, "#0d1620");
-      skyGrad.addColorStop(1, "#192634");
-    } else if (this.chapter === 5) {
-      skyGrad.addColorStop(0, "#0b0407");
-      skyGrad.addColorStop(0.6, "#220c15");
-      skyGrad.addColorStop(1, "#451c14");
-    } else {
-      skyGrad.addColorStop(0, "#020a04");
-      skyGrad.addColorStop(0.65, "#08200f");
-      skyGrad.addColorStop(1, "#0f361a");
-    }
-    ctx.fillStyle = skyGrad;
-    ctx.fillRect(0, 0, w, horizonY + 2);
+    // Kudawa Outpost Cabin Interior Check (Chapter 1: Player inside the building)
+    const inKudawaCabin = (this.chapter === 1 && camX >= 425 && camX <= 635 && camY >= 650 && camY <= 825);
 
-    // Parallax Mountain Ranges (Rotates as player turns view)
-    ctx.fillStyle = this.chapter === 2 ? "#061320" : (this.chapter === 3 ? "#07040f" : "#041008");
-    ctx.beginPath();
-    ctx.moveTo(0, horizonY);
-    const step = 20;
-    for (let x = 0; x <= w + step; x += step) {
-      const peak = Math.sin((x / w) * 10 + yaw * 2.2) * 32 + Math.cos((x / w) * 5 + yaw * 1.4) * 18;
-      ctx.lineTo(x, horizonY - 18 - peak);
-    }
-    ctx.lineTo(w, horizonY);
-    ctx.closePath();
-    ctx.fill();
+    // 2. Ceiling / Sky Dome Rendering
+    if (inKudawaCabin) {
+      // Kudawa Cabin Interior Timber Ceiling & Heavy Rafters
+      const ceilH = Math.max(0, horizonY);
+      const ceilGrad = ctx.createLinearGradient(0, 0, 0, ceilH);
+      ceilGrad.addColorStop(0, "#120b06");
+      ceilGrad.addColorStop(0.7, "#24160d");
+      ceilGrad.addColorStop(1, "#362114");
+      ctx.fillStyle = ceilGrad;
+      ctx.fillRect(0, 0, w, ceilH);
 
-    // Thunder Flash
-    if (this.stormActive && Math.random() < 0.012) {
-      ctx.fillStyle = "rgba(220, 245, 255, 0.4)";
-      ctx.fillRect(0, 0, w, h);
-    }
-
-    // 3. Perspective Ground Plane (Rainforest Soil / Mud / Moss)
-    const groundGrad = ctx.createLinearGradient(0, horizonY, 0, h);
-    if (this.chapter === 2) {
-      groundGrad.addColorStop(0, "#101e14");
-      groundGrad.addColorStop(0.4, "#213d28");
-      groundGrad.addColorStop(1, "#32573d");
-    } else if (this.chapter === 3) {
-      groundGrad.addColorStop(0, "#08060e");
-      groundGrad.addColorStop(0.5, "#140f21");
-      groundGrad.addColorStop(1, "#1e1830");
-    } else if (this.chapter === 4) {
-      groundGrad.addColorStop(0, "#0a0f14");
-      groundGrad.addColorStop(0.5, "#162029");
-      groundGrad.addColorStop(1, "#22303c");
-    } else if (this.chapter === 5) {
-      groundGrad.addColorStop(0, "#140905");
-      groundGrad.addColorStop(0.5, "#2c150c");
-      groundGrad.addColorStop(1, "#442416");
-    } else {
-      groundGrad.addColorStop(0, "#051105");
-      groundGrad.addColorStop(0.35, "#0c240c");
-      groundGrad.addColorStop(0.75, "#143314");
-      groundGrad.addColorStop(1, "#1a421a");
-    }
-    ctx.fillStyle = groundGrad;
-    ctx.fillRect(0, horizonY, w, h - horizonY);
-
-    // ── Ultra-Realistic Forest Floor: Mud Trails, Puddles & Leaf Litter ──
-    // A. Winding perspective muddy footpath
-    ctx.save();
-    const trailGrad = ctx.createLinearGradient(0, horizonY, 0, h);
-    trailGrad.addColorStop(0, "rgba(18, 12, 6, 0.15)");
-    trailGrad.addColorStop(0.5, "rgba(28, 18, 10, 0.45)");
-    trailGrad.addColorStop(1, "rgba(35, 22, 12, 0.70)");
-    ctx.fillStyle = trailGrad;
-
-    const trailWBottom = w * 0.46;
-    const trailWTop = 18;
-    const trailCenterX = w * 0.50 + Math.sin(time * 0.0005) * 15;
-    ctx.beginPath();
-    ctx.moveTo(trailCenterX - trailWTop, horizonY);
-    ctx.quadraticCurveTo(trailCenterX - trailWBottom * 0.35, horizonY + (h - horizonY) * 0.55, trailCenterX - trailWBottom, h);
-    ctx.lineTo(trailCenterX + trailWBottom, h);
-    ctx.quadraticCurveTo(trailCenterX + trailWBottom * 0.35, horizonY + (h - horizonY) * 0.55, trailCenterX + trailWTop, horizonY);
-    ctx.closePath();
-    ctx.fill();
-
-    // B. Rainwater puddles reflecting the night sky & lightning
-    const puddles = [
-      { rx: 0.44, ry: 0.68, rw: 48, rh: 14, rot: 0.1 },
-      { rx: 0.58, ry: 0.82, rw: 65, rh: 18, rot: -0.15 },
-      { rx: 0.36, ry: 0.88, rw: 85, rh: 22, rot: 0.08 },
-    ];
-    puddles.forEach((pud) => {
-      const px = w * pud.rx + bobX * 0.4;
-      const py = horizonY + (h - horizonY) * pud.ry;
-      const pudGrad = ctx.createRadialGradient(px, py, 2, px, py, pud.rw);
-      pudGrad.addColorStop(0, "rgba(60, 110, 140, 0.45)");
-      pudGrad.addColorStop(0.7, "rgba(30, 60, 80, 0.28)");
-      pudGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
-      ctx.fillStyle = pudGrad;
-      ctx.beginPath();
-      ctx.ellipse(px, py, pud.rw, pud.rh, pud.rot, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Specular highlight ripple
-      ctx.strokeStyle = "rgba(186, 230, 253, 0.25)";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.ellipse(px, py, pud.rw * 0.7, pud.rh * 0.6, pud.rot, 0, Math.PI * 2);
-      ctx.stroke();
-    });
-
-    // C. Perspective depth terrain bands & leaf litter
-    const numStripes = 16;
-    for (let i = 0; i < numStripes; i++) {
-      const t = (i + 1) / numStripes;
-      const sy = horizonY + (h - horizonY) * (t * t);
-      const bandHeight = (h - horizonY) * (0.04 + t * 0.10);
-      ctx.fillStyle = i % 2 === 0 ? "rgba(0, 0, 0, 0.12)" : "rgba(35, 65, 30, 0.09)";
-      ctx.fillRect(0, sy, w, bandHeight);
-    }
-    ctx.restore();
-
-    // D. Volumetric Flashlight Ground Spot (with specular wet ground reflection)
-    if (this.torchOn) {
-      const spotX = w * 0.5 + bobX * 0.6;
-      const spotY = h * 0.74 + bobY;
-      const spotGrad = ctx.createRadialGradient(spotX, spotY, 25, spotX, spotY, w * 0.44);
-      if (this.uvMode) {
-        spotGrad.addColorStop(0, "rgba(168, 85, 247, 0.58)");
-        spotGrad.addColorStop(0.35, "rgba(126, 34, 206, 0.35)");
-        spotGrad.addColorStop(0.7, "rgba(56, 189, 248, 0.18)");
-        spotGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
-      } else {
-        spotGrad.addColorStop(0, "rgba(255, 250, 220, 0.65)");
-        spotGrad.addColorStop(0.35, "rgba(230, 215, 165, 0.35)");
-        spotGrad.addColorStop(0.7, "rgba(180, 160, 110, 0.15)");
-        spotGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+      // Heavy timber roof rafters across ceiling in perspective
+      ctx.fillStyle = "#1a0f08";
+      for (let r = 0; r < 5; r++) {
+        const ry = (ceilH / 5) * r;
+        ctx.fillRect(0, ry, w, 7);
       }
-      ctx.fillStyle = spotGrad;
-      ctx.fillRect(0, horizonY, w, h - horizonY);
+    } else {
+      // Nocturnal Rainforest Sky Dome & Parallax Mountain Horizon
+      const skyH = Math.max(0, horizonY + 2);
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, Math.max(10, horizonY));
+      if (this.chapter === 2) {
+        skyGrad.addColorStop(0, "#020814");
+        skyGrad.addColorStop(0.65, "#0a1e30");
+        skyGrad.addColorStop(1, "#163852");
+      } else if (this.chapter === 3) {
+        skyGrad.addColorStop(0, "#010106");
+        skyGrad.addColorStop(0.65, "#0b0817");
+        skyGrad.addColorStop(1, "#17102e");
+      } else if (this.chapter === 4) {
+        skyGrad.addColorStop(0, "#04070a");
+        skyGrad.addColorStop(0.65, "#0d1620");
+        skyGrad.addColorStop(1, "#192634");
+      } else if (this.chapter === 5) {
+        skyGrad.addColorStop(0, "#0b0407");
+        skyGrad.addColorStop(0.6, "#220c15");
+        skyGrad.addColorStop(1, "#451c14");
+      } else {
+        skyGrad.addColorStop(0, "#020a04");
+        skyGrad.addColorStop(0.65, "#08200f");
+        skyGrad.addColorStop(1, "#0f361a");
+      }
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, w, skyH);
+
+      // Parallax Mountain Ranges (Rotates as player turns view)
+      if (horizonY > 10) {
+        ctx.fillStyle = this.chapter === 2 ? "#061320" : (this.chapter === 3 ? "#07040f" : "#041008");
+        ctx.beginPath();
+        ctx.moveTo(0, horizonY);
+        const step = 20;
+        for (let x = 0; x <= w + step; x += step) {
+          const peak = Math.sin((x / w) * 10 + yaw * 2.2) * 32 + Math.cos((x / w) * 5 + yaw * 1.4) * 18;
+          ctx.lineTo(x, horizonY - 18 - peak);
+        }
+        ctx.lineTo(w, horizonY);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // Thunder Flash
+      if (this.stormActive && Math.random() < 0.012) {
+        ctx.fillStyle = "rgba(220, 245, 255, 0.4)";
+        ctx.fillRect(0, 0, w, h);
+      }
+    }
+
+    // 3. Perspective Ground Plane / Cabin Floor
+    if (horizonY < h) {
+      if (inKudawaCabin) {
+        // Polished Timber Floorboards inside Kudawa Outpost Cabin
+        const floorH = h - horizonY;
+        const floorGrad = ctx.createLinearGradient(0, horizonY, 0, h);
+        floorGrad.addColorStop(0, "#1e120a");
+        floorGrad.addColorStop(0.5, "#2d1b0f");
+        floorGrad.addColorStop(1, "#422817");
+        ctx.fillStyle = floorGrad;
+        ctx.fillRect(0, horizonY, w, floorH);
+
+        // Perspective Timber Planks
+        ctx.strokeStyle = "rgba(18, 10, 5, 0.55)";
+        ctx.lineWidth = 1.5;
+        const plankCount = 14;
+        for (let pl = 0; pl <= plankCount; pl++) {
+          const pFrac = pl / plankCount;
+          const topX = w * (0.45 + (pFrac - 0.5) * 0.3);
+          const botX = w * (0.5 + (pFrac - 0.5) * 1.6);
+          ctx.beginPath();
+          ctx.moveTo(topX, horizonY);
+          ctx.lineTo(botX, h);
+          ctx.stroke();
+        }
+
+        // Horizontal plank joint lines in perspective
+        for (let pj = 1; pj <= 8; pj++) {
+          const py = horizonY + floorH * Math.pow(pj / 8, 2);
+          ctx.beginPath();
+          ctx.moveTo(0, py);
+          ctx.lineTo(w, py);
+          ctx.stroke();
+        }
+
+        // Warm Storm Lantern Hanging from Center Ceiling Rafter
+        const lanternX = w * 0.5 + bobX * 0.3;
+        const lanternY = Math.max(20, horizonY - 75);
+        ctx.strokeStyle = "#475569";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(lanternX, 0);
+        ctx.lineTo(lanternX, lanternY);
+        ctx.stroke();
+
+        const lantGlow = ctx.createRadialGradient(lanternX, lanternY + 12, 10, lanternX, lanternY + 12, w * 0.75);
+        lantGlow.addColorStop(0, "rgba(251, 191, 36, 0.65)");
+        lantGlow.addColorStop(0.4, "rgba(245, 158, 11, 0.35)");
+        lantGlow.addColorStop(0.75, "rgba(180, 83, 9, 0.15)");
+        lantGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
+        ctx.fillStyle = lantGlow;
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.fillStyle = "#78350f";
+        ctx.beginPath();
+        ctx.arc(lanternX, lanternY + 12, 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#fef08a";
+        ctx.beginPath();
+        ctx.arc(lanternX, lanternY + 12, 6, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // Perspective Rainforest Ground Plane (Soil / Mud / Moss)
+        const groundGrad = ctx.createLinearGradient(0, horizonY, 0, h);
+        if (this.chapter === 2) {
+          groundGrad.addColorStop(0, "#101e14");
+          groundGrad.addColorStop(0.4, "#213d28");
+          groundGrad.addColorStop(1, "#32573d");
+        } else if (this.chapter === 3) {
+          groundGrad.addColorStop(0, "#08060e");
+          groundGrad.addColorStop(0.5, "#140f21");
+          groundGrad.addColorStop(1, "#1e1830");
+        } else if (this.chapter === 4) {
+          groundGrad.addColorStop(0, "#0a0f14");
+          groundGrad.addColorStop(0.5, "#162029");
+          groundGrad.addColorStop(1, "#22303c");
+        } else if (this.chapter === 5) {
+          groundGrad.addColorStop(0, "#140905");
+          groundGrad.addColorStop(0.5, "#2c150c");
+          groundGrad.addColorStop(1, "#442416");
+        } else {
+          groundGrad.addColorStop(0, "#051105");
+          groundGrad.addColorStop(0.35, "#0c240c");
+          groundGrad.addColorStop(0.75, "#143314");
+          groundGrad.addColorStop(1, "#1a421a");
+        }
+        ctx.fillStyle = groundGrad;
+        ctx.fillRect(0, horizonY, w, h - horizonY);
+
+        // ── Ultra-Realistic Forest Floor: Mud Trails, Puddles & Leaf Litter ──
+        // A. Winding perspective muddy footpath
+        ctx.save();
+        const trailGrad = ctx.createLinearGradient(0, horizonY, 0, h);
+        trailGrad.addColorStop(0, "rgba(18, 12, 6, 0.15)");
+        trailGrad.addColorStop(0.5, "rgba(28, 18, 10, 0.45)");
+        trailGrad.addColorStop(1, "rgba(35, 22, 12, 0.70)");
+        ctx.fillStyle = trailGrad;
+
+        const trailWBottom = w * 0.46;
+        const trailWTop = 18;
+        const trailCenterX = w * 0.50 + Math.sin(time * 0.0005) * 15;
+        ctx.beginPath();
+        ctx.moveTo(trailCenterX - trailWTop, horizonY);
+        ctx.quadraticCurveTo(trailCenterX - trailWBottom * 0.35, horizonY + (h - horizonY) * 0.55, trailCenterX - trailWBottom, h);
+        ctx.lineTo(trailCenterX + trailWBottom, h);
+        ctx.quadraticCurveTo(trailCenterX + trailWBottom * 0.35, horizonY + (h - horizonY) * 0.55, trailCenterX + trailWTop, horizonY);
+        ctx.closePath();
+        ctx.fill();
+
+        // B. Rainwater puddles reflecting the night sky & lightning
+        const puddles = [
+          { rx: 0.44, ry: 0.68, rw: 48, rh: 14, rot: 0.1 },
+          { rx: 0.58, ry: 0.82, rw: 65, rh: 18, rot: -0.15 },
+          { rx: 0.36, ry: 0.88, rw: 85, rh: 22, rot: 0.08 },
+        ];
+        puddles.forEach((pud) => {
+          const px = w * pud.rx + bobX * 0.4;
+          const py = horizonY + (h - horizonY) * pud.ry;
+          const pudGrad = ctx.createRadialGradient(px, py, 2, px, py, pud.rw);
+          pudGrad.addColorStop(0, "rgba(60, 110, 140, 0.45)");
+          pudGrad.addColorStop(0.7, "rgba(30, 60, 80, 0.28)");
+          pudGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+          ctx.fillStyle = pudGrad;
+          ctx.beginPath();
+          ctx.ellipse(px, py, pud.rw, pud.rh, pud.rot, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Specular highlight ripple
+          ctx.strokeStyle = "rgba(186, 230, 253, 0.25)";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.ellipse(px, py, pud.rw * 0.7, pud.rh * 0.6, pud.rot, 0, Math.PI * 2);
+          ctx.stroke();
+        });
+
+        // C. Perspective depth terrain bands & leaf litter
+        const numStripes = 16;
+        for (let i = 0; i < numStripes; i++) {
+          const t = (i + 1) / numStripes;
+          const sy = horizonY + (h - horizonY) * (t * t);
+          const bandHeight = (h - horizonY) * (0.04 + t * 0.10);
+          ctx.fillStyle = i % 2 === 0 ? "rgba(0, 0, 0, 0.12)" : "rgba(35, 65, 30, 0.09)";
+          ctx.fillRect(0, sy, w, bandHeight);
+        }
+        ctx.restore();
+
+        // D. Volumetric Flashlight Ground Spot
+        if (this.torchOn) {
+          const spotX = w * 0.5 + bobX * 0.6;
+          const spotY = h * 0.74 + bobY;
+          const spotGrad = ctx.createRadialGradient(spotX, spotY, 25, spotX, spotY, w * 0.44);
+          if (this.uvMode) {
+            spotGrad.addColorStop(0, "rgba(168, 85, 247, 0.58)");
+            spotGrad.addColorStop(0.35, "rgba(126, 34, 206, 0.35)");
+            spotGrad.addColorStop(0.7, "rgba(56, 189, 248, 0.18)");
+            spotGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+          } else {
+            spotGrad.addColorStop(0, "rgba(255, 250, 220, 0.65)");
+            spotGrad.addColorStop(0.35, "rgba(230, 215, 165, 0.35)");
+            spotGrad.addColorStop(0.7, "rgba(180, 160, 110, 0.15)");
+            spotGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+          }
+          ctx.fillStyle = spotGrad;
+          ctx.fillRect(0, horizonY, w, h - horizonY);
+        }
+      }
     }
 
     // 4. Transform & Project All Game Entities into 3D Depth
@@ -6704,7 +6952,7 @@ export class SinharajaEngine {
       const angle = Math.atan2(rgt, fwd);
       const inTorch = this.torchOn && Math.abs(angle) < 0.40;
       const fog = Math.max(0, Math.min(1.0, 1.0 - (fwd - 60) / 800));
-      const light = Math.min(1.0, 0.22 + (inTorch ? Math.max(0.3, 1.0 - (fwd / 520)) * 0.85 : 0));
+      const light = Math.min(1.0, (inKudawaCabin ? 0.65 : 0.22) + (inTorch ? Math.max(0.3, 1.0 - (fwd / 520)) * 0.85 : 0));
       return { fwd, rgt, scale, Sx, Sy, fog, light, inTorch, angle };
     };
 
@@ -6762,7 +7010,7 @@ export class SinharajaEngine {
     });
 
     // E. Ground Items (Salt, Herbs, Tea, Flares)
-    (this.items || []).forEach((it) => {
+    (this.items || []).forEach((it, idx) => {
       const p = projectPoint(it.x, it.y, 0);
       if (p) {
         fpsEntities.push({
@@ -6770,6 +7018,7 @@ export class SinharajaEngine {
           fwd: p.fwd,
           p,
           item: it,
+          itemIndex: idx,
         });
       }
     });
@@ -7385,142 +7634,403 @@ export class SinharajaEngine {
             ctx.shadowBlur = 0;
           }
         }
-        // 2. Kudawa Outpost Cabin (කුඩව ලී මුරපොළ)
-        else if (id.includes("cabin") || id.includes("outpost") || id.includes("shelter")) {
-          const cW = Math.max(60, 150 * scale);
-          const cH = Math.max(45, 110 * scale);
-          const stiltH = cH * 0.22;
+        // 2. Kudawa Outpost Cabin & Doorway (කුඩව ලී මුරපොළ ප්‍රධාන ගොඩනැගිල්ල සහ දොරටුව)
+        else if (id === "kudawa_outpost_door" || ent.type === "outpost_cabin") {
+          if (inKudawaCabin) {
+            // Inside the Cabin: Draw the Interior Exit Doorway & Frame
+            const dW = Math.max(30, 80 * scale);
+            const dH = Math.max(50, 130 * scale);
+            const dX = Sx - dW * 0.5;
+            const dY = Sy - dH;
 
-          ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
-          ctx.beginPath();
-          ctx.ellipse(Sx, Sy + 2, cW * 0.65, stiltH * 0.8, 0, 0, Math.PI * 2);
-          ctx.fill();
+            // Timber Wall Frame Around Doorway
+            ctx.fillStyle = `rgb(${Math.round(45 * light)}, ${Math.round(28 * light)}, ${Math.round(18 * light)})`;
+            ctx.fillRect(dX - 10 * scale, dY - 10 * scale, dW + 20 * scale, dH + 10 * scale);
 
-          // Raised Timber Stilt Foundation & Crawlspace
-          const stiltY = Sy - stiltH;
-          ctx.fillStyle = `rgb(${Math.round(30 * light)}, ${Math.round(20 * light)}, ${Math.round(14 * light)})`;
-          ctx.fillRect(Sx - cW * 0.46, stiltY, cW * 0.92, stiltH);
+            if (this.kudawaDoorOpen) {
+              // Open doorway looking out into the misty rainforest
+              ctx.fillStyle = "#030c05";
+              ctx.fillRect(dX, dY, dW, dH);
 
-          ctx.fillStyle = `rgb(${Math.round(65 * light)}, ${Math.round(44 * light)}, ${Math.round(32 * light)})`;
-          [-0.45, -0.15, 0.15, 0.45].forEach((pileFrac) => {
-            ctx.fillRect(Sx + cW * pileFrac - 3 * scale, stiltY, 6 * scale, stiltH);
-          });
+              // Silhouette of Sinharaja trees and moonlit mist outside
+              ctx.fillStyle = "#064e3b";
+              ctx.beginPath();
+              ctx.ellipse(dX + dW * 0.5, dY + dH * 0.75, dW * 0.42, dH * 0.35, 0, 0, Math.PI * 2);
+              ctx.fill();
 
-          ctx.fillStyle = `rgb(${Math.round(90 * light)}, ${Math.round(62 * light)}, ${Math.round(45 * light)})`;
-          ctx.fillRect(Sx - cW * 0.5, stiltY - 4 * scale, cW, 6 * scale);
+              // Swung door resting against inside wall
+              ctx.fillStyle = `rgb(${Math.round(65 * light)}, ${Math.round(42 * light)}, ${Math.round(28 * light)})`;
+              ctx.fillRect(dX - 6 * scale, dY, 10 * scale, dH);
+            } else {
+              // Closed heavy timber door from inside with diagonal brace and iron slide bolt
+              ctx.fillStyle = `rgb(${Math.round(58 * light)}, ${Math.round(36 * light)}, ${Math.round(24 * light)})`;
+              ctx.fillRect(dX, dY, dW, dH);
+              ctx.strokeStyle = `rgb(${Math.round(32 * light)}, ${Math.round(18 * light)}, ${Math.round(10 * light)})`;
+              ctx.lineWidth = Math.max(1, 2.5 * scale);
+              ctx.strokeRect(dX, dY, dW, dH);
+              ctx.beginPath();
+              ctx.moveTo(dX, dY); ctx.lineTo(dX + dW, dY + dH);
+              ctx.stroke();
 
-          // Weatherboard Timber Cabin Walls
-          const wallY = stiltY - 4 * scale - (cH - stiltH);
-          const wallH = cH - stiltH;
-          const wallGrad = ctx.createLinearGradient(0, wallY, 0, wallY + wallH);
-          wallGrad.addColorStop(0, `rgb(${Math.round(105 * light)}, ${Math.round(74 * light)}, ${Math.round(52 * light)})`);
-          wallGrad.addColorStop(1, `rgb(${Math.round(65 * light)}, ${Math.round(44 * light)}, ${Math.round(30 * light)})`);
-          ctx.fillStyle = wallGrad;
-          ctx.fillRect(Sx - cW * 0.48, wallY, cW * 0.96, wallH);
+              // Heavy Iron Sliding Bolt Latch
+              ctx.fillStyle = "#1e293b";
+              ctx.fillRect(dX + dW * 0.25, dY + dH * 0.5 - 3 * scale, dW * 0.5, 6 * scale);
+              ctx.fillStyle = "#475569";
+              ctx.beginPath();
+              ctx.arc(dX + dW * 0.65, dY + dH * 0.5, 4 * scale, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          } else {
+            // Outside the Cabin: Full Elevated Weatherboard Timber Outpost
+            const cW = Math.max(70, 160 * scale);
+            const cH = Math.max(50, 120 * scale);
+            const stiltH = cH * 0.22;
 
-          // Weatherboard Slat Grooves
-          ctx.strokeStyle = `rgba(${Math.round(35 * light)}, ${Math.round(22 * light)}, ${Math.round(14 * light)}, 0.65)`;
-          ctx.lineWidth = Math.max(1, 1.4 * scale);
-          const slatStep = wallH / 8;
-          ctx.beginPath();
-          for (let sl = 1; sl < 8; sl++) {
-            ctx.moveTo(Sx - cW * 0.48, wallY + sl * slatStep);
-            ctx.lineTo(Sx + cW * 0.48, wallY + sl * slatStep);
+            ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+            ctx.beginPath();
+            ctx.ellipse(Sx, Sy + 2, cW * 0.65, stiltH * 0.8, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Raised Timber Stilt Foundation & Crawlspace
+            const stiltY = Sy - stiltH;
+            ctx.fillStyle = `rgb(${Math.round(30 * light)}, ${Math.round(20 * light)}, ${Math.round(14 * light)})`;
+            ctx.fillRect(Sx - cW * 0.46, stiltY, cW * 0.92, stiltH);
+
+            // Timber Stilts
+            ctx.fillStyle = `rgb(${Math.round(65 * light)}, ${Math.round(44 * light)}, ${Math.round(32 * light)})`;
+            [-0.45, -0.15, 0.15, 0.45].forEach((pileFrac) => {
+              ctx.fillRect(Sx + cW * pileFrac - 3 * scale, stiltY, 6 * scale, stiltH);
+            });
+
+            // Horizontal Veranda Beam & Porch Steps
+            ctx.fillStyle = `rgb(${Math.round(90 * light)}, ${Math.round(62 * light)}, ${Math.round(45 * light)})`;
+            ctx.fillRect(Sx - cW * 0.5, stiltY - 4 * scale, cW, 6 * scale);
+
+            // Wooden steps leading up to the doorway
+            ctx.fillStyle = `rgb(${Math.round(75 * light)}, ${Math.round(50 * light)}, ${Math.round(35 * light)})`;
+            ctx.fillRect(Sx - 18 * scale, Sy - 4 * scale, 36 * scale, 5 * scale);
+            ctx.fillRect(Sx - 15 * scale, Sy - 9 * scale, 30 * scale, 5 * scale);
+
+            // Weatherboard Timber Cabin Walls
+            const wallY = stiltY - 4 * scale - (cH - stiltH);
+            const wallH = cH - stiltH;
+            const wallGrad = ctx.createLinearGradient(0, wallY, 0, wallY + wallH);
+            wallGrad.addColorStop(0, `rgb(${Math.round(105 * light)}, ${Math.round(74 * light)}, ${Math.round(52 * light)})`);
+            wallGrad.addColorStop(1, `rgb(${Math.round(65 * light)}, ${Math.round(44 * light)}, ${Math.round(30 * light)})`);
+            ctx.fillStyle = wallGrad;
+            ctx.fillRect(Sx - cW * 0.48, wallY, cW * 0.96, wallH);
+
+            // Weatherboard Slat Grooves
+            ctx.strokeStyle = `rgba(${Math.round(35 * light)}, ${Math.round(22 * light)}, ${Math.round(14 * light)}, 0.65)`;
+            ctx.lineWidth = Math.max(1, 1.4 * scale);
+            const slatStep = wallH / 8;
+            ctx.beginPath();
+            for (let sl = 1; sl < 8; sl++) {
+              ctx.moveTo(Sx - cW * 0.48, wallY + sl * slatStep);
+              ctx.lineTo(Sx + cW * 0.48, wallY + sl * slatStep);
+            }
+            ctx.stroke();
+
+            // Doorway Opening (Entrance)
+            const doorW = cW * 0.26;
+            const doorH = wallH * 0.82;
+            const doorX = Sx - doorW * 0.5;
+            const doorY = wallY + (wallH - doorH);
+
+            // Interior View through doorway
+            ctx.fillStyle = "#1e130c";
+            ctx.fillRect(doorX, doorY, doorW, doorH);
+
+            // If door is open, warm light spills out of doorway
+            if (this.kudawaDoorOpen) {
+              const doorLight = ctx.createLinearGradient(doorX, doorY, doorX, doorY + doorH + 20 * scale);
+              doorLight.addColorStop(0, "rgba(251, 191, 36, 0.7)");
+              doorLight.addColorStop(0.6, "rgba(245, 158, 11, 0.35)");
+              doorLight.addColorStop(1, "rgba(0, 0, 0, 0)");
+              ctx.fillStyle = doorLight;
+              ctx.fillRect(doorX, doorY, doorW, doorH + 25 * scale);
+
+              // Open door swinging 90 deg inward
+              ctx.fillStyle = `rgb(${Math.round(48 * light)}, ${Math.round(30 * light)}, ${Math.round(20 * light)})`;
+              ctx.fillRect(doorX, doorY, 6 * scale, doorH);
+            } else {
+              // Closed Heavy Timber Door with Z-Brace
+              ctx.fillStyle = `rgb(${Math.round(48 * light)}, ${Math.round(30 * light)}, ${Math.round(20 * light)})`;
+              ctx.fillRect(doorX, doorY, doorW, doorH);
+              ctx.strokeStyle = `rgb(${Math.round(32 * light)}, ${Math.round(18 * light)}, ${Math.round(10 * light)})`;
+              ctx.lineWidth = Math.max(1, 2.5 * scale);
+              ctx.strokeRect(doorX, doorY, doorW, doorH);
+              ctx.beginPath();
+              ctx.moveTo(doorX, doorY); ctx.lineTo(doorX + doorW, doorY + doorH);
+              ctx.stroke();
+              // Iron Ring Handle
+              ctx.fillStyle = "#1e293b";
+              ctx.beginPath();
+              ctx.arc(doorX + doorW * 0.8, doorY + doorH * 0.5, Math.max(1.5, 3.5 * scale), 0, Math.PI * 2);
+              ctx.fill();
+            }
+
+            // Signboard above Door
+            ctx.fillStyle = "#271c14";
+            ctx.fillRect(doorX - 4 * scale, doorY - 11 * scale, doorW + 8 * scale, 9 * scale);
+            ctx.fillStyle = "#facc15";
+            ctx.font = `bold ${Math.max(6, Math.round(5.5 * scale))}px monospace`;
+            ctx.textAlign = "center";
+            ctx.fillText("KUDAWA", doorX + doorW * 0.5, doorY - 4 * scale);
+
+            // Illuminated 4-Pane Window with Warm Lantern Light
+            const winW = cW * 0.24;
+            const winH = wallH * 0.38;
+            const winX = Sx + cW * 0.20;
+            const winY = wallY + wallH * 0.25;
+
+            const winLight = ctx.createRadialGradient(winX + winW * 0.5, winY + winH * 0.5, 5, winX + winW * 0.5, winY + winH * 0.5, winW * 2.2);
+            winLight.addColorStop(0, "rgba(251, 191, 36, 0.55)");
+            winLight.addColorStop(0.5, "rgba(245, 158, 11, 0.20)");
+            winLight.addColorStop(1, "rgba(0, 0, 0, 0)");
+            ctx.fillStyle = winLight;
+            ctx.beginPath();
+            ctx.arc(winX + winW * 0.5, winY + winH * 0.5, winW * 2.2, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = "#fbbf24";
+            ctx.fillRect(winX, winY, winW, winH);
+            ctx.fillStyle = "#3e2723";
+            ctx.fillRect(winX + winW * 0.5 - 1.5 * scale, winY, 3 * scale, winH);
+            ctx.fillRect(winX, winY + winH * 0.5 - 1.5 * scale, winW, 3 * scale);
+            ctx.strokeRect(winX, winY, winW, winH);
+
+            // Corrugated Zinc Gabled Roof with Rust Streaks
+            const roofOverhang = cW * 0.08;
+            const roofApexY = wallY - cH * 0.38;
+            const roofBaseY = wallY + 2 * scale;
+
+            const roofGrad = ctx.createLinearGradient(0, roofApexY, 0, roofBaseY);
+            roofGrad.addColorStop(0, `rgb(${Math.round(145 * light)}, ${Math.round(152 * light)}, ${Math.round(160 * light)})`);
+            roofGrad.addColorStop(0.5, `rgb(${Math.round(110 * light)}, ${Math.round(118 * light)}, ${Math.round(126 * light)})`);
+            roofGrad.addColorStop(1, `rgb(${Math.round(75 * light)}, ${Math.round(82 * light)}, ${Math.round(90 * light)})`);
+            ctx.fillStyle = roofGrad;
+
+            ctx.beginPath();
+            ctx.moveTo(Sx - cW * 0.5 - roofOverhang, roofBaseY);
+            ctx.lineTo(Sx, roofApexY);
+            ctx.lineTo(Sx + cW * 0.5 + roofOverhang, roofBaseY);
+            ctx.closePath();
+            ctx.fill();
+
+            // Corrugated Roof Ridges & Rust Streaks
+            ctx.strokeStyle = `rgba(${Math.round(180 * light)}, ${Math.round(80 * light)}, ${Math.round(40 * light)}, 0.4)`;
+            ctx.lineWidth = Math.max(1, 1.8 * scale);
+            ctx.beginPath();
+            [-0.35, -0.2, -0.05, 0.1, 0.25, 0.4].forEach((rOff) => {
+              ctx.moveTo(Sx + cW * rOff * 0.2, roofApexY);
+              ctx.lineTo(Sx + cW * rOff * 1.1, roofBaseY);
+            });
+            ctx.stroke();
+
+            // Roof Antenna & Blinking Beacon
+            ctx.strokeStyle = "#94a3b8";
+            ctx.lineWidth = Math.max(1.2, 2 * scale);
+            ctx.beginPath();
+            ctx.moveTo(Sx, roofApexY); ctx.lineTo(Sx, roofApexY - 24 * scale);
+            ctx.moveTo(Sx - 6 * scale, roofApexY - 14 * scale); ctx.lineTo(Sx + 6 * scale, roofApexY - 14 * scale);
+            ctx.stroke();
+
+            const beaconFlash = Math.sin(time * 0.008) > 0.2;
+            ctx.fillStyle = beaconFlash ? "#ef4444" : "#450a0a";
+            ctx.shadowColor = beaconFlash ? "#ef4444" : "transparent";
+            ctx.shadowBlur = beaconFlash ? 14 * scale : 0;
+            ctx.beginPath();
+            ctx.arc(Sx, roofApexY - 25 * scale, Math.max(2, 3.5 * scale), 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
           }
-          ctx.stroke();
-
-          // Z-Braced Timber Door
-          const doorW = cW * 0.26;
-          const doorH = wallH * 0.78;
-          const doorX = Sx - cW * 0.34;
-          const doorY = wallY + (wallH - doorH);
-
-          ctx.fillStyle = `rgb(${Math.round(48 * light)}, ${Math.round(30 * light)}, ${Math.round(20 * light)})`;
-          ctx.fillRect(doorX, doorY, doorW, doorH);
-          ctx.strokeStyle = `rgb(${Math.round(32 * light)}, ${Math.round(18 * light)}, ${Math.round(10 * light)})`;
-          ctx.lineWidth = Math.max(1, 2.5 * scale);
-          ctx.strokeRect(doorX, doorY, doorW, doorH);
+        }
+        // 2B. 1987 Military VHF Radio Transceiver (රේඩියෝ උපකරණය)
+        else if (id === "outpost_radio" || id.includes("radio")) {
+          const rW = Math.max(16, 32 * scale);
+          const rH = Math.max(12, 24 * scale);
+          ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
           ctx.beginPath();
-          ctx.moveTo(doorX, doorY); ctx.lineTo(doorX + doorW, doorY + doorH);
-          ctx.stroke();
-          ctx.fillStyle = "#1e293b";
-          ctx.beginPath();
-          ctx.arc(doorX + doorW * 0.8, doorY + doorH * 0.5, Math.max(1.5, 3 * scale), 0, Math.PI * 2);
+          ctx.ellipse(Sx, Sy + 2, rW * 0.6, rH * 0.28, 0, 0, Math.PI * 2);
           ctx.fill();
 
-          // Signboard above Door
-          ctx.fillStyle = "#271c14";
-          ctx.fillRect(doorX - 2 * scale, doorY - 10 * scale, doorW + 4 * scale, 8 * scale);
-          ctx.fillStyle = "#e2e8f0";
-          ctx.font = `bold ${Math.max(6, Math.round(5.5 * scale))}px monospace`;
-          ctx.textAlign = "center";
-          ctx.fillText("KUDAWA", doorX + doorW * 0.5, doorY - 4 * scale);
+          const rGrad = ctx.createLinearGradient(0, Sy - rH, 0, Sy);
+          rGrad.addColorStop(0, `rgb(${Math.round(80 * light)}, ${Math.round(92 * light)}, ${Math.round(78 * light)})`);
+          rGrad.addColorStop(1, `rgb(${Math.round(35 * light)}, ${Math.round(42 * light)}, ${Math.round(34 * light)})`);
+          ctx.fillStyle = rGrad;
+          ctx.fillRect(Sx - rW * 0.5, Sy - rH, rW, rH);
 
-          // Illuminated 4-Pane Window with Warm Lantern Light
-          const winW = cW * 0.28;
-          const winH = wallH * 0.42;
-          const winX = Sx + cW * 0.12;
-          const winY = wallY + wallH * 0.22;
-
-          const winLight = ctx.createRadialGradient(winX + winW * 0.5, winY + winH * 0.5, 5, winX + winW * 0.5, winY + winH * 0.5, winW * 2.5);
-          winLight.addColorStop(0, "rgba(251, 191, 36, 0.55)");
-          winLight.addColorStop(0.5, "rgba(245, 158, 11, 0.20)");
-          winLight.addColorStop(1, "rgba(0, 0, 0, 0)");
-          ctx.fillStyle = winLight;
+          // Speaker grille
+          ctx.fillStyle = "#1e2920";
           ctx.beginPath();
-          ctx.arc(winX + winW * 0.5, winY + winH * 0.5, winW * 2.2, 0, Math.PI * 2);
+          ctx.arc(Sx - rW * 0.2, Sy - rH * 0.5, rH * 0.32, 0, Math.PI * 2);
           ctx.fill();
 
-          ctx.fillStyle = "#fbbf24";
-          ctx.fillRect(winX, winY, winW, winH);
-          ctx.fillStyle = "#3e2723";
-          ctx.fillRect(winX + winW * 0.5 - 1.5 * scale, winY, 3 * scale, winH);
-          ctx.fillRect(winX, winY + winH * 0.5 - 1.5 * scale, winW, 3 * scale);
-          ctx.strokeRect(winX, winY, winW, winH);
-
-          // Corrugated Zinc Gabled Roof with Rust Streaks
-          const roofOverhang = cW * 0.08;
-          const roofApexY = wallY - cH * 0.38;
-          const roofBaseY = wallY + 2 * scale;
-
-          const roofGrad = ctx.createLinearGradient(0, roofApexY, 0, roofBaseY);
-          roofGrad.addColorStop(0, `rgb(${Math.round(145 * light)}, ${Math.round(152 * light)}, ${Math.round(160 * light)})`);
-          roofGrad.addColorStop(0.5, `rgb(${Math.round(110 * light)}, ${Math.round(118 * light)}, ${Math.round(126 * light)})`);
-          roofGrad.addColorStop(1, `rgb(${Math.round(75 * light)}, ${Math.round(82 * light)}, ${Math.round(90 * light)})`);
-          ctx.fillStyle = roofGrad;
-
+          // Tuning knobs
+          ctx.fillStyle = "#cbd5e1";
           ctx.beginPath();
-          ctx.moveTo(Sx - cW * 0.5 - roofOverhang, roofBaseY);
-          ctx.lineTo(Sx, roofApexY);
-          ctx.lineTo(Sx + cW * 0.5 + roofOverhang, roofBaseY);
-          ctx.closePath();
+          ctx.arc(Sx + rW * 0.25, Sy - rH * 0.65, 3 * scale, 0, Math.PI * 2);
+          ctx.arc(Sx + rW * 0.25, Sy - rH * 0.35, 3 * scale, 0, Math.PI * 2);
           ctx.fill();
 
-          // Corrugated Roof Ridges & Rust Streaks
-          ctx.strokeStyle = `rgba(${Math.round(180 * light)}, ${Math.round(80 * light)}, ${Math.round(40 * light)}, 0.4)`;
-          ctx.lineWidth = Math.max(1, 1.8 * scale);
-          ctx.beginPath();
-          [-0.35, -0.2, -0.05, 0.1, 0.25, 0.4].forEach((rOff) => {
-            ctx.moveTo(Sx + cW * rOff * 0.2, roofApexY);
-            ctx.lineTo(Sx + cW * rOff * 1.1, roofBaseY);
-          });
-          ctx.stroke();
+          // Green frequency display LED
+          ctx.fillStyle = "#22c55e";
+          ctx.shadowColor = "#22c55e";
+          ctx.shadowBlur = 6 * scale;
+          ctx.fillRect(Sx + rW * 0.1, Sy - rH * 0.85, rW * 0.32, 3 * scale);
+          ctx.shadowBlur = 0;
 
-          // Roof Antenna & Blinking Beacon
+          // Antenna
           ctx.strokeStyle = "#94a3b8";
-          ctx.lineWidth = Math.max(1.2, 2 * scale);
+          ctx.lineWidth = Math.max(1, 1.5 * scale);
           ctx.beginPath();
-          ctx.moveTo(Sx, roofApexY); ctx.lineTo(Sx, roofApexY - 24 * scale);
-          ctx.moveTo(Sx - 6 * scale, roofApexY - 14 * scale); ctx.lineTo(Sx + 6 * scale, roofApexY - 14 * scale);
+          ctx.moveTo(Sx - rW * 0.38, Sy - rH);
+          ctx.lineTo(Sx - rW * 0.45, Sy - rH - 28 * scale);
+          ctx.stroke();
+        }
+        // 2C. Reel-to-Reel Tape Machine (ඩග්ලස්ගේ හඬපට යන්ත්‍රය)
+        else if (id === "outpost_douglas_reel" || id.includes("reel")) {
+          const tW = Math.max(18, 34 * scale);
+          const tH = Math.max(14, 26 * scale);
+
+          ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+          ctx.beginPath();
+          ctx.ellipse(Sx, Sy + 2, tW * 0.6, tH * 0.28, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = `rgb(${Math.round(45 * light)}, ${Math.round(52 * light)}, ${Math.round(60 * light)})`;
+          ctx.fillRect(Sx - tW * 0.5, Sy - tH, tW, tH);
+
+          const spoolR = tH * 0.32;
+          [-0.22, 0.22].forEach((off) => {
+            ctx.fillStyle = "#1e293b";
+            ctx.beginPath();
+            ctx.arc(Sx + tW * off, Sy - tH * 0.55, spoolR, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = "#cbd5e1";
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.fillStyle = "#ffffff";
+            ctx.beginPath();
+            ctx.arc(Sx + tW * off, Sy - tH * 0.55, 2 * scale, 0, Math.PI * 2);
+            ctx.fill();
+          });
+
+          ctx.fillStyle = "#f59e0b";
+          ctx.fillRect(Sx - 4 * scale, Sy - tH * 0.25, 8 * scale, 4 * scale);
+        }
+        // 2D. Herbal Balm Medicine Vial (කූඩැලි ආරක්ෂක තෙල් බෝතලය)
+        else if (id === "outpost_balm_bottle" || id.includes("balm")) {
+          const bW = Math.max(10, 18 * scale);
+          const bH = Math.max(16, 30 * scale);
+
+          ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+          ctx.beginPath();
+          ctx.ellipse(Sx, Sy + 1, bW * 0.6, bW * 0.25, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          const vialGrad = ctx.createLinearGradient(Sx - bW * 0.5, 0, Sx + bW * 0.5, 0);
+          vialGrad.addColorStop(0, "rgba(180, 83, 9, 0.85)");
+          vialGrad.addColorStop(0.4, "rgba(245, 158, 11, 0.95)");
+          vialGrad.addColorStop(1, "rgba(120, 53, 15, 0.9)");
+          ctx.fillStyle = vialGrad;
+          ctx.beginPath();
+          ctx.roundRect(Sx - bW * 0.5, Sy - bH * 0.75, bW, bH * 0.75, 3 * scale);
+          ctx.fill();
+
+          ctx.fillStyle = "#fef3c7";
+          ctx.fillRect(Sx - bW * 0.4, Sy - bH * 0.55, bW * 0.8, bH * 0.35);
+          ctx.fillStyle = "#15803d";
+          ctx.beginPath();
+          ctx.arc(Sx, Sy - bH * 0.38, 2.5 * scale, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = "#b45309";
+          ctx.fillRect(Sx - bW * 0.25, Sy - bH * 0.90, bW * 0.5, bH * 0.18);
+          ctx.fillStyle = "#d4a373";
+          ctx.fillRect(Sx - bW * 0.22, Sy - bH, bW * 0.44, bH * 0.12);
+        }
+        // 2E. UV Blacklight Optical Lens (පාරජම්බුල කාචය)
+        else if (id === "outpost_uv_lens" || id.includes("lens")) {
+          const lR = Math.max(10, 18 * scale);
+
+          ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+          ctx.beginPath();
+          ctx.ellipse(Sx, Sy + 1, lR * 1.1, lR * 0.4, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = "#b45309";
+          ctx.beginPath();
+          ctx.arc(Sx, Sy - lR, lR, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = "#d4af37";
+          ctx.lineWidth = Math.max(1.5, 2.5 * scale);
           ctx.stroke();
 
-          const beaconFlash = Math.sin(time * 0.008) > 0.2;
-          ctx.fillStyle = beaconFlash ? "#ef4444" : "#450a0a";
-          ctx.shadowColor = beaconFlash ? "#ef4444" : "transparent";
-          ctx.shadowBlur = beaconFlash ? 14 * scale : 0;
+          ctx.fillStyle = "#3b0764";
           ctx.beginPath();
-          ctx.arc(Sx, roofApexY - 25 * scale, Math.max(2, 3.5 * scale), 0, Math.PI * 2);
+          ctx.arc(Sx, Sy - lR, lR * 0.75, 0, Math.PI * 2);
           ctx.fill();
+
+          ctx.shadowColor = "#a855f7";
+          ctx.shadowBlur = 12 * scale;
+          ctx.strokeStyle = "rgba(168, 85, 247, 0.85)";
+          ctx.lineWidth = Math.max(1, 2 * scale);
+          ctx.beginPath();
+          ctx.arc(Sx - lR * 0.2, Sy - lR - lR * 0.2, lR * 0.35, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+        }
+        // 2F. Tactical Emergency Flare Launcher (සංඥා පිස්තෝලය)
+        else if (id === "outpost_flaregun" || id.includes("flaregun")) {
+          const fW = Math.max(16, 32 * scale);
+          const fH = Math.max(12, 22 * scale);
+
+          ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+          ctx.beginPath();
+          ctx.ellipse(Sx, Sy + 1, fW * 0.6, fH * 0.3, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = "#ea580c";
+          ctx.beginPath();
+          ctx.fillRect(Sx - fW * 0.4, Sy - fH * 0.85, fW * 0.8, fH * 0.42);
+          ctx.fillRect(Sx - fW * 0.35, Sy - fH * 0.45, fW * 0.35, fH * 0.55);
+          ctx.fill();
+
+          ctx.fillStyle = "#1e293b";
+          ctx.fillRect(Sx - fW * 0.45, Sy - fH * 0.9, 4 * scale, 6 * scale);
+          ctx.fillRect(Sx + fW * 0.35, Sy - fH * 0.85, 3 * scale, fH * 0.42);
+        }
+        // 2G. Solar Charger & Battery Station (සූර්ය කෝෂ ආරෝපකය)
+        else if (id === "outpost_solar_charger" || id.includes("solar")) {
+          const sW = Math.max(22, 44 * scale);
+          const sH = Math.max(18, 36 * scale);
+
+          ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+          ctx.beginPath();
+          ctx.ellipse(Sx, Sy + 2, sW * 0.65, sH * 0.28, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = `rgb(${Math.round(30 * light)}, ${Math.round(41 * light)}, ${Math.round(59 * light)})`;
+          ctx.fillRect(Sx - sW * 0.5, Sy - sH, sW, sH);
+
+          ctx.fillStyle = "#1e3a8a";
+          ctx.fillRect(Sx - sW * 0.44, Sy - sH * 0.92, sW * 0.88, sH * 0.55);
+
+          ctx.strokeStyle = "#94a3b8";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(Sx, Sy - sH * 0.92); ctx.lineTo(Sx, Sy - sH * 0.37);
+          ctx.moveTo(Sx - sW * 0.44, Sy - sH * 0.65); ctx.lineTo(Sx + sW * 0.44, Sy - sH * 0.65);
+          ctx.stroke();
+
+          ctx.fillStyle = "#10b981";
+          ctx.shadowColor = "#10b981";
+          ctx.shadowBlur = 8 * scale;
+          for (let b = 0; b < 3; b++) {
+            ctx.fillRect(Sx - sW * 0.3 + b * (7 * scale), Sy - sH * 0.25, 4 * scale, 5 * scale);
+          }
           ctx.shadowBlur = 0;
         }
         // 3. Military / Field Research Canvas Tent
@@ -8007,6 +8517,27 @@ export class SinharajaEngine {
         ctx.save();
         ctx.globalAlpha = fog;
 
+        // Check if aimed near crosshair (center of screen) for precise pickup
+        const distToCenter = Math.hypot(Sx - w * 0.5, (Sy - 8 * scale) - h * 0.5);
+        if (distToCenter < minCrosshairDist && p.fwd < 160) {
+          minCrosshairDist = distToCenter;
+          const itemName = it?.type === "salt"
+            ? "ලුණු කුඩු මල්ල (Sea Salt Pouch)"
+            : it?.type === "herb"
+            ? "ඖෂධීය පැළෑටිය (Rainforest Herb)"
+            : it?.type === "feather"
+            ? "නිල් කැහිබෙලි පිහාටුව (Blue Magpie Feather)"
+            : "උණුසුම් ඉඟුරු තේ (Ginger Tea Flask)";
+          crosshairTarget = {
+            isItem: true,
+            item: it,
+            itemIndex: ent.itemIndex,
+            title: itemName,
+            prompt: "[E] අහුලාගන්න (Pick Up)",
+            icon: it?.type === "salt" ? "🧂" : (it?.type === "herb" ? "🌿" : (it?.type === "feather" ? "🪶" : "🫖")),
+          };
+        }
+
         ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
         ctx.beginPath();
         ctx.ellipse(Sx, Sy + 2, iR * 1.2, iR * 0.45, 0, 0, Math.PI * 2);
@@ -8387,6 +8918,7 @@ export class SinharajaEngine {
     const cx = w * 0.5;
     const cy = h * 0.5;
     const hasTarget = !!crosshairTarget;
+    this.activeCrosshairTarget = crosshairTarget;
 
     ctx.strokeStyle = hasTarget ? "#f59e0b" : "rgba(74, 222, 128, 0.75)";
     ctx.lineWidth = 1.5;
