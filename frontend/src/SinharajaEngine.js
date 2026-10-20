@@ -6611,28 +6611,77 @@ export class SinharajaEngine {
     ctx.fillStyle = groundGrad;
     ctx.fillRect(0, horizonY, w, h - horizonY);
 
-    // Perspective depth terrain stripes (Mud footpaths & wet soil)
-    const numStripes = 14;
+    // ── Ultra-Realistic Forest Floor: Mud Trails, Puddles & Leaf Litter ──
+    // A. Winding perspective muddy footpath
+    ctx.save();
+    const trailGrad = ctx.createLinearGradient(0, horizonY, 0, h);
+    trailGrad.addColorStop(0, "rgba(18, 12, 6, 0.15)");
+    trailGrad.addColorStop(0.5, "rgba(28, 18, 10, 0.45)");
+    trailGrad.addColorStop(1, "rgba(35, 22, 12, 0.70)");
+    ctx.fillStyle = trailGrad;
+
+    const trailWBottom = w * 0.46;
+    const trailWTop = 18;
+    const trailCenterX = w * 0.50 + Math.sin(time * 0.0005) * 15;
+    ctx.beginPath();
+    ctx.moveTo(trailCenterX - trailWTop, horizonY);
+    ctx.quadraticCurveTo(trailCenterX - trailWBottom * 0.35, horizonY + (h - horizonY) * 0.55, trailCenterX - trailWBottom, h);
+    ctx.lineTo(trailCenterX + trailWBottom, h);
+    ctx.quadraticCurveTo(trailCenterX + trailWBottom * 0.35, horizonY + (h - horizonY) * 0.55, trailCenterX + trailWTop, horizonY);
+    ctx.closePath();
+    ctx.fill();
+
+    // B. Rainwater puddles reflecting the night sky & lightning
+    const puddles = [
+      { rx: 0.44, ry: 0.68, rw: 48, rh: 14, rot: 0.1 },
+      { rx: 0.58, ry: 0.82, rw: 65, rh: 18, rot: -0.15 },
+      { rx: 0.36, ry: 0.88, rw: 85, rh: 22, rot: 0.08 },
+    ];
+    puddles.forEach((pud) => {
+      const px = w * pud.rx + bobX * 0.4;
+      const py = horizonY + (h - horizonY) * pud.ry;
+      const pudGrad = ctx.createRadialGradient(px, py, 2, px, py, pud.rw);
+      pudGrad.addColorStop(0, "rgba(60, 110, 140, 0.45)");
+      pudGrad.addColorStop(0.7, "rgba(30, 60, 80, 0.28)");
+      pudGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+      ctx.fillStyle = pudGrad;
+      ctx.beginPath();
+      ctx.ellipse(px, py, pud.rw, pud.rh, pud.rot, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Specular highlight ripple
+      ctx.strokeStyle = "rgba(186, 230, 253, 0.25)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.ellipse(px, py, pud.rw * 0.7, pud.rh * 0.6, pud.rot, 0, Math.PI * 2);
+      ctx.stroke();
+    });
+
+    // C. Perspective depth terrain bands & leaf litter
+    const numStripes = 16;
     for (let i = 0; i < numStripes; i++) {
       const t = (i + 1) / numStripes;
       const sy = horizonY + (h - horizonY) * (t * t);
-      const bandHeight = (h - horizonY) * (0.05 + t * 0.12);
-      ctx.fillStyle = i % 2 === 0 ? "rgba(0, 0, 0, 0.15)" : "rgba(30, 60, 25, 0.12)";
+      const bandHeight = (h - horizonY) * (0.04 + t * 0.10);
+      ctx.fillStyle = i % 2 === 0 ? "rgba(0, 0, 0, 0.12)" : "rgba(35, 65, 30, 0.09)";
       ctx.fillRect(0, sy, w, bandHeight);
     }
+    ctx.restore();
 
-    // Volumetric Flashlight Ground Spot
+    // D. Volumetric Flashlight Ground Spot (with specular wet ground reflection)
     if (this.torchOn) {
       const spotX = w * 0.5 + bobX * 0.6;
       const spotY = h * 0.74 + bobY;
       const spotGrad = ctx.createRadialGradient(spotX, spotY, 25, spotX, spotY, w * 0.44);
       if (this.uvMode) {
-        spotGrad.addColorStop(0, "rgba(168, 85, 247, 0.55)");
-        spotGrad.addColorStop(0.4, "rgba(56, 189, 248, 0.28)");
+        spotGrad.addColorStop(0, "rgba(168, 85, 247, 0.58)");
+        spotGrad.addColorStop(0.35, "rgba(126, 34, 206, 0.35)");
+        spotGrad.addColorStop(0.7, "rgba(56, 189, 248, 0.18)");
         spotGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
       } else {
-        spotGrad.addColorStop(0, "rgba(255, 250, 220, 0.62)");
-        spotGrad.addColorStop(0.35, "rgba(230, 215, 165, 0.32)");
+        spotGrad.addColorStop(0, "rgba(255, 250, 220, 0.65)");
+        spotGrad.addColorStop(0.35, "rgba(230, 215, 165, 0.35)");
+        spotGrad.addColorStop(0.7, "rgba(180, 160, 110, 0.15)");
         spotGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
       }
       ctx.fillStyle = spotGrad;
@@ -6774,132 +6823,359 @@ export class SinharajaEngine {
       const { p } = ent;
       const { Sx, Sy, scale, light, fog } = p;
 
-      // ── Tree ──
+      // ── Tree (Realistic Buttress Roots, Furrowed Bark & Volumetric Canopy) ──
       if (ent.type === "tree") {
         const t = ent.tree;
-        const trunkR = (t.r || 18) * scale;
-        const treeH = (t.height || 135) * scale;
-        const foliageR = (t.foliageR || 72) * scale;
-        const sway = Math.sin(time * 0.0018 + t.x * 0.01) * (10 * scale);
+        const trunkR = Math.max(8, (t.r || 18) * scale);
+        const treeH = Math.max(40, (t.height || 135) * scale);
+        const foliageR = Math.max(25, (t.foliageR || 72) * scale);
+        const sway = Math.sin(time * 0.0018 + t.x * 0.01) * (8 * scale);
 
         ctx.save();
         ctx.globalAlpha = fog;
 
-        // Tree contact shadow
-        ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+        // Ground Contact Occlusion Shadow
+        ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
         ctx.beginPath();
-        ctx.ellipse(Sx, Sy, trunkR * 1.5, trunkR * 0.5, 0, 0, Math.PI * 2);
+        ctx.ellipse(Sx, Sy + 2, trunkR * 2.2, trunkR * 0.65, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Buttress Roots
-        ctx.fillStyle = `rgba(${Math.round(40 * light)}, ${Math.round(25 * light)}, ${Math.round(15 * light)}, 1)`;
+        // Organic Flanged Buttress Roots (කැපොක් / හෝර ගස් මුල්)
+        const rootColor = `rgb(${Math.round(48 * light)}, ${Math.round(32 * light)}, ${Math.round(20 * light)})`;
+        const rootDark = `rgb(${Math.round(24 * light)}, ${Math.round(16 * light)}, ${Math.round(10 * light)})`;
+        const mossColor = `rgba(${Math.round(34 * light)}, ${Math.round(130 * light)}, ${Math.round(52 * light)}, 0.85)`;
+
+        // Left Buttress Flange
+        ctx.fillStyle = rootDark;
         ctx.beginPath();
-        ctx.moveTo(Sx - trunkR * 1.8, Sy + 2);
-        ctx.lineTo(Sx, Sy - treeH * 0.15);
-        ctx.lineTo(Sx + trunkR * 1.8, Sy + 2);
+        ctx.moveTo(Sx - trunkR * 2.2, Sy + 2);
+        ctx.quadraticCurveTo(Sx - trunkR * 1.2, Sy - treeH * 0.18, Sx - trunkR * 0.3, Sy - treeH * 0.28);
+        ctx.lineTo(Sx - trunkR * 0.7, Sy);
         ctx.closePath();
         ctx.fill();
 
-        // Cylindrical Trunk
+        // Right Buttress Flange
+        ctx.fillStyle = rootColor;
+        ctx.beginPath();
+        ctx.moveTo(Sx + trunkR * 2.2, Sy + 2);
+        ctx.quadraticCurveTo(Sx + trunkR * 1.2, Sy - treeH * 0.18, Sx + trunkR * 0.3, Sy - treeH * 0.28);
+        ctx.lineTo(Sx + trunkR * 0.7, Sy);
+        ctx.closePath();
+        ctx.fill();
+
+        // Center Root Buttress & Valley
+        ctx.fillStyle = rootColor;
+        ctx.beginPath();
+        ctx.moveTo(Sx - trunkR * 0.9, Sy + 2);
+        ctx.lineTo(Sx, Sy - treeH * 0.24);
+        ctx.lineTo(Sx + trunkR * 0.9, Sy + 2);
+        ctx.closePath();
+        ctx.fill();
+
+        // Moss on damp root base
+        ctx.fillStyle = mossColor;
+        ctx.beginPath();
+        ctx.ellipse(Sx - trunkR * 0.6, Sy - treeH * 0.05, trunkR * 0.5, trunkR * 0.25, 0.3, 0, Math.PI * 2);
+        ctx.ellipse(Sx + trunkR * 0.5, Sy - treeH * 0.04, trunkR * 0.4, trunkR * 0.2, -0.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 3D Cylindrical Shaded Trunk
         const trunkGrad = ctx.createLinearGradient(Sx - trunkR, 0, Sx + trunkR, 0);
-        trunkGrad.addColorStop(0, `rgb(${Math.round(90 * light)}, ${Math.round(60 * light)}, ${Math.round(40 * light)})`);
-        trunkGrad.addColorStop(0.4, `rgb(${Math.round(60 * light)}, ${Math.round(38 * light)}, ${Math.round(24 * light)})`);
-        trunkGrad.addColorStop(1, `rgb(${Math.round(25 * light)}, ${Math.round(15 * light)}, ${Math.round(10 * light)})`);
+        trunkGrad.addColorStop(0, `rgb(${Math.round(75 * light)}, ${Math.round(50 * light)}, ${Math.round(32 * light)})`);
+        trunkGrad.addColorStop(0.35, `rgb(${Math.round(105 * light)}, ${Math.round(72 * light)}, ${Math.round(48 * light)})`);
+        trunkGrad.addColorStop(0.75, `rgb(${Math.round(58 * light)}, ${Math.round(38 * light)}, ${Math.round(24 * light)})`);
+        trunkGrad.addColorStop(1, `rgb(${Math.round(26 * light)}, ${Math.round(16 * light)}, ${Math.round(11 * light)})`);
         ctx.fillStyle = trunkGrad;
         ctx.fillRect(Sx - trunkR, Sy - treeH, trunkR * 2, treeH);
 
-        // Climbing Lianas & Epiphytes
-        ctx.strokeStyle = `rgba(${Math.round(50 * light)}, ${Math.round(90 * light)}, ${Math.round(40 * light)}, 0.8)`;
-        ctx.lineWidth = Math.max(1, 2 * scale);
+        // Furrowed Bark Texture Lines
+        ctx.strokeStyle = `rgba(${Math.round(20 * light)}, ${Math.round(12 * light)}, ${Math.round(8 * light)}, 0.6)`;
+        ctx.lineWidth = Math.max(1, 1.2 * scale);
         ctx.beginPath();
-        ctx.moveTo(Sx - trunkR * 0.5, Sy);
-        ctx.quadraticCurveTo(Sx + trunkR * 0.7, Sy - treeH * 0.5, Sx - trunkR * 0.3, Sy - treeH);
+        ctx.moveTo(Sx - trunkR * 0.4, Sy - treeH * 0.85); ctx.lineTo(Sx - trunkR * 0.35, Sy - treeH * 0.15);
+        ctx.moveTo(Sx + trunkR * 0.1, Sy - treeH * 0.9); ctx.lineTo(Sx + trunkR * 0.15, Sy - treeH * 0.2);
+        ctx.moveTo(Sx + trunkR * 0.5, Sy - treeH * 0.8); ctx.lineTo(Sx + trunkR * 0.45, Sy - treeH * 0.12);
         ctx.stroke();
 
-        // Towering Foliage Canopy
-        const canopyY = Sy - treeH;
-        ctx.fillStyle = `rgb(${Math.round(18 * light)}, ${Math.round(45 * light)}, ${Math.round(22 * light)})`;
+        // Climbing Liana Vines (වැල්)
+        ctx.strokeStyle = `rgba(${Math.round(45 * light)}, ${Math.round(75 * light)}, ${Math.round(35 * light)}, 0.85)`;
+        ctx.lineWidth = Math.max(1.2, 2.2 * scale);
         ctx.beginPath();
-        ctx.arc(Sx + sway, canopyY, foliageR, 0, Math.PI * 2);
+        ctx.moveTo(Sx - trunkR * 0.8, Sy);
+        ctx.quadraticCurveTo(Sx + trunkR * 1.1, Sy - treeH * 0.35, Sx - trunkR * 0.7, Sy - treeH * 0.7);
+        ctx.quadraticCurveTo(Sx + trunkR * 0.9, Sy - treeH * 0.85, Sx - trunkR * 0.2, Sy - treeH);
+        ctx.stroke();
+
+        // Epiphytic Bird's-Nest Fern (කුරුළු කූඩු මීවන)
+        if (treeH > 60) {
+          const epiphyteY = Sy - treeH * 0.52;
+          ctx.fillStyle = `rgb(${Math.round(35 * light)}, ${Math.round(110 * light)}, ${Math.round(45 * light)})`;
+          for (let f = -3; f <= 3; f++) {
+            const fAngle = f * 0.25;
+            const frondLen = (14 + Math.abs(f) * 3) * scale;
+            ctx.beginPath();
+            ctx.ellipse(
+              Sx + trunkR * 0.4 + Math.sin(fAngle) * frondLen * 0.5,
+              epiphyteY - Math.cos(fAngle) * frondLen * 0.5,
+              Math.max(1.5, 3 * scale),
+              frondLen * 0.5,
+              fAngle, 0, Math.PI * 2
+            );
+            ctx.fill();
+          }
+        }
+
+        // Multi-Tier Volumetric Canopy
+        const canopyY = Sy - treeH;
+        // Tier 1: Dark Under-Canopy
+        ctx.fillStyle = `rgb(${Math.round(14 * light)}, ${Math.round(38 * light)}, ${Math.round(18 * light)})`;
+        ctx.beginPath();
+        ctx.arc(Sx + sway, canopyY + foliageR * 0.15, foliageR * 0.95, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.fillStyle = `rgb(${Math.round(28 * light)}, ${Math.round(70 * light)}, ${Math.round(35 * light)})`;
+        // Tier 2: Mid-Level Lush Jungle Canopy
+        ctx.fillStyle = `rgb(${Math.round(24 * light)}, ${Math.round(65 * light)}, ${Math.round(30 * light)})`;
         ctx.beginPath();
-        ctx.arc(Sx + sway - foliageR * 0.25, canopyY - foliageR * 0.15, foliageR * 0.75, 0, Math.PI * 2);
-        ctx.arc(Sx + sway + foliageR * 0.25, canopyY - foliageR * 0.1, foliageR * 0.7, 0, Math.PI * 2);
+        ctx.arc(Sx + sway - foliageR * 0.35, canopyY - foliageR * 0.1, foliageR * 0.75, 0, Math.PI * 2);
+        ctx.arc(Sx + sway + foliageR * 0.35, canopyY - foliageR * 0.08, foliageR * 0.72, 0, Math.PI * 2);
+        ctx.arc(Sx + sway, canopyY - foliageR * 0.35, foliageR * 0.7, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Tier 3: Sunlit / Flashlight Highlight Clusters
+        ctx.fillStyle = `rgb(${Math.round(42 * light)}, ${Math.round(98 * light)}, ${Math.round(46 * light)})`;
+        ctx.beginPath();
+        ctx.arc(Sx + sway - foliageR * 0.18, canopyY - foliageR * 0.28, foliageR * 0.45, 0, Math.PI * 2);
+        ctx.arc(Sx + sway + foliageR * 0.18, canopyY - foliageR * 0.22, foliageR * 0.42, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.restore();
       }
 
-      // ── Boulder / Granite Rock ──
+      // ── Boulder / Granite Rock (Faceted 3D Geometry with Moss & Fissures) ──
       else if (ent.type === "boulder") {
         const obs = ent.obs;
-        const bR = (obs.radius || 28) * scale;
+        const bR = Math.max(12, (obs.radius || 28) * scale);
         ctx.save();
         ctx.globalAlpha = fog;
 
-        ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+        // Ground Contact Occlusion Shadow
+        ctx.fillStyle = "rgba(0, 0, 0, 0.48)";
         ctx.beginPath();
-        ctx.ellipse(Sx, Sy, bR * 1.3, bR * 0.45, 0, 0, Math.PI * 2);
+        ctx.ellipse(Sx, Sy + 2, bR * 1.4, bR * 0.5, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        const rockGrad = ctx.createRadialGradient(Sx - bR * 0.3, Sy - bR * 0.6, bR * 0.1, Sx, Sy - bR * 0.4, bR);
-        rockGrad.addColorStop(0, `rgb(${Math.round(140 * light)}, ${Math.round(145 * light)}, ${Math.round(140 * light)})`);
-        rockGrad.addColorStop(0.7, `rgb(${Math.round(75 * light)}, ${Math.round(80 * light)}, ${Math.round(75 * light)})`);
-        rockGrad.addColorStop(1, `rgb(${Math.round(35 * light)}, ${Math.round(40 * light)}, ${Math.round(35 * light)})`);
-        ctx.fillStyle = rockGrad;
+        // Faceted 3D Chiseled Granite Polygon Base
+        ctx.fillStyle = `rgb(${Math.round(40 * light)}, ${Math.round(45 * light)}, ${Math.round(42 * light)})`;
         ctx.beginPath();
-        ctx.ellipse(Sx, Sy - bR * 0.5, bR, bR * 0.7, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
-
-      // ── Campfire ──
-      else if (ent.type === "campfire") {
-        const cRad = (ent.fire?.radius || 36) * scale;
-        ctx.save();
-        ctx.globalAlpha = fog;
-
-        // Ground Glow
-        const fireGlow = ctx.createRadialGradient(Sx, Sy, 5, Sx, Sy, cRad * 3.5);
-        fireGlow.addColorStop(0, "rgba(255, 140, 20, 0.55)");
-        fireGlow.addColorStop(0.5, "rgba(220, 80, 10, 0.2)");
-        fireGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
-        ctx.fillStyle = fireGlow;
-        ctx.beginPath();
-        ctx.ellipse(Sx, Sy, cRad * 3.5, cRad * 1.2, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Charred Stone Circle & Wood
-        ctx.fillStyle = "#271b12";
-        ctx.beginPath();
-        ctx.ellipse(Sx, Sy, cRad, cRad * 0.38, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Animated Flame Petals
-        const flameH = (32 + Math.sin(time * 0.02) * 8) * scale;
-        const flameGrad = ctx.createLinearGradient(Sx, Sy, Sx, Sy - flameH);
-        flameGrad.addColorStop(0, "#ff4500");
-        flameGrad.addColorStop(0.5, "#ffaa00");
-        flameGrad.addColorStop(1, "#fff7cc");
-        ctx.fillStyle = flameGrad;
-        ctx.beginPath();
-        ctx.moveTo(Sx - cRad * 0.45, Sy);
-        ctx.quadraticCurveTo(Sx - cRad * 0.2, Sy - flameH * 0.6, Sx, Sy - flameH);
-        ctx.quadraticCurveTo(Sx + cRad * 0.2, Sy - flameH * 0.6, Sx + cRad * 0.45, Sy);
+        ctx.moveTo(Sx - bR * 1.1, Sy - bR * 0.2);
+        ctx.lineTo(Sx - bR * 0.8, Sy - bR * 0.85);
+        ctx.lineTo(Sx - bR * 0.2, Sy - bR * 1.15);
+        ctx.lineTo(Sx + bR * 0.6, Sy - bR * 1.05);
+        ctx.lineTo(Sx + bR * 1.15, Sy - bR * 0.65);
+        ctx.lineTo(Sx + bR * 0.95, Sy - bR * 0.1);
+        ctx.lineTo(Sx + bR * 0.3, Sy + bR * 0.15);
+        ctx.lineTo(Sx - bR * 0.7, Sy + bR * 0.12);
         ctx.closePath();
         ctx.fill();
 
-        // Sparks Floating into Air
-        ctx.fillStyle = "#ffd166";
-        for (let i = 0; i < 4; i++) {
-          const spX = Sx + Math.sin(time * 0.005 + i * 2) * (cRad * 0.6);
-          const spY = Sy - flameH - ((time * 0.04 + i * 15) % 40) * scale;
+        // Lit Top Facet
+        ctx.fillStyle = `rgb(${Math.round(115 * light)}, ${Math.round(122 * light)}, ${Math.round(118 * light)})`;
+        ctx.beginPath();
+        ctx.moveTo(Sx - bR * 0.8, Sy - bR * 0.85);
+        ctx.lineTo(Sx - bR * 0.2, Sy - bR * 1.15);
+        ctx.lineTo(Sx + bR * 0.6, Sy - bR * 1.05);
+        ctx.lineTo(Sx + bR * 0.3, Sy - bR * 0.55);
+        ctx.lineTo(Sx - bR * 0.4, Sy - bR * 0.58);
+        ctx.closePath();
+        ctx.fill();
+
+        // Medium Angle Facet
+        ctx.fillStyle = `rgb(${Math.round(75 * light)}, ${Math.round(82 * light)}, ${Math.round(78 * light)})`;
+        ctx.beginPath();
+        ctx.moveTo(Sx - bR * 1.1, Sy - bR * 0.2);
+        ctx.lineTo(Sx - bR * 0.8, Sy - bR * 0.85);
+        ctx.lineTo(Sx - bR * 0.4, Sy - bR * 0.58);
+        ctx.lineTo(Sx - bR * 0.5, Sy - bR * 0.05);
+        ctx.closePath();
+        ctx.fill();
+
+        // Right Shaded Facet
+        ctx.fillStyle = `rgb(${Math.round(52 * light)}, ${Math.round(58 * light)}, ${Math.round(54 * light)})`;
+        ctx.beginPath();
+        ctx.moveTo(Sx + bR * 0.6, Sy - bR * 1.05);
+        ctx.lineTo(Sx + bR * 1.15, Sy - bR * 0.65);
+        ctx.lineTo(Sx + bR * 0.95, Sy - bR * 0.1);
+        ctx.lineTo(Sx + bR * 0.3, Sy - bR * 0.55);
+        ctx.closePath();
+        ctx.fill();
+
+        // Fissure Fracture Lines
+        ctx.strokeStyle = `rgba(${Math.round(20 * light)}, ${Math.round(22 * light)}, ${Math.round(20 * light)}, 0.8)`;
+        ctx.lineWidth = Math.max(1, 1.2 * scale);
+        ctx.beginPath();
+        ctx.moveTo(Sx - bR * 0.3, Sy - bR * 0.95);
+        ctx.lineTo(Sx - bR * 0.15, Sy - bR * 0.5);
+        ctx.lineTo(Sx + bR * 0.1, Sy - bR * 0.2);
+        ctx.stroke();
+
+        // Damp Rainforest Moss on Upward Crest
+        ctx.fillStyle = `rgba(${Math.round(38 * light)}, ${Math.round(115 * light)}, ${Math.round(48 * light)}, 0.88)`;
+        ctx.beginPath();
+        ctx.ellipse(Sx - bR * 0.2, Sy - bR * 0.9, bR * 0.45, bR * 0.22, -0.15, 0, Math.PI * 2);
+        ctx.ellipse(Sx + bR * 0.3, Sy - bR * 0.8, bR * 0.35, bR * 0.18, 0.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      // ── Campfire (River Stones, Charred Firewood & Turbulent Flame Tongues) ──
+      else if (ent.type === "campfire") {
+        const cRad = Math.max(18, (ent.fire?.radius || 36) * scale);
+        ctx.save();
+        ctx.globalAlpha = fog;
+
+        // Dynamic Ground Light Emission
+        const fireGlow = ctx.createRadialGradient(Sx, Sy, 5, Sx, Sy, cRad * 4.2);
+        fireGlow.addColorStop(0, "rgba(255, 145, 25, 0.65)");
+        fireGlow.addColorStop(0.35, "rgba(230, 85, 12, 0.28)");
+        fireGlow.addColorStop(0.7, "rgba(180, 50, 5, 0.10)");
+        fireGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
+        ctx.fillStyle = fireGlow;
+        ctx.beginPath();
+        ctx.ellipse(Sx, Sy + 2, cRad * 4.2, cRad * 1.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Ring of 3D River Granite Hearth Stones
+        const stoneCount = 9;
+        for (let s = 0; s < stoneCount; s++) {
+          const sAngle = (s / stoneCount) * Math.PI * 2;
+          const stX = Sx + Math.cos(sAngle) * (cRad * 0.85);
+          const stY = Sy + Math.sin(sAngle) * (cRad * 0.38);
+          const stR = (6.5 + (s % 3) * 2) * scale;
+
+          ctx.fillStyle = "#1e1e1e";
           ctx.beginPath();
-          ctx.arc(spX, spY, Math.max(1, 2 * scale), 0, Math.PI * 2);
+          ctx.ellipse(stX, stY + 2, stR * 1.1, stR * 0.6, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          const stGrad = ctx.createRadialGradient(stX - Math.cos(sAngle) * 3, stY - Math.sin(sAngle) * 2, 1, stX, stY, stR);
+          stGrad.addColorStop(0, "#a8a29e");
+          stGrad.addColorStop(0.6, "#57534e");
+          stGrad.addColorStop(1, "#292524");
+          ctx.fillStyle = stGrad;
+          ctx.beginPath();
+          ctx.arc(stX, stY, Math.max(2, stR), 0, Math.PI * 2);
           ctx.fill();
         }
+
+        // Incandescent Glowing Ember Bed
+        const emberPulse = Math.sin(time * 0.015) * 0.15;
+        const emberGrad = ctx.createRadialGradient(Sx, Sy, 2, Sx, Sy, cRad * 0.6);
+        emberGrad.addColorStop(0, `rgba(255, 255, 240, ${0.9 + emberPulse})`);
+        emberGrad.addColorStop(0.3, `rgba(255, 140, 20, ${0.85 + emberPulse})`);
+        emberGrad.addColorStop(0.7, "rgba(220, 38, 38, 0.7)");
+        emberGrad.addColorStop(1, "rgba(69, 10, 10, 0.5)");
+        ctx.fillStyle = emberGrad;
+        ctx.beginPath();
+        ctx.ellipse(Sx, Sy, cRad * 0.65, cRad * 0.28, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Charred Criss-Crossed Firewood Logs
+        ctx.save();
+        ctx.translate(Sx, Sy);
+        ctx.rotate(-0.35);
+        ctx.fillStyle = "#1c1917";
+        ctx.fillRect(-cRad * 0.6, -3 * scale, cRad * 1.2, 6 * scale);
+        ctx.fillStyle = "#ff5500";
+        ctx.fillRect(-cRad * 0.2, -1 * scale, cRad * 0.4, 2 * scale);
+        ctx.restore();
+
+        ctx.save();
+        ctx.translate(Sx, Sy);
+        ctx.rotate(0.42);
+        ctx.fillStyle = "#292524";
+        ctx.fillRect(-cRad * 0.55, -2.5 * scale, cRad * 1.1, 5 * scale);
+        ctx.fillStyle = "#ff7700";
+        ctx.fillRect(-cRad * 0.15, -0.8 * scale, cRad * 0.3, 1.6 * scale);
+        ctx.restore();
+
+        // Multi-Phase Turbulent Dancing Flames
+        const flameBaseH = (38 + Math.sin(time * 0.02) * 9) * scale;
+
+        // 1. Blue Ignition Zone (Combustion zone at base)
+        ctx.fillStyle = "rgba(59, 130, 246, 0.75)";
+        ctx.beginPath();
+        ctx.ellipse(Sx, Sy - 3 * scale, cRad * 0.35, cRad * 0.12, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 2. Main Outer Golden Flame
+        const f1H = flameBaseH * (0.95 + Math.sin(time * 0.024) * 0.15);
+        const f1W = cRad * 0.5;
+        const flameGrad1 = ctx.createLinearGradient(Sx, Sy, Sx, Sy - f1H);
+        flameGrad1.addColorStop(0, "#ea580c");
+        flameGrad1.addColorStop(0.45, "#f59e0b");
+        flameGrad1.addColorStop(0.85, "#fde047");
+        flameGrad1.addColorStop(1, "rgba(255, 255, 255, 0)");
+
+        ctx.fillStyle = flameGrad1;
+        ctx.beginPath();
+        ctx.moveTo(Sx - f1W, Sy);
+        ctx.quadraticCurveTo(
+          Sx - f1W * 0.6 + Math.sin(time * 0.018) * 8 * scale,
+          Sy - f1H * 0.55,
+          Sx + Math.sin(time * 0.022) * 6 * scale,
+          Sy - f1H
+        );
+        ctx.quadraticCurveTo(
+          Sx + f1W * 0.6 + Math.cos(time * 0.02) * 8 * scale,
+          Sy - f1H * 0.55,
+          Sx + f1W,
+          Sy
+        );
+        ctx.closePath();
+        ctx.fill();
+
+        // 3. Inner White-Hot Core Flame
+        const f2H = f1H * 0.62;
+        const f2W = f1W * 0.55;
+        const flameGrad2 = ctx.createLinearGradient(Sx, Sy, Sx, Sy - f2H);
+        flameGrad2.addColorStop(0, "#f97316");
+        flameGrad2.addColorStop(0.5, "#fef08a");
+        flameGrad2.addColorStop(1, "#ffffff");
+
+        ctx.fillStyle = flameGrad2;
+        ctx.beginPath();
+        ctx.moveTo(Sx - f2W, Sy);
+        ctx.quadraticCurveTo(
+          Sx - f2W * 0.4 + Math.sin(time * 0.03) * 4 * scale,
+          Sy - f2H * 0.5,
+          Sx,
+          Sy - f2H
+        );
+        ctx.quadraticCurveTo(
+          Sx + f2W * 0.4 + Math.cos(time * 0.03) * 4 * scale,
+          Sy - f2H * 0.5,
+          Sx + f2W,
+          Sy
+        );
+        ctx.closePath();
+        ctx.fill();
+
+        // Rising Sparks & Embers
+        for (let i = 0; i < 7; i++) {
+          const spProgress = ((time * 0.035 + i * 22) % 100) / 100;
+          const spSwirl = Math.sin(time * 0.008 + i * 1.5) * (cRad * 0.7);
+          const spX = Sx + spSwirl;
+          const spY = Sy - flameBaseH * 0.6 - spProgress * (85 * scale);
+          const spAlpha = Math.max(0, 1.0 - spProgress);
+          const spR = Math.max(1, (2.8 - spProgress * 1.5) * scale);
+
+          ctx.fillStyle = i % 2 === 0 ? `rgba(254, 240, 138, ${spAlpha})` : `rgba(249, 115, 22, ${spAlpha})`;
+          ctx.beginPath();
+          ctx.arc(spX, spY, spR, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
         ctx.restore();
       }
 
@@ -6917,202 +7193,996 @@ export class SinharajaEngine {
           crosshairTarget = obj;
         }
 
-        // 1. Old Ranger Gunadasa (ගුණදාස මාමා)
+        // 1. Old Ranger Gunadasa (ගුණදාස මාමා - Realistic Anatomical Model)
         if (id === "gunadasa_npc" || id === "npc") {
-          const gH = 68 * scale;
-          const gW = 28 * scale;
+          const gH = Math.max(38, 74 * scale);
+          const gW = Math.max(16, 32 * scale);
+          const breath = Math.sin(time * 0.0022) * (1.2 * scale);
 
-          // Soft ground shadow
-          ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+          // Soft Contact Ground Shadow
+          ctx.fillStyle = "rgba(0, 0, 0, 0.46)";
           ctx.beginPath();
-          ctx.ellipse(Sx, Sy, gW * 0.9, gW * 0.35, 0, 0, Math.PI * 2);
+          ctx.ellipse(Sx, Sy + 2, gW * 0.85, gW * 0.35, 0, 0, Math.PI * 2);
           ctx.fill();
 
-          // Tall Bamboo Staff
-          ctx.fillStyle = "#eed088";
-          ctx.fillRect(Sx + gW * 0.42, Sy - gH * 0.85, Math.max(2, 3.5 * scale), gH * 0.88);
+          // Tall Knotted Bamboo Walking Staff (බට ලී සැරයටිය)
+          const staffX = Sx + gW * 0.45;
+          const staffY = Sy - gH * 0.88;
+          const staffW = Math.max(2, 3.8 * scale);
+          const staffH = gH * 0.90;
+
+          const staffGrad = ctx.createLinearGradient(staffX, 0, staffX + staffW, 0);
+          staffGrad.addColorStop(0, `rgb(${Math.round(180 * light)}, ${Math.round(138 * light)}, ${Math.round(75 * light)})`);
+          staffGrad.addColorStop(0.5, `rgb(${Math.round(230 * light)}, ${Math.round(195 * light)}, ${Math.round(120 * light)})`);
+          staffGrad.addColorStop(1, `rgb(${Math.round(140 * light)}, ${Math.round(100 * light)}, ${Math.round(50 * light)})`);
+          ctx.fillStyle = staffGrad;
+          ctx.fillRect(staffX, staffY, staffW, staffH);
+
+          // Bamboo knot rings & brass ferrule
+          ctx.fillStyle = "#3e2723";
+          [-0.15, -0.35, -0.55, -0.75].forEach((frac) => {
+            ctx.fillRect(staffX - 1, Sy + staffH * frac, staffW + 2, Math.max(1, 2.2 * scale));
+          });
+          ctx.fillStyle = "#d4af37";
+          ctx.fillRect(staffX - 0.5, Sy - 2, staffW + 1, 4 * scale);
+
+          // Leather Strapped Sandals & Feet on Ground
+          ctx.fillStyle = `rgb(${Math.round(38 * light)}, ${Math.round(24 * light)}, ${Math.round(16 * light)})`;
+          ctx.fillRect(Sx - gW * 0.28, Sy - 3 * scale, gW * 0.22, 4 * scale);
+          ctx.fillRect(Sx + gW * 0.06, Sy - 3 * scale, gW * 0.22, 4 * scale);
           ctx.fillStyle = "#5d4037";
-          ctx.fillRect(Sx + gW * 0.38, Sy - gH * 0.4, Math.max(3, 5 * scale), 2 * scale);
+          ctx.fillRect(Sx - gW * 0.26, Sy - 4 * scale, gW * 0.18, 1.8 * scale);
+          ctx.fillRect(Sx + gW * 0.08, Sy - 4 * scale, gW * 0.18, 1.8 * scale);
 
-          // Traditional Sarong
-          ctx.fillStyle = `rgb(${Math.round(45 * light)}, ${Math.round(68 * light)}, ${Math.round(42 * light)})`;
-          ctx.fillRect(Sx - gW * 0.38, Sy - gH * 0.46, gW * 0.76, gH * 0.44);
+          // Traditional Sri Lankan Sarong (කයිලි / සරම)
+          const sarongY = Sy - gH * 0.50;
+          const sarongH = gH * 0.48;
+          const sarongW = gW * 0.74;
 
-          // Khaki Safari Jacket
-          const jacketY = Sy - gH * 0.76;
-          ctx.fillStyle = `rgb(${Math.round(85 * light)}, ${Math.round(98 * light)}, ${Math.round(75 * light)})`;
-          ctx.fillRect(Sx - gW * 0.42, jacketY, gW * 0.84, gH * 0.32);
-
-          // Silver Elder Beard & Face
-          const headY = jacketY - gH * 0.12;
-          ctx.fillStyle = `rgb(${Math.round(198 * light)}, ${Math.round(138 * light)}, ${Math.round(76 * light)})`;
+          const sarongGrad = ctx.createLinearGradient(Sx - sarongW * 0.5, 0, Sx + sarongW * 0.5, 0);
+          sarongGrad.addColorStop(0, `rgb(${Math.round(35 * light)}, ${Math.round(56 * light)}, ${Math.round(32 * light)})`);
+          sarongGrad.addColorStop(0.35, `rgb(${Math.round(52 * light)}, ${Math.round(85 * light)}, ${Math.round(48 * light)})`);
+          sarongGrad.addColorStop(0.7, `rgb(${Math.round(42 * light)}, ${Math.round(68 * light)}, ${Math.round(38 * light)})`);
+          sarongGrad.addColorStop(1, `rgb(${Math.round(22 * light)}, ${Math.round(36 * light)}, ${Math.round(20 * light)})`);
+          ctx.fillStyle = sarongGrad;
           ctx.beginPath();
-          ctx.arc(Sx, headY, gW * 0.28, 0, Math.PI * 2);
-          ctx.fill();
-
-          // Flowing Silver-White Beard
-          ctx.fillStyle = "#f1f5f9";
-          ctx.beginPath();
-          ctx.moveTo(Sx - gW * 0.2, headY + 2 * scale);
-          ctx.lineTo(Sx, headY + gH * 0.22);
-          ctx.lineTo(Sx + gW * 0.2, headY + 2 * scale);
+          ctx.moveTo(Sx - sarongW * 0.45, sarongY);
+          ctx.lineTo(Sx + sarongW * 0.45, sarongY);
+          ctx.lineTo(Sx + sarongW * 0.52, sarongY + sarongH);
+          ctx.lineTo(Sx - sarongW * 0.52, sarongY + sarongH);
           ctx.closePath();
           ctx.fill();
 
-          // Safari Ranger Hat
-          ctx.fillStyle = "#4a3c28";
+          // Sarong Checkered Weave Pattern & Pleats
+          ctx.strokeStyle = `rgba(${Math.round(90 * light)}, ${Math.round(130 * light)}, ${Math.round(80 * light)}, 0.45)`;
+          ctx.lineWidth = Math.max(1, 1.2 * scale);
           ctx.beginPath();
-          ctx.ellipse(Sx, headY - 4 * scale, gW * 0.55, gW * 0.2, 0, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = "#635035";
-          ctx.fillRect(Sx - gW * 0.25, headY - gH * 0.12, gW * 0.5, gH * 0.08);
+          [-0.3, 0, 0.3].forEach((off) => {
+            ctx.moveTo(Sx + sarongW * off, sarongY);
+            ctx.lineTo(Sx + sarongW * off * 1.1, sarongY + sarongH);
+          });
+          ctx.stroke();
 
-          // Floating Dialogue Indicator
-          if (!this.npc.helped) {
-            const beaconPulse = Math.sin(time * 0.005) * 4 * scale;
-            ctx.fillStyle = "#4ade80";
+          // Rolled Waistband Knot (බණ්ඩලය)
+          ctx.fillStyle = `rgb(${Math.round(28 * light)}, ${Math.round(46 * light)}, ${Math.round(26 * light)})`;
+          ctx.beginPath();
+          ctx.ellipse(Sx, sarongY, sarongW * 0.42, 3.5 * scale, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Leather Utility Belt with Brass Canteen & Pouch
+          const beltY = sarongY - 3 * scale;
+          ctx.fillStyle = `rgb(${Math.round(50 * light)}, ${Math.round(32 * light)}, ${Math.round(20 * light)})`;
+          ctx.fillRect(Sx - sarongW * 0.45, beltY, sarongW * 0.9, 3.5 * scale);
+          ctx.fillStyle = "#d4af37";
+          ctx.fillRect(Sx - 2.5 * scale, beltY, 5 * scale, 3.5 * scale);
+          // Canteen
+          ctx.fillStyle = "#b45309";
+          ctx.beginPath();
+          ctx.ellipse(Sx + sarongW * 0.42, beltY + 4 * scale, 3.5 * scale, 5 * scale, 0.2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = "#d4af37";
+          ctx.fillRect(Sx + sarongW * 0.40, beltY - 1 * scale, 2.5 * scale, 2 * scale);
+
+          // Khaki Safari Ranger Jacket
+          const jacketY = Sy - gH * 0.78 + breath;
+          const jacketH = gH * 0.32;
+          const jacketW = gW * 0.88;
+
+          const jacketGrad = ctx.createLinearGradient(Sx - jacketW * 0.5, 0, Sx + jacketW * 0.5, 0);
+          jacketGrad.addColorStop(0, `rgb(${Math.round(85 * light)}, ${Math.round(102 * light)}, ${Math.round(78 * light)})`);
+          jacketGrad.addColorStop(0.4, `rgb(${Math.round(120 * light)}, ${Math.round(138 * light)}, ${Math.round(108 * light)})`);
+          jacketGrad.addColorStop(1, `rgb(${Math.round(65 * light)}, ${Math.round(78 * light)}, ${Math.round(58 * light)})`);
+          ctx.fillStyle = jacketGrad;
+          ctx.beginPath();
+          ctx.roundRect(Sx - jacketW * 0.5, jacketY, jacketW, jacketH, [4 * scale, 4 * scale, 2 * scale, 2 * scale]);
+          ctx.fill();
+
+          // Pockets & Lapels
+          ctx.fillStyle = `rgb(${Math.round(70 * light)}, ${Math.round(85 * light)}, ${Math.round(65 * light)})`;
+          ctx.fillRect(Sx - jacketW * 0.42, jacketY + jacketH * 0.35, jacketW * 0.35, jacketH * 0.25);
+          ctx.fillRect(Sx + jacketW * 0.07, jacketY + jacketH * 0.35, jacketW * 0.35, jacketH * 0.25);
+
+          // Brass Buttons
+          ctx.fillStyle = "#d4af37";
+          [-0.1, 0.15, 0.4].forEach((bFrac) => {
             ctx.beginPath();
-            ctx.arc(Sx, headY - gH * 0.22 - beaconPulse, Math.max(3, 5 * scale), 0, Math.PI * 2);
+            ctx.arc(Sx, jacketY + jacketH * (0.4 + bFrac), Math.max(1, 1.4 * scale), 0, Math.PI * 2);
+            ctx.fill();
+          });
+
+          // Hand Gripping Staff
+          ctx.fillStyle = `rgb(${Math.round(195 * light)}, ${Math.round(135 * light)}, ${Math.round(75 * light)})`;
+          ctx.beginPath();
+          ctx.arc(staffX + staffW * 0.5, jacketY + jacketH * 0.65, 3.5 * scale, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Elder Head & Facial Features
+          const headY = jacketY - gH * 0.12;
+          const headR = gW * 0.28;
+
+          ctx.fillStyle = `rgb(${Math.round(175 * light)}, ${Math.round(120 * light)}, ${Math.round(65 * light)})`;
+          ctx.fillRect(Sx - headR * 0.4, jacketY - 2 * scale, headR * 0.8, 5 * scale);
+
+          ctx.fillStyle = `rgb(${Math.round(195 * light)}, ${Math.round(135 * light)}, ${Math.round(75 * light)})`;
+          ctx.beginPath();
+          ctx.arc(Sx, headY, headR, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = "#cbd5e1";
+          ctx.fillRect(Sx - headR * 0.7, headY - headR * 0.35, headR * 0.55, 1.8 * scale);
+          ctx.fillRect(Sx + headR * 0.15, headY - headR * 0.35, headR * 0.55, 1.8 * scale);
+          ctx.fillStyle = "#0f172a";
+          ctx.fillRect(Sx - headR * 0.55, headY - headR * 0.1, 2.2 * scale, 2.2 * scale);
+          ctx.fillRect(Sx + headR * 0.3, headY - headR * 0.1, 2.2 * scale, 2.2 * scale);
+
+          // Flowing Silver-White Elder Beard
+          ctx.fillStyle = "#f8fafc";
+          ctx.beginPath();
+          ctx.moveTo(Sx - headR * 0.85, headY + headR * 0.15);
+          ctx.quadraticCurveTo(Sx - headR * 1.0, headY + gH * 0.22, Sx, headY + gH * 0.28);
+          ctx.quadraticCurveTo(Sx + headR * 1.0, headY + gH * 0.22, Sx + headR * 0.85, headY + headR * 0.15);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.strokeStyle = "#cbd5e1";
+          ctx.lineWidth = Math.max(1, 1 * scale);
+          ctx.beginPath();
+          ctx.moveTo(Sx, headY + headR * 0.4); ctx.lineTo(Sx, headY + gH * 0.26);
+          ctx.moveTo(Sx - headR * 0.35, headY + headR * 0.5); ctx.lineTo(Sx - headR * 0.2, headY + gH * 0.24);
+          ctx.moveTo(Sx + headR * 0.35, headY + headR * 0.5); ctx.lineTo(Sx + headR * 0.2, headY + gH * 0.24);
+          ctx.stroke();
+
+          // Wide-Brimmed Ranger Safari Hat
+          const hatY = headY - headR * 0.65;
+          ctx.fillStyle = "#3d2e1e";
+          ctx.beginPath();
+          ctx.ellipse(Sx, hatY, gW * 0.65, gW * 0.22, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = "#241a0f";
+          ctx.lineWidth = Math.max(1, 1.2 * scale);
+          ctx.stroke();
+
+          const crownW = gW * 0.52;
+          const crownH = gH * 0.10;
+          ctx.fillStyle = "#5c4731";
+          ctx.beginPath();
+          ctx.roundRect(Sx - crownW * 0.5, hatY - crownH, crownW, crownH, [4 * scale, 4 * scale, 0, 0]);
+          ctx.fill();
+          ctx.fillStyle = "#1e140a";
+          ctx.fillRect(Sx - crownW * 0.5, hatY - 3.5 * scale, crownW, 3.5 * scale);
+          ctx.fillStyle = "#d4af37";
+          ctx.fillRect(Sx - 1.5 * scale, hatY - 3.5 * scale, 3 * scale, 3.5 * scale);
+
+          // Dialogue Beacon
+          if (!this.npc.helped) {
+            const bPulse = Math.sin(time * 0.005) * 5 * scale;
+            ctx.fillStyle = "#4ade80";
+            ctx.shadowColor = "#4ade80";
+            ctx.shadowBlur = 12 * scale;
+            ctx.beginPath();
+            ctx.arc(Sx, hatY - crownH - 12 * scale - bPulse, Math.max(3, 5.5 * scale), 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+          }
+        }
+        // 2. Kudawa Outpost Cabin (කුඩව ලී මුරපොළ)
+        else if (id.includes("cabin") || id.includes("outpost") || id.includes("shelter")) {
+          const cW = Math.max(60, 150 * scale);
+          const cH = Math.max(45, 110 * scale);
+          const stiltH = cH * 0.22;
+
+          ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+          ctx.beginPath();
+          ctx.ellipse(Sx, Sy + 2, cW * 0.65, stiltH * 0.8, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Raised Timber Stilt Foundation & Crawlspace
+          const stiltY = Sy - stiltH;
+          ctx.fillStyle = `rgb(${Math.round(30 * light)}, ${Math.round(20 * light)}, ${Math.round(14 * light)})`;
+          ctx.fillRect(Sx - cW * 0.46, stiltY, cW * 0.92, stiltH);
+
+          ctx.fillStyle = `rgb(${Math.round(65 * light)}, ${Math.round(44 * light)}, ${Math.round(32 * light)})`;
+          [-0.45, -0.15, 0.15, 0.45].forEach((pileFrac) => {
+            ctx.fillRect(Sx + cW * pileFrac - 3 * scale, stiltY, 6 * scale, stiltH);
+          });
+
+          ctx.fillStyle = `rgb(${Math.round(90 * light)}, ${Math.round(62 * light)}, ${Math.round(45 * light)})`;
+          ctx.fillRect(Sx - cW * 0.5, stiltY - 4 * scale, cW, 6 * scale);
+
+          // Weatherboard Timber Cabin Walls
+          const wallY = stiltY - 4 * scale - (cH - stiltH);
+          const wallH = cH - stiltH;
+          const wallGrad = ctx.createLinearGradient(0, wallY, 0, wallY + wallH);
+          wallGrad.addColorStop(0, `rgb(${Math.round(105 * light)}, ${Math.round(74 * light)}, ${Math.round(52 * light)})`);
+          wallGrad.addColorStop(1, `rgb(${Math.round(65 * light)}, ${Math.round(44 * light)}, ${Math.round(30 * light)})`);
+          ctx.fillStyle = wallGrad;
+          ctx.fillRect(Sx - cW * 0.48, wallY, cW * 0.96, wallH);
+
+          // Weatherboard Slat Grooves
+          ctx.strokeStyle = `rgba(${Math.round(35 * light)}, ${Math.round(22 * light)}, ${Math.round(14 * light)}, 0.65)`;
+          ctx.lineWidth = Math.max(1, 1.4 * scale);
+          const slatStep = wallH / 8;
+          ctx.beginPath();
+          for (let sl = 1; sl < 8; sl++) {
+            ctx.moveTo(Sx - cW * 0.48, wallY + sl * slatStep);
+            ctx.lineTo(Sx + cW * 0.48, wallY + sl * slatStep);
+          }
+          ctx.stroke();
+
+          // Z-Braced Timber Door
+          const doorW = cW * 0.26;
+          const doorH = wallH * 0.78;
+          const doorX = Sx - cW * 0.34;
+          const doorY = wallY + (wallH - doorH);
+
+          ctx.fillStyle = `rgb(${Math.round(48 * light)}, ${Math.round(30 * light)}, ${Math.round(20 * light)})`;
+          ctx.fillRect(doorX, doorY, doorW, doorH);
+          ctx.strokeStyle = `rgb(${Math.round(32 * light)}, ${Math.round(18 * light)}, ${Math.round(10 * light)})`;
+          ctx.lineWidth = Math.max(1, 2.5 * scale);
+          ctx.strokeRect(doorX, doorY, doorW, doorH);
+          ctx.beginPath();
+          ctx.moveTo(doorX, doorY); ctx.lineTo(doorX + doorW, doorY + doorH);
+          ctx.stroke();
+          ctx.fillStyle = "#1e293b";
+          ctx.beginPath();
+          ctx.arc(doorX + doorW * 0.8, doorY + doorH * 0.5, Math.max(1.5, 3 * scale), 0, Math.PI * 2);
+          ctx.fill();
+
+          // Signboard above Door
+          ctx.fillStyle = "#271c14";
+          ctx.fillRect(doorX - 2 * scale, doorY - 10 * scale, doorW + 4 * scale, 8 * scale);
+          ctx.fillStyle = "#e2e8f0";
+          ctx.font = `bold ${Math.max(6, Math.round(5.5 * scale))}px monospace`;
+          ctx.textAlign = "center";
+          ctx.fillText("KUDAWA", doorX + doorW * 0.5, doorY - 4 * scale);
+
+          // Illuminated 4-Pane Window with Warm Lantern Light
+          const winW = cW * 0.28;
+          const winH = wallH * 0.42;
+          const winX = Sx + cW * 0.12;
+          const winY = wallY + wallH * 0.22;
+
+          const winLight = ctx.createRadialGradient(winX + winW * 0.5, winY + winH * 0.5, 5, winX + winW * 0.5, winY + winH * 0.5, winW * 2.5);
+          winLight.addColorStop(0, "rgba(251, 191, 36, 0.55)");
+          winLight.addColorStop(0.5, "rgba(245, 158, 11, 0.20)");
+          winLight.addColorStop(1, "rgba(0, 0, 0, 0)");
+          ctx.fillStyle = winLight;
+          ctx.beginPath();
+          ctx.arc(winX + winW * 0.5, winY + winH * 0.5, winW * 2.2, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = "#fbbf24";
+          ctx.fillRect(winX, winY, winW, winH);
+          ctx.fillStyle = "#3e2723";
+          ctx.fillRect(winX + winW * 0.5 - 1.5 * scale, winY, 3 * scale, winH);
+          ctx.fillRect(winX, winY + winH * 0.5 - 1.5 * scale, winW, 3 * scale);
+          ctx.strokeRect(winX, winY, winW, winH);
+
+          // Corrugated Zinc Gabled Roof with Rust Streaks
+          const roofOverhang = cW * 0.08;
+          const roofApexY = wallY - cH * 0.38;
+          const roofBaseY = wallY + 2 * scale;
+
+          const roofGrad = ctx.createLinearGradient(0, roofApexY, 0, roofBaseY);
+          roofGrad.addColorStop(0, `rgb(${Math.round(145 * light)}, ${Math.round(152 * light)}, ${Math.round(160 * light)})`);
+          roofGrad.addColorStop(0.5, `rgb(${Math.round(110 * light)}, ${Math.round(118 * light)}, ${Math.round(126 * light)})`);
+          roofGrad.addColorStop(1, `rgb(${Math.round(75 * light)}, ${Math.round(82 * light)}, ${Math.round(90 * light)})`);
+          ctx.fillStyle = roofGrad;
+
+          ctx.beginPath();
+          ctx.moveTo(Sx - cW * 0.5 - roofOverhang, roofBaseY);
+          ctx.lineTo(Sx, roofApexY);
+          ctx.lineTo(Sx + cW * 0.5 + roofOverhang, roofBaseY);
+          ctx.closePath();
+          ctx.fill();
+
+          // Corrugated Roof Ridges & Rust Streaks
+          ctx.strokeStyle = `rgba(${Math.round(180 * light)}, ${Math.round(80 * light)}, ${Math.round(40 * light)}, 0.4)`;
+          ctx.lineWidth = Math.max(1, 1.8 * scale);
+          ctx.beginPath();
+          [-0.35, -0.2, -0.05, 0.1, 0.25, 0.4].forEach((rOff) => {
+            ctx.moveTo(Sx + cW * rOff * 0.2, roofApexY);
+            ctx.lineTo(Sx + cW * rOff * 1.1, roofBaseY);
+          });
+          ctx.stroke();
+
+          // Roof Antenna & Blinking Beacon
+          ctx.strokeStyle = "#94a3b8";
+          ctx.lineWidth = Math.max(1.2, 2 * scale);
+          ctx.beginPath();
+          ctx.moveTo(Sx, roofApexY); ctx.lineTo(Sx, roofApexY - 24 * scale);
+          ctx.moveTo(Sx - 6 * scale, roofApexY - 14 * scale); ctx.lineTo(Sx + 6 * scale, roofApexY - 14 * scale);
+          ctx.stroke();
+
+          const beaconFlash = Math.sin(time * 0.008) > 0.2;
+          ctx.fillStyle = beaconFlash ? "#ef4444" : "#450a0a";
+          ctx.shadowColor = beaconFlash ? "#ef4444" : "transparent";
+          ctx.shadowBlur = beaconFlash ? 14 * scale : 0;
+          ctx.beginPath();
+          ctx.arc(Sx, roofApexY - 25 * scale, Math.max(2, 3.5 * scale), 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+        // 3. Military / Field Research Canvas Tent
+        else if (id.includes("tent")) {
+          const tW = Math.max(50, 110 * scale);
+          const tH = Math.max(35, 75 * scale);
+
+          ctx.fillStyle = "rgba(0, 0, 0, 0.48)";
+          ctx.beginPath();
+          ctx.ellipse(Sx, Sy + 2, tW * 0.65, tW * 0.25, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          const tentGrad = ctx.createLinearGradient(0, Sy - tH, 0, Sy);
+          tentGrad.addColorStop(0, `rgb(${Math.round(85 * light)}, ${Math.round(98 * light)}, ${Math.round(75 * light)})`);
+          tentGrad.addColorStop(1, `rgb(${Math.round(45 * light)}, ${Math.round(58 * light)}, ${Math.round(40 * light)})`);
+          ctx.fillStyle = tentGrad;
+
+          ctx.beginPath();
+          ctx.moveTo(Sx - tW * 0.5, Sy);
+          ctx.lineTo(Sx, Sy - tH);
+          ctx.lineTo(Sx + tW * 0.5, Sy);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.strokeStyle = `rgba(${Math.round(150 * light)}, ${Math.round(140 * light)}, ${Math.round(110 * light)}, 0.6)`;
+          ctx.lineWidth = Math.max(1, 1.2 * scale);
+          ctx.beginPath();
+          ctx.moveTo(Sx, Sy - tH); ctx.lineTo(Sx - tW * 0.68, Sy + 2);
+          ctx.moveTo(Sx, Sy - tH); ctx.lineTo(Sx + tW * 0.68, Sy + 2);
+          ctx.stroke();
+
+          ctx.fillStyle = "#1e293b";
+          ctx.beginPath();
+          ctx.moveTo(Sx - tW * 0.18, Sy);
+          ctx.lineTo(Sx, Sy - tH * 0.65);
+          ctx.lineTo(Sx + tW * 0.18, Sy);
+          ctx.closePath();
+          ctx.fill();
+
+          const tentGlow = ctx.createRadialGradient(Sx, Sy - tH * 0.35, 2, Sx, Sy - tH * 0.35, tW * 0.22);
+          tentGlow.addColorStop(0, "rgba(251, 191, 36, 0.75)");
+          tentGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
+          ctx.fillStyle = tentGlow;
+          ctx.beginPath();
+          ctx.arc(Sx, Sy - tH * 0.35, tW * 0.2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        // 4. Military Supply Crates & Chests
+        else if (id.includes("chest") || id.includes("crate") || id.includes("box") || id.includes("mine_cart_cache")) {
+          const cW = Math.max(22, 46 * scale);
+          const cH = Math.max(16, 34 * scale);
+
+          ctx.fillStyle = "rgba(0, 0, 0, 0.52)";
+          ctx.beginPath();
+          ctx.ellipse(Sx, Sy + 2, cW * 0.68, cH * 0.32, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          const crateGrad = ctx.createLinearGradient(0, Sy - cH, 0, Sy);
+          crateGrad.addColorStop(0, `rgb(${Math.round(112 * light)}, ${Math.round(80 * light)}, ${Math.round(55 * light)})`);
+          crateGrad.addColorStop(1, `rgb(${Math.round(58 * light)}, ${Math.round(38 * light)}, ${Math.round(24 * light)})`);
+          ctx.fillStyle = crateGrad;
+          ctx.fillRect(Sx - cW * 0.5, Sy - cH, cW, cH);
+
+          ctx.strokeStyle = `rgba(${Math.round(25 * light)}, ${Math.round(15 * light)}, ${Math.round(10 * light)}, 0.65)`;
+          ctx.lineWidth = Math.max(1, 1.2 * scale);
+          ctx.beginPath();
+          ctx.moveTo(Sx - cW * 0.5, Sy - cH * 0.66); ctx.lineTo(Sx + cW * 0.5, Sy - cH * 0.66);
+          ctx.moveTo(Sx - cW * 0.5, Sy - cH * 0.33); ctx.lineTo(Sx + cW * 0.5, Sy - cH * 0.33);
+          ctx.stroke();
+
+          const bW = Math.max(2.5, 5 * scale);
+          ctx.fillStyle = `rgb(${Math.round(30 * light)}, ${Math.round(35 * light)}, ${Math.round(40 * light)})`;
+          ctx.fillRect(Sx - cW * 0.5, Sy - cH, bW, cH);
+          ctx.fillRect(Sx + cW * 0.5 - bW, Sy - cH, bW, cH);
+          ctx.fillRect(Sx - cW * 0.5, Sy - cH, cW, bW * 0.8);
+          ctx.fillRect(Sx - cW * 0.5, Sy - bW * 0.8, cW, bW * 0.8);
+
+          ctx.fillStyle = `rgb(${Math.round(180 * light)}, ${Math.round(190 * light)}, ${Math.round(200 * light)})`;
+          const rivR = Math.max(1, 1.3 * scale);
+          [0.2, 0.5, 0.8].forEach((rFrac) => {
+            ctx.beginPath();
+            ctx.arc(Sx - cW * 0.5 + bW * 0.5, Sy - cH * rFrac, rivR, 0, Math.PI * 2);
+            ctx.arc(Sx + cW * 0.5 - bW * 0.5, Sy - cH * rFrac, rivR, 0, Math.PI * 2);
+            ctx.fill();
+          });
+
+          ctx.fillStyle = `rgba(${Math.round(230 * light)}, ${Math.round(230 * light)}, ${Math.round(230 * light)}, 0.75)`;
+          ctx.font = `bold ${Math.max(6, Math.round(5.5 * scale))}px monospace`;
+          ctx.textAlign = "center";
+          ctx.fillText("HQ-87", Sx, Sy - cH * 0.44);
+
+          const stripeW = 3.5 * scale;
+          ctx.fillStyle = "#eab308";
+          for (let st = -cW * 0.35; st < cW * 0.35; st += stripeW * 2) {
+            ctx.fillRect(Sx + st, Sy - cH + 1, stripeW, 2.5 * scale);
+          }
+
+          ctx.fillStyle = "#f59e0b";
+          ctx.beginPath();
+          ctx.arc(Sx, Sy - cH * 0.5, Math.max(2, 4 * scale), 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = "#1e293b";
+          ctx.fillRect(Sx - 1 * scale, Sy - cH * 0.5, 2 * scale, 3.5 * scale);
+        }
+        // 5. Heavy Diesel Generator, Breakers & Consoles
+        else if (id.includes("generator") || id.includes("breaker") || id.includes("terminal") || id.includes("workbench")) {
+          const gW = Math.max(28, 54 * scale);
+          const gH = Math.max(22, 42 * scale);
+          const vShudder = (this.generatorOn ? Math.sin(time * 45) * (0.8 * scale) : 0);
+
+          ctx.fillStyle = "rgba(0, 0, 0, 0.58)";
+          ctx.beginPath();
+          ctx.ellipse(Sx + vShudder, Sy + 2, gW * 0.65, gH * 0.30, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          const genGrad = ctx.createLinearGradient(0, Sy - gH, 0, Sy);
+          genGrad.addColorStop(0, `rgb(${Math.round(75 * light)}, ${Math.round(85 * light)}, ${Math.round(98 * light)})`);
+          genGrad.addColorStop(1, `rgb(${Math.round(28 * light)}, ${Math.round(36 * light)}, ${Math.round(48 * light)})`);
+          ctx.fillStyle = genGrad;
+          ctx.fillRect(Sx - gW * 0.5 + vShudder, Sy - gH, gW, gH);
+
+          ctx.strokeStyle = `rgb(${Math.round(15 * light)}, ${Math.round(20 * light)}, ${Math.round(28 * light)})`;
+          ctx.lineWidth = Math.max(1, 1.5 * scale);
+          ctx.beginPath();
+          for (let lv = -gH * 0.35; lv <= gH * 0.25; lv += 4.5 * scale) {
+            ctx.moveTo(Sx - gW * 0.42 + vShudder, Sy - gH * 0.5 + lv);
+            ctx.lineTo(Sx + gW * 0.05 + vShudder, Sy - gH * 0.5 + lv);
+          }
+          ctx.stroke();
+
+          ctx.fillStyle = `rgb(${Math.round(40 * light)}, ${Math.round(45 * light)}, ${Math.round(52 * light)})`;
+          ctx.fillRect(Sx + gW * 0.28 + vShudder, Sy - gH - 12 * scale, 6 * scale, 14 * scale);
+          ctx.fillStyle = `rgb(${Math.round(120 * light)}, ${Math.round(130 * light)}, ${Math.round(140 * light)})`;
+          ctx.fillRect(Sx + gW * 0.26 + vShudder, Sy - gH - 14 * scale, 9 * scale, 3 * scale);
+
+          const dialX = Sx + gW * 0.25 + vShudder;
+          const dialY = Sy - gH * 0.65;
+          const dialR = Math.max(2, 4.5 * scale);
+
+          ctx.fillStyle = "#ffffff";
+          ctx.beginPath();
+          ctx.arc(dialX, dialY, dialR, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = "#0f172a";
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          ctx.strokeStyle = "#ef4444";
+          ctx.beginPath();
+          ctx.moveTo(dialX, dialY);
+          ctx.lineTo(dialX + Math.cos(time * 0.005) * dialR * 0.8, dialY + Math.sin(time * 0.005) * dialR * 0.8);
+          ctx.stroke();
+
+          const isRunning = this.generatorOn || this.breakerOff;
+          const ledColor = isRunning ? "#22c55e" : "#ef4444";
+          ctx.fillStyle = ledColor;
+          ctx.shadowColor = ledColor;
+          ctx.shadowBlur = 10 * scale;
+          ctx.beginPath();
+          ctx.arc(dialX, dialY + 12 * scale, Math.max(1.5, 3 * scale), 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+
+          ctx.strokeStyle = "#0f172a";
+          ctx.lineWidth = Math.max(1.5, 3 * scale);
+          ctx.beginPath();
+          ctx.moveTo(Sx - gW * 0.25 + vShudder, Sy);
+          ctx.quadraticCurveTo(Sx - gW * 0.5, Sy + 8 * scale, Sx - gW * 0.8, Sy + 4 * scale);
+          ctx.stroke();
+        }
+        // 6. Extraction Helipad & Tactical Rescue Helicopter
+        else if (id.includes("helipad")) {
+          const hR = Math.max(30, 95 * scale);
+          ctx.fillStyle = `rgb(${Math.round(40 * light)}, ${Math.round(45 * light)}, ${Math.round(52 * light)})`;
+          ctx.beginPath();
+          ctx.ellipse(Sx, Sy + 2, hR, hR * 0.38, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.strokeStyle = "#eab308";
+          ctx.lineWidth = Math.max(1.5, 3.5 * scale);
+          ctx.beginPath();
+          ctx.ellipse(Sx, Sy + 2, hR * 0.85, hR * 0.32, 0, 0, Math.PI * 2);
+          ctx.stroke();
+
+          ctx.fillStyle = "#f8fafc";
+          ctx.font = `bold ${Math.max(10, Math.round(28 * scale))}px monospace`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText("H", Sx, Sy + 2);
+
+          const strobe = Math.floor((time * 0.005) % 4);
+          for (let b = 0; b < 4; b++) {
+            const bAngle = (b / 4) * Math.PI * 2;
+            const bx = Sx + Math.cos(bAngle) * (hR * 0.85);
+            const by = Sy + 2 + Math.sin(bAngle) * (hR * 0.32);
+            ctx.fillStyle = b === strobe ? "#22c55e" : "#14532d";
+            ctx.beginPath();
+            ctx.arc(bx, by, Math.max(1.5, 3 * scale), 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          const heliH = hR * 0.45;
+          const heliY = Sy - heliH * 0.6;
+          ctx.strokeStyle = "#94a3b8";
+          ctx.lineWidth = Math.max(1, 2 * scale);
+          ctx.beginPath();
+          ctx.moveTo(Sx - hR * 0.35, Sy - 2); ctx.lineTo(Sx + hR * 0.35, Sy - 2);
+          ctx.stroke();
+
+          ctx.fillStyle = `rgb(${Math.round(45 * light)}, ${Math.round(58 * light)}, ${Math.round(42 * light)})`;
+          ctx.beginPath();
+          ctx.ellipse(Sx, heliY, hR * 0.42, heliH * 0.45, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = "rgba(56, 189, 248, 0.75)";
+          ctx.beginPath();
+          ctx.ellipse(Sx + hR * 0.15, heliY - heliH * 0.08, hR * 0.18, heliH * 0.28, 0.2, 0, Math.PI * 2);
+          ctx.fill();
+
+          const rotorR = hR * 0.75;
+          ctx.strokeStyle = "rgba(226, 232, 240, 0.45)";
+          ctx.lineWidth = Math.max(1, 2 * scale);
+          ctx.beginPath();
+          ctx.ellipse(Sx, heliY - heliH * 0.55, rotorR, rotorR * 0.18, time * 0.02, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        // 7. Bamboo River Raft (උණ බට පහුර)
+        else if (id.includes("raft")) {
+          const rW = Math.max(30, 75 * scale);
+          const rH = Math.max(16, 38 * scale);
+
+          ctx.strokeStyle = "rgba(56, 189, 248, 0.45)";
+          ctx.lineWidth = Math.max(1, 1.5 * scale);
+          ctx.beginPath();
+          ctx.ellipse(Sx, Sy + 2, rW * 0.7, rH * 0.4, 0, 0, Math.PI * 2);
+          ctx.stroke();
+
+          const poleCount = 6;
+          const poleH = rH / poleCount;
+          for (let p = 0; p < poleCount; p++) {
+            const py = Sy - rH * 0.5 + p * poleH;
+            const bGrad = ctx.createLinearGradient(Sx - rW * 0.5, 0, Sx + rW * 0.5, 0);
+            bGrad.addColorStop(0, `rgb(${Math.round(160 * light)}, ${Math.round(120 * light)}, ${Math.round(60 * light)})`);
+            bGrad.addColorStop(0.5, `rgb(${Math.round(210 * light)}, ${Math.round(175 * light)}, ${Math.round(95 * light)})`);
+            bGrad.addColorStop(1, `rgb(${Math.round(130 * light)}, ${Math.round(95 * light)}, ${Math.round(45 * light)})`);
+            ctx.fillStyle = bGrad;
+            ctx.beginPath();
+            ctx.roundRect(Sx - rW * 0.48, py, rW * 0.96, poleH * 0.85, 2 * scale);
+            ctx.fill();
+          }
+
+          ctx.fillStyle = `rgb(${Math.round(40 * light)}, ${Math.round(25 * light)}, ${Math.round(15 * light)})`;
+          ctx.fillRect(Sx - rW * 0.25, Sy - rH * 0.55, 4 * scale, rH * 1.1);
+          ctx.fillRect(Sx + rW * 0.25, Sy - rH * 0.55, 4 * scale, rH * 1.1);
+
+          ctx.strokeStyle = "#854d0e";
+          ctx.lineWidth = Math.max(1, 2.5 * scale);
+          ctx.beginPath();
+          ctx.moveTo(Sx - rW * 0.3, Sy - rH * 0.4);
+          ctx.lineTo(Sx + rW * 0.65, Sy + rH * 0.6);
+          ctx.stroke();
+        }
+        // 8. Natural Mountain Spring & Bubbling Hot Basin
+        else if (id.includes("spring") || id.includes("basin")) {
+          const sR = Math.max(22, 54 * scale);
+
+          ctx.fillStyle = `rgb(${Math.round(65 * light)}, ${Math.round(72 * light)}, ${Math.round(68 * light)})`;
+          ctx.beginPath();
+          ctx.ellipse(Sx, Sy + 2, sR, sR * 0.42, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          const poolGrad = ctx.createRadialGradient(Sx, Sy + 2, 2, Sx, Sy + 2, sR * 0.85);
+          poolGrad.addColorStop(0, "rgba(6, 182, 212, 0.85)");
+          poolGrad.addColorStop(0.7, "rgba(14, 116, 144, 0.65)");
+          poolGrad.addColorStop(1, "rgba(15, 23, 42, 0.85)");
+          ctx.fillStyle = poolGrad;
+          ctx.beginPath();
+          ctx.ellipse(Sx, Sy + 2, sR * 0.82, sR * 0.32, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          const rPhase = (time * 0.003) % 1;
+          ctx.strokeStyle = `rgba(165, 243, 252, ${0.8 - rPhase})`;
+          ctx.lineWidth = Math.max(1, 1.2 * scale);
+          ctx.beginPath();
+          ctx.ellipse(Sx, Sy + 2, sR * 0.75 * rPhase, sR * 0.28 * rPhase, 0, 0, Math.PI * 2);
+          ctx.stroke();
+
+          for (let st = 0; st < 3; st++) {
+            const stY = Sy - ((time * 0.02 + st * 15) % 40) * scale;
+            const stX = Sx + Math.sin(time * 0.004 + st * 2) * (sR * 0.3);
+            ctx.fillStyle = "rgba(224, 242, 254, 0.22)";
+            ctx.beginPath();
+            ctx.arc(stX, stY, Math.max(2, 4.5 * scale), 0, Math.PI * 2);
             ctx.fill();
           }
         }
-        // 2. Outpost Cabin (Chapter 1 Outpost)
-        else if (id.includes("cabin") || id.includes("outpost") || id.includes("shelter")) {
-          const cW = 120 * scale;
-          const cH = 80 * scale;
+        // 9. Steel Lattice Radio Tower & Skyhook Pylon
+        else if (id.includes("tower") || id.includes("antenna") || id.includes("beacon") || id.includes("skyhook") || id.includes("monorail") || id.includes("elevator")) {
+          const tW = Math.max(25, 55 * scale);
+          const tH = Math.max(50, 140 * scale);
 
-          // Timber Walls
-          ctx.fillStyle = `rgb(${Math.round(78 * light)}, ${Math.round(52 * light)}, ${Math.round(46 * light)})`;
-          ctx.fillRect(Sx - cW * 0.5, Sy - cH, cW, cH);
+          ctx.fillStyle = "#334155";
+          ctx.fillRect(Sx - tW * 0.5 - 3 * scale, Sy - 3 * scale, 6 * scale, 5 * scale);
+          ctx.fillRect(Sx + tW * 0.5 - 3 * scale, Sy - 3 * scale, 6 * scale, 5 * scale);
 
-          // Sloped Tin Roof
-          ctx.fillStyle = `rgb(${Math.round(110 * light)}, ${Math.round(118 * light)}, ${Math.round(124 * light)})`;
+          ctx.strokeStyle = `rgb(${Math.round(110 * light)}, ${Math.round(120 * light)}, ${Math.round(135 * light)})`;
+          ctx.lineWidth = Math.max(1.5, 3 * scale);
           ctx.beginPath();
-          ctx.moveTo(Sx - cW * 0.58, Sy - cH);
-          ctx.lineTo(Sx, Sy - cH * 1.35);
-          ctx.lineTo(Sx + cW * 0.58, Sy - cH);
+          ctx.moveTo(Sx - tW * 0.5, Sy);
+          ctx.lineTo(Sx, Sy - tH);
+          ctx.lineTo(Sx + tW * 0.5, Sy);
+          ctx.stroke();
+
+          ctx.lineWidth = Math.max(1, 1.4 * scale);
+          const levels = 6;
+          for (let lv = 1; lv <= levels; lv++) {
+            const frac = lv / levels;
+            const ly = Sy - tH * frac;
+            const lw = tW * 0.5 * (1 - frac);
+            ctx.beginPath();
+            ctx.moveTo(Sx - lw, ly); ctx.lineTo(Sx + lw, ly);
+            if (lv < levels) {
+              const nextFrac = (lv + 1) / levels;
+              const nly = Sy - tH * nextFrac;
+              const nlw = tW * 0.5 * (1 - nextFrac);
+              ctx.moveTo(Sx - lw, ly); ctx.lineTo(Sx + nlw, nly);
+            }
+            ctx.stroke();
+          }
+
+          ctx.fillStyle = "#94a3b8";
+          ctx.beginPath();
+          ctx.ellipse(Sx, Sy - tH * 0.7, 8 * scale, 12 * scale, 0.4, 0, Math.PI * 2);
+          ctx.fill();
+
+          const beaconOn = Math.sin(time * 0.008) > 0.2;
+          ctx.fillStyle = beaconOn ? "#ef4444" : "#450a0a";
+          ctx.shadowColor = beaconOn ? "#ef4444" : "transparent";
+          ctx.shadowBlur = beaconOn ? 18 * scale : 0;
+          ctx.beginPath();
+          ctx.arc(Sx, Sy - tH - 4 * scale, Math.max(2, 4.5 * scale), 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+        // 10. Forest Trail Signpost (සිංහරාජ මාර්ග පුවරුව)
+        else if (id.includes("sign") || id.includes("trail")) {
+          const sH = Math.max(22, 50 * scale);
+          const sW = Math.max(20, 48 * scale);
+
+          ctx.fillStyle = "rgba(0, 0, 0, 0.42)";
+          ctx.beginPath();
+          ctx.ellipse(Sx, Sy + 2, 8 * scale, 4 * scale, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = `rgb(${Math.round(85 * light)}, ${Math.round(58 * light)}, ${Math.round(38 * light)})`;
+          ctx.fillRect(Sx - 2.5 * scale, Sy - sH, 5 * scale, sH);
+
+          ctx.fillStyle = `rgb(${Math.round(135 * light)}, ${Math.round(95 * light)}, ${Math.round(62 * light)})`;
+          ctx.beginPath();
+          ctx.moveTo(Sx - sW * 0.45, Sy - sH * 0.95);
+          ctx.lineTo(Sx + sW * 0.35, Sy - sH * 0.95);
+          ctx.lineTo(Sx + sW * 0.52, Sy - sH * 0.82);
+          ctx.lineTo(Sx + sW * 0.35, Sy - sH * 0.69);
+          ctx.lineTo(Sx - sW * 0.45, Sy - sH * 0.69);
           ctx.closePath();
           ctx.fill();
+          ctx.strokeStyle = "#3e2723";
+          ctx.lineWidth = 1;
+          ctx.stroke();
 
-          // Warm Glowing Lantern Window
-          ctx.fillStyle = "#ffb703";
-          ctx.fillRect(Sx + cW * 0.12, Sy - cH * 0.7, cW * 0.25, cH * 0.35);
-          ctx.strokeStyle = "#4e342e";
-          ctx.lineWidth = Math.max(1, 2 * scale);
-          ctx.strokeRect(Sx + cW * 0.12, Sy - cH * 0.7, cW * 0.25, cH * 0.35);
+          ctx.fillStyle = `rgb(${Math.round(115 * light)}, ${Math.round(80 * light)}, ${Math.round(52 * light)})`;
+          ctx.beginPath();
+          ctx.moveTo(Sx + sW * 0.45, Sy - sH * 0.65);
+          ctx.lineTo(Sx - sW * 0.35, Sy - sH * 0.65);
+          ctx.lineTo(Sx - sW * 0.52, Sy - sH * 0.52);
+          ctx.lineTo(Sx - sW * 0.35, Sy - sH * 0.39);
+          ctx.lineTo(Sx + sW * 0.45, Sy - sH * 0.39);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        }
+        // 11. Ancient Rune Slates, Field Journals & Audio Tapes
+        else if (id.includes("slate") || id.includes("diary") || id.includes("log") || id.includes("tape") || id.includes("doc") || id.includes("truth") || id.includes("blackbox")) {
+          const itemH = Math.max(14, 28 * scale);
+          const itemW = Math.max(16, 32 * scale);
 
-          // Front Door
-          ctx.fillStyle = "#3e2723";
-          ctx.fillRect(Sx - cW * 0.35, Sy - cH * 0.75, cW * 0.28, cH * 0.75);
-        }
-        // 3. Supply Crates & Chests
-        else if (id.includes("chest") || id.includes("crate") || id.includes("box")) {
-          const bW = 34 * scale;
-          const bH = 24 * scale;
-          ctx.fillStyle = `rgb(${Math.round(92 * light)}, ${Math.round(64 * light)}, ${Math.round(51 * light)})`;
-          ctx.fillRect(Sx - bW * 0.5, Sy - bH, bW, bH);
-          ctx.fillStyle = "#d4af37"; // Brass lock
+          ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
           ctx.beginPath();
-          ctx.arc(Sx, Sy - bH * 0.5, Math.max(2, 3.5 * scale), 0, Math.PI * 2);
+          ctx.ellipse(Sx, Sy + 2, itemW * 0.6, itemH * 0.3, 0, 0, Math.PI * 2);
           ctx.fill();
+
+          if (id.includes("slate")) {
+            ctx.fillStyle = `rgb(${Math.round(55 * light)}, ${Math.round(65 * light)}, ${Math.round(75 * light)})`;
+            ctx.beginPath();
+            ctx.roundRect(Sx - itemW * 0.5, Sy - itemH, itemW, itemH, 3 * scale);
+            ctx.fill();
+            ctx.shadowColor = "#38bdf8";
+            ctx.shadowBlur = 8 * scale;
+            ctx.strokeStyle = "#38bdf8";
+            ctx.lineWidth = Math.max(1, 1.4 * scale);
+            ctx.beginPath();
+            ctx.moveTo(Sx - itemW * 0.25, Sy - itemH * 0.7); ctx.lineTo(Sx, Sy - itemH * 0.45); ctx.lineTo(Sx + itemW * 0.25, Sy - itemH * 0.7);
+            ctx.moveTo(Sx, Sy - itemH * 0.85); ctx.lineTo(Sx, Sy - itemH * 0.25);
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+          } else if (id.includes("diary") || id.includes("log") || id.includes("doc")) {
+            ctx.fillStyle = "#78350f";
+            ctx.fillRect(Sx - itemW * 0.48, Sy - itemH, itemW * 0.96, itemH);
+            ctx.fillStyle = "#fef3c7";
+            ctx.fillRect(Sx - itemW * 0.42, Sy - itemH + 2 * scale, itemW * 0.84, itemH - 4 * scale);
+            ctx.fillStyle = "#dc2626";
+            ctx.fillRect(Sx - 1 * scale, Sy - itemH, 2.5 * scale, itemH * 0.8);
+          } else {
+            ctx.fillStyle = "#1e293b";
+            ctx.fillRect(Sx - itemW * 0.45, Sy - itemH * 0.75, itemW * 0.9, itemH * 0.75);
+            ctx.fillStyle = "#ffffff";
+            ctx.beginPath();
+            ctx.arc(Sx - itemW * 0.2, Sy - itemH * 0.38, 2.5 * scale, 0, Math.PI * 2);
+            ctx.arc(Sx + itemW * 0.2, Sy - itemH * 0.38, 2.5 * scale, 0, Math.PI * 2);
+            ctx.fill();
+          }
         }
-        // 4. Heavy Generator / Breaker
-        else if (id.includes("generator") || id.includes("breaker") || id.includes("terminal")) {
-          const gW = 42 * scale;
-          const gH = 34 * scale;
-          ctx.fillStyle = `rgb(${Math.round(71 * light)}, ${Math.round(85 * light)}, ${Math.round(105 * light)})`;
-          ctx.fillRect(Sx - gW * 0.5, Sy - gH, gW, gH);
-          // Blinking status diode
-          ctx.fillStyle = this.generatorOn ? "#22c55e" : "#ef4444";
-          ctx.beginPath();
-          ctx.arc(Sx + gW * 0.3, Sy - gH * 0.7, Math.max(2, 3 * scale), 0, Math.PI * 2);
-          ctx.fill();
-        }
-        // 5. General Pickups (Keys, Slates, Gems, DNA Core)
+        // 12. Keys, Keycards, Bio-Crystals & Sacred Feathers
         else {
-          const itR = 14 * scale;
-          ctx.fillStyle = "#f59e0b";
-          ctx.beginPath();
-          ctx.arc(Sx, Sy - itR, itR, 0, Math.PI * 2);
-          ctx.fill();
+          const itemR = Math.max(8, 16 * scale);
+
+          if (id.includes("feather")) {
+            const fFloat = Math.sin(time * 0.004) * (6 * scale);
+            const fy = Sy - 18 * scale + fFloat;
+            ctx.shadowColor = "#38bdf8";
+            ctx.shadowBlur = 12 * scale;
+            ctx.fillStyle = "#0284c7";
+            ctx.beginPath();
+            ctx.ellipse(Sx, fy, itemR * 0.4, itemR * 1.1, 0.3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = "#dc2626";
+            ctx.beginPath();
+            ctx.arc(Sx + itemR * 0.25, fy - itemR * 0.8, 3.5 * scale, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = Math.max(1, 1.2 * scale);
+            ctx.beginPath();
+            ctx.moveTo(Sx - itemR * 0.2, fy + itemR * 0.9);
+            ctx.lineTo(Sx + itemR * 0.25, fy - itemR * 0.8);
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+          } else if (id.includes("keycard")) {
+            ctx.fillStyle = "#f8fafc";
+            ctx.fillRect(Sx - 10 * scale, Sy - 14 * scale, 20 * scale, 13 * scale);
+            ctx.fillStyle = "#0284c7";
+            ctx.fillRect(Sx - 10 * scale, Sy - 14 * scale, 20 * scale, 3.5 * scale);
+            ctx.fillStyle = "#eab308";
+            ctx.fillRect(Sx - 6 * scale, Sy - 8 * scale, 4 * scale, 4 * scale);
+          } else if (id.includes("core") || id.includes("crystal") || id.includes("sample") || id.includes("gem")) {
+            const cFloat = Math.sin(time * 0.005) * (4 * scale);
+            const cy = Sy - 16 * scale + cFloat;
+            ctx.shadowColor = "#00f5d4";
+            ctx.shadowBlur = 14 * scale;
+            ctx.fillStyle = "#00f5d4";
+            ctx.beginPath();
+            ctx.moveTo(Sx, cy - itemR);
+            ctx.lineTo(Sx + itemR * 0.5, cy);
+            ctx.lineTo(Sx, cy + itemR * 0.8);
+            ctx.lineTo(Sx - itemR * 0.5, cy);
+            ctx.closePath();
+            ctx.fill();
+            ctx.shadowBlur = 0;
+          } else {
+            ctx.fillStyle = "#d4af37";
+            ctx.beginPath();
+            ctx.arc(Sx - 5 * scale, Sy - 10 * scale, 5 * scale, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillRect(Sx - 2 * scale, Sy - 11.5 * scale, 15 * scale, 3 * scale);
+            ctx.fillRect(Sx + 8 * scale, Sy - 9 * scale, 3 * scale, 4.5 * scale);
+          }
         }
 
         ctx.restore();
       }
 
-      // ── Ground Item ──
+      // ── Ground Item (Salt, Herbs, Minerals, Flares) ──
       else if (ent.type === "item") {
         const it = ent.item;
-        const iR = 10 * scale;
+        const iR = Math.max(6, 12 * scale);
         ctx.save();
         ctx.globalAlpha = fog;
-        ctx.fillStyle = it?.type === "salt" ? "#f8fafc" : (it?.type === "herb" ? "#4ade80" : "#38bdf8");
+
+        ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
         ctx.beginPath();
-        ctx.arc(Sx, Sy - iR, Math.max(2, iR), 0, Math.PI * 2);
+        ctx.ellipse(Sx, Sy + 2, iR * 1.2, iR * 0.45, 0, 0, Math.PI * 2);
         ctx.fill();
+
+        if (it?.type === "salt") {
+          // Sea Salt Pouch with Spilled Glittering White Crystals
+          ctx.fillStyle = "#e2e8f0";
+          ctx.beginPath();
+          ctx.arc(Sx, Sy - iR * 0.7, iR * 0.85, 0, Math.PI * 2);
+          ctx.fill();
+          // Salt shimmer crystals
+          ctx.fillStyle = "#ffffff";
+          [-0.3, 0.1, 0.4].forEach((cx, idx) => {
+            ctx.fillRect(Sx + iR * cx, Sy - 2 + (idx % 2) * 2, 2 * scale, 2 * scale);
+          });
+        } else if (it?.type === "herb") {
+          // Bushy Endemic Rainforest Herb with Serrated Leaves
+          ctx.fillStyle = "#22c55e";
+          ctx.beginPath();
+          ctx.ellipse(Sx - iR * 0.35, Sy - iR * 0.7, iR * 0.55, iR * 0.3, 0.4, 0, Math.PI * 2);
+          ctx.ellipse(Sx + iR * 0.35, Sy - iR * 0.7, iR * 0.55, iR * 0.3, -0.4, 0, Math.PI * 2);
+          ctx.ellipse(Sx, Sy - iR * 1.1, iR * 0.3, iR * 0.55, 0, 0, Math.PI * 2);
+          ctx.fill();
+          // Small wild yellow flower
+          ctx.fillStyle = "#fde047";
+          ctx.beginPath();
+          ctx.arc(Sx, Sy - iR * 0.9, 2.5 * scale, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          // Tech / Equipment Capsule
+          ctx.fillStyle = "#38bdf8";
+          ctx.beginPath();
+          ctx.roundRect(Sx - iR * 0.5, Sy - iR * 1.2, iR, iR * 1.2, 3 * scale);
+          ctx.fill();
+        }
         ctx.restore();
       }
 
-      // ── Shadow Stalker Leopard (3D Prowler in the Mist) ──
+      // ── Shadow Stalker Leopard (3D Tactical Predator in the Mist) ──
       else if (ent.type === "stalker") {
         const stalker = ent.stalker;
-        const catH = 36 * scale;
-        const catW = 48 * scale;
+        const catH = Math.max(18, 42 * scale);
+        const catW = Math.max(26, 62 * scale);
         ctx.save();
         ctx.globalAlpha = fog;
 
-        // Shadow under cat
-        ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+        // Ground Contact Shadow
+        ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
         ctx.beginPath();
-        ctx.ellipse(Sx, Sy, catW * 0.65, catH * 0.25, 0, 0, Math.PI * 2);
+        ctx.ellipse(Sx, Sy + 2, catW * 0.75, catH * 0.3, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Sleek Melanistic Black Leopard Body
-        ctx.fillStyle = `rgb(${Math.round(18 * light)}, ${Math.round(16 * light)}, ${Math.round(14 * light)})`;
+        // Sleek Melanistic Black Leopard Body (low prowling muscular silhouette)
+        ctx.fillStyle = `rgb(${Math.round(20 * light)}, ${Math.round(18 * light)}, ${Math.round(16 * light)})`;
         ctx.beginPath();
-        ctx.ellipse(Sx, Sy - catH * 0.5, catW * 0.45, catH * 0.35, 0, 0, Math.PI * 2);
+        ctx.ellipse(Sx, Sy - catH * 0.45, catW * 0.45, catH * 0.32, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Feline Head
+        // Muscular Shoulders & Stalking Paws
+        ctx.fillRect(Sx - catW * 0.35, Sy - catH * 0.35, 6 * scale, catH * 0.4);
+        ctx.fillRect(Sx + catW * 0.22, Sy - catH * 0.35, 6 * scale, catH * 0.4);
+
+        // Curving Sinuous Tail with Animated Twitching Tip
+        const tailTwitch = Math.sin(time * 0.005) * (8 * scale);
+        ctx.strokeStyle = `rgb(${Math.round(20 * light)}, ${Math.round(18 * light)}, ${Math.round(16 * light)})`;
+        ctx.lineWidth = Math.max(2, 3.5 * scale);
+        ctx.beginPath();
+        ctx.moveTo(Sx - catW * 0.42, Sy - catH * 0.48);
+        ctx.quadraticCurveTo(Sx - catW * 0.75, Sy - catH * 0.75, Sx - catW * 0.78 + tailTwitch, Sy - catH * 0.95);
+        ctx.stroke();
+
+        // Low Predatory Feline Head & Ears
         const catHeadX = Sx + catW * 0.38;
-        const catHeadY = Sy - catH * 0.65;
+        const catHeadY = Sy - catH * 0.55;
         ctx.beginPath();
-        ctx.arc(catHeadX, catHeadY, catH * 0.3, 0, Math.PI * 2);
+        ctx.ellipse(catHeadX, catHeadY, catH * 0.32, catH * 0.26, 0.15, 0, Math.PI * 2);
+        ctx.fill();
+        // Pointed ears
+        ctx.beginPath();
+        ctx.moveTo(catHeadX - 4 * scale, catHeadY - catH * 0.22);
+        ctx.lineTo(catHeadX - 7 * scale, catHeadY - catH * 0.45);
+        ctx.lineTo(catHeadX - 1 * scale, catHeadY - catH * 0.3);
+        ctx.moveTo(catHeadX + 2 * scale, catHeadY - catH * 0.25);
+        ctx.lineTo(catHeadX + 6 * scale, catHeadY - catH * 0.45);
+        ctx.lineTo(catHeadX + 6 * scale, catHeadY - catH * 0.2);
         ctx.fill();
 
-        // Glowing Predatory Amber Eyes (Gleams when player flashlight hits it!)
+        // Eerie Glowing Amber Eyes (Tapetum Lucidum Flares when Flashlight Hits)
         const eyeGlow = p.inTorch ? 1.0 : (stalker.eyesAlpha || 0.4);
         ctx.fillStyle = `rgba(251, 191, 36, ${eyeGlow})`;
         ctx.shadowColor = "#fbbf24";
-        ctx.shadowBlur = 10 * scale;
+        ctx.shadowBlur = (p.inTorch ? 18 : 8) * scale;
         ctx.beginPath();
-        ctx.arc(catHeadX - 2 * scale, catHeadY - 2 * scale, Math.max(1.5, 2.5 * scale), 0, Math.PI * 2);
-        ctx.arc(catHeadX + 5 * scale, catHeadY - 2 * scale, Math.max(1.5, 2.5 * scale), 0, Math.PI * 2);
+        ctx.arc(catHeadX - 2 * scale, catHeadY - 2 * scale, Math.max(1.5, 2.8 * scale), 0, Math.PI * 2);
+        ctx.arc(catHeadX + 5 * scale, catHeadY - 2 * scale, Math.max(1.5, 2.8 * scale), 0, Math.PI * 2);
         ctx.fill();
         ctx.shadowBlur = 0;
 
         ctx.restore();
       }
 
-      // ── Leeches & Vipers ──
+      // ── Rainforest Leech (Haemadipsa zeylanica) ──
       else if (ent.type === "leech") {
-        const lR = 6 * scale;
+        const l = ent.leech;
+        const lR = Math.max(3, 8 * scale);
         ctx.save();
         ctx.globalAlpha = fog;
-        ctx.fillStyle = "#4a0404";
+
+        // Ground shadow
+        ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
         ctx.beginPath();
-        ctx.ellipse(Sx, Sy - lR * 0.5, lR * 1.5, lR * 0.6, 0, 0, Math.PI * 2);
+        ctx.ellipse(Sx, Sy + 1, lR * 1.5, lR * 0.5, 0, 0, Math.PI * 2);
         ctx.fill();
+
+        // Segmented dark crimson body in looping inchworm motion
+        const inchLoop = Math.abs(Math.sin(time * 0.008 + (l?.id || 0))) * (4 * scale);
+        ctx.fillStyle = "#5c0606";
+        ctx.beginPath();
+        ctx.ellipse(Sx, Sy - lR * 0.5 - inchLoop, lR * 1.4, lR * 0.65, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Anterior searching sucker head
+        ctx.fillStyle = "#831843";
+        ctx.beginPath();
+        ctx.arc(Sx + lR * 1.2, Sy - lR * 0.7 - inchLoop * 1.5, Math.max(1.5, 2.5 * scale), 0, Math.PI * 2);
+        ctx.fill();
+
         ctx.restore();
       }
+      // ── Green Pit Viper (Trimeresurus trigonocephalus) ──
       else if (ent.type === "viper") {
-        const vR = 8 * scale;
+        const vR = Math.max(5, 12 * scale);
         ctx.save();
         ctx.globalAlpha = fog;
-        ctx.fillStyle = "#854d0e";
+
+        // Ground shadow
+        ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
         ctx.beginPath();
-        ctx.arc(Sx, Sy - vR, Math.max(2, vR), 0, Math.PI * 2);
+        ctx.ellipse(Sx, Sy + 2, vR * 1.4, vR * 0.6, 0, 0, Math.PI * 2);
         ctx.fill();
+
+        // Coiled Emerald-Green Scaled Body
+        ctx.fillStyle = "#15803d";
+        ctx.beginPath();
+        ctx.ellipse(Sx, Sy - vR * 0.5, vR * 1.2, vR * 0.7, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Black Chevron Dorsal Markings
+        ctx.strokeStyle = "#0f172a";
+        ctx.lineWidth = Math.max(1, 1.2 * scale);
+        ctx.beginPath();
+        ctx.moveTo(Sx - vR * 0.5, Sy - vR * 0.7); ctx.lineTo(Sx, Sy - vR * 0.5); ctx.lineTo(Sx + vR * 0.5, Sy - vR * 0.7);
+        ctx.stroke();
+
+        // Distinctive Triangular Viper Head & Black Tongue
+        const headX = Sx + vR * 0.85;
+        const headY = Sy - vR * 0.8;
+        ctx.fillStyle = "#22c55e";
+        ctx.beginPath();
+        ctx.moveTo(headX + 5 * scale, headY);
+        ctx.lineTo(headX - 4 * scale, headY - 4 * scale);
+        ctx.lineTo(headX - 4 * scale, headY + 4 * scale);
+        ctx.closePath();
+        ctx.fill();
+
+        // Flickering forked tongue
+        if (Math.sin(time * 0.01) > 0.4) {
+          ctx.strokeStyle = "#dc2626";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(headX + 5 * scale, headY);
+          ctx.lineTo(headX + 9 * scale, headY);
+          ctx.stroke();
+        }
+
         ctx.restore();
       }
     });
@@ -7127,7 +8197,7 @@ export class SinharajaEngine {
     ctx.fillRect(0, 0, w, h);
     ctx.restore();
 
-    // 7. First-Person Viewmodel: I.G.I. Tactical Hands & Military Torch
+    // 7. First-Person Viewmodel: I.G.I. Tactical Hands & Military Maglite
     ctx.save();
     const handBobX = bobX * 0.85;
     const handBobY = bobY * 0.85;
@@ -7156,44 +8226,106 @@ export class SinharajaEngine {
       ctx.lineTo(w * 0.95, h * 0.15);
       ctx.closePath();
       ctx.fill();
+
+      // Atmospheric Dust Motes Scattering in the Light Beam
+      for (let dm = 0; dm < 6; dm++) {
+        const dmX = w * 0.3 + ((time * 0.02 + dm * 95) % (w * 0.4));
+        const dmY = h * 0.25 + Math.sin(time * 0.002 + dm * 3) * 60;
+        ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+        ctx.beginPath();
+        ctx.arc(dmX, dmY, 1.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
 
-    // Heavy-Duty Tactical Flashlight Body (Anodized Aluminum Maglite)
+    // Heavy-Duty Tactical Flashlight Body (Anodized Aircraft Aluminum Maglite)
     const torchAngle = -0.42;
     ctx.translate(torchBaseX, torchBaseY);
     ctx.rotate(torchAngle);
 
-    // Tactical Gloved Hand Gripping Torch
-    ctx.fillStyle = "#1e2920"; // Tactical green glove
-    ctx.beginPath();
-    ctx.roundRect(-25, -20, 50, 65, 8);
-    ctx.fill();
-    ctx.fillStyle = "#111812"; // Carbon knuckle pad
-    ctx.fillRect(-22, -16, 44, 14);
+    // Tactical Gloved Arm & Wrist Cuff with Digital Chronometer
+    ctx.fillStyle = "#161f18";
+    ctx.fillRect(-28, 28, 56, 75);
+    // Digital Tactical Wrist Unit
+    ctx.fillStyle = "#0f172a";
+    ctx.fillRect(-18, 48, 36, 18);
+    ctx.strokeStyle = "#334155";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(-18, 48, 36, 18);
+    // Green digital readout
+    ctx.fillStyle = "#4ade80";
+    ctx.font = "bold 9px monospace";
+    ctx.textAlign = "center";
+    ctx.fillText("IGI-OPS", 0, 61);
 
-    // Aluminum Torch Barrel
-    const barrelGrad = ctx.createLinearGradient(-14, 0, 14, 0);
-    barrelGrad.addColorStop(0, "#475569");
+    // Tactical Assault Glove Gripping Torch
+    ctx.fillStyle = "#1e2920";
+    ctx.beginPath();
+    ctx.roundRect(-26, -22, 52, 68, 8);
+    ctx.fill();
+
+    // Carbon Fiber Knuckle Armor Plate
+    ctx.fillStyle = "#0a0e0b";
+    ctx.beginPath();
+    ctx.roundRect(-23, -18, 46, 16, 4);
+    ctx.fill();
+    // Knuckle divider grooves
+    ctx.strokeStyle = "#1e2920";
+    ctx.lineWidth = 1.5;
+    [-10, 0, 10].forEach((kg) => {
+      ctx.beginPath();
+      ctx.moveTo(kg, -18); ctx.lineTo(kg, -2);
+      ctx.stroke();
+    });
+
+    // Anodized Aluminum Torch Barrel
+    const barrelGrad = ctx.createLinearGradient(-15, 0, 15, 0);
+    barrelGrad.addColorStop(0, "#334155");
     barrelGrad.addColorStop(0.35, "#94a3b8");
-    barrelGrad.addColorStop(0.7, "#334155");
+    barrelGrad.addColorStop(0.7, "#475569");
     barrelGrad.addColorStop(1, "#1e293b");
     ctx.fillStyle = barrelGrad;
-    ctx.fillRect(-14, -90, 28, 90);
+    ctx.fillRect(-15, -95, 30, 95);
 
-    // Bezel Head
+    // Diamond Cross-Hatch Knurled Grip Texture
+    ctx.strokeStyle = "rgba(15, 23, 42, 0.45)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let kn = -80; kn <= -25; kn += 6) {
+      ctx.moveTo(-14, kn); ctx.lineTo(14, kn + 8);
+      ctx.moveTo(14, kn); ctx.lineTo(-14, kn + 8);
+    }
+    ctx.stroke();
+
+    // Machined Aluminum Strike Bezel Head
     ctx.fillStyle = "#1e293b";
-    ctx.fillRect(-18, -112, 36, 22);
+    ctx.beginPath();
+    ctx.moveTo(-19, -95);
+    ctx.lineTo(-21, -118);
+    ctx.lineTo(21, -118);
+    ctx.lineTo(19, -95);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = "#475569";
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
 
-    // Glowing Lens
+    // Recessed Rubber Push-Button Switch
+    ctx.fillStyle = "#0f172a";
+    ctx.beginPath();
+    ctx.ellipse(0, -50, 4, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Glowing Lens & Reflector
     if (this.torchOn) {
       ctx.fillStyle = this.uvMode ? "#a855f7" : "#fef08a";
       ctx.shadowColor = this.uvMode ? "#a855f7" : "#fde047";
-      ctx.shadowBlur = 18;
-      ctx.fillRect(-16, -115, 32, 4);
+      ctx.shadowBlur = 22;
+      ctx.fillRect(-19, -121, 38, 5);
       ctx.shadowBlur = 0;
     } else {
       ctx.fillStyle = "#334155";
-      ctx.fillRect(-16, -115, 32, 4);
+      ctx.fillRect(-19, -121, 38, 5);
     }
 
     ctx.restore();
