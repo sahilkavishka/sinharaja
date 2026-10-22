@@ -3174,6 +3174,14 @@ export class SinharajaEngine {
         this.moveTarget = { x: touchX, y: touchY, time: performance.now() };
       }
     }, { passive: true });
+
+    // Pointer Lock Change Listeners for authentic 360 FPS Mouse Look
+    document.addEventListener("pointerlockchange", () => {
+      this.pointerLocked = document.pointerLockElement === this.canvas;
+    });
+    document.addEventListener("pointerlockerror", () => {
+      this.pointerLocked = false;
+    });
   }
 
   // ── 6. Actions ────────────────────────────────────────────────────────────
