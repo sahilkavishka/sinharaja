@@ -378,6 +378,7 @@ export class SinharajaEngine {
       { key: "black_leopard", src: "/textures/black_leopard.jpg", darkBg: true },
       { key: "rainforest_herb", src: "/textures/rainforest_herb.jpg", darkBg: true },
       { key: "salt_pouch", src: "/textures/salt_pouch.jpg", darkBg: true },
+      { key: "canvas_tent", src: "/textures/canvas_tent.jpg", darkBg: true },
     ];
 
     textureList.forEach(({ key, src, darkBg }) => {
@@ -6810,51 +6811,224 @@ export class SinharajaEngine {
         ctx.fillRect(0, ry, w, 7);
       }
     } else {
-      // Nocturnal Rainforest Sky Dome & Parallax Mountain Horizon
+      // ── Nocturnal Rainforest Sky Dome, Celestial Starfield & Mountain Vista ──
       const skyH = Math.max(0, horizonY + 2);
+
+      // A. Deep Atmospheric Celestial Gradient
       const skyGrad = ctx.createLinearGradient(0, 0, 0, Math.max(10, horizonY));
       if (this.chapter === 2) {
-        skyGrad.addColorStop(0, "#020814");
-        skyGrad.addColorStop(0.65, "#0a1e30");
-        skyGrad.addColorStop(1, "#163852");
+        skyGrad.addColorStop(0, "#010611");
+        skyGrad.addColorStop(0.45, "#061528");
+        skyGrad.addColorStop(0.85, "#0e2942");
+        skyGrad.addColorStop(1, "#1a3d5c");
       } else if (this.chapter === 3) {
-        skyGrad.addColorStop(0, "#010106");
-        skyGrad.addColorStop(0.65, "#0b0817");
-        skyGrad.addColorStop(1, "#17102e");
+        skyGrad.addColorStop(0, "#010105");
+        skyGrad.addColorStop(0.45, "#080614");
+        skyGrad.addColorStop(0.85, "#120e29");
+        skyGrad.addColorStop(1, "#1e183a");
       } else if (this.chapter === 4) {
-        skyGrad.addColorStop(0, "#04070a");
-        skyGrad.addColorStop(0.65, "#0d1620");
-        skyGrad.addColorStop(1, "#192634");
+        skyGrad.addColorStop(0, "#020407");
+        skyGrad.addColorStop(0.45, "#09121a");
+        skyGrad.addColorStop(0.85, "#13212c");
+        skyGrad.addColorStop(1, "#1f3240");
       } else if (this.chapter === 5) {
-        skyGrad.addColorStop(0, "#0b0407");
-        skyGrad.addColorStop(0.6, "#220c15");
-        skyGrad.addColorStop(1, "#451c14");
+        skyGrad.addColorStop(0, "#080205");
+        skyGrad.addColorStop(0.45, "#1c0912");
+        skyGrad.addColorStop(0.85, "#381418");
+        skyGrad.addColorStop(1, "#522019");
       } else {
-        skyGrad.addColorStop(0, "#020a04");
-        skyGrad.addColorStop(0.65, "#08200f");
-        skyGrad.addColorStop(1, "#0f361a");
+        skyGrad.addColorStop(0, "#010703");
+        skyGrad.addColorStop(0.45, "#05180c");
+        skyGrad.addColorStop(0.85, "#0b2c17");
+        skyGrad.addColorStop(1, "#123d21");
       }
       ctx.fillStyle = skyGrad;
       ctx.fillRect(0, 0, w, skyH);
 
-      // Parallax Mountain Ranges (Rotates as player turns view)
+      // B. Twinkling Astronomical Starfield (Rotates seamlessly with yaw & pitch)
+      if (skyH > 20) {
+        ctx.save();
+        const starSeed = [
+          { a: 0.12, alt: 0.28, r: 1.4, b: 0.9 }, { a: 0.35, alt: 0.65, r: 1.0, b: 0.6 },
+          { a: 0.58, alt: 0.42, r: 1.8, b: 1.0 }, { a: 0.82, alt: 0.78, r: 1.2, b: 0.7 },
+          { a: 1.05, alt: 0.35, r: 1.5, b: 0.8 }, { a: 1.28, alt: 0.82, r: 0.9, b: 0.5 },
+          { a: 1.45, alt: 0.52, r: 1.6, b: 0.9 }, { a: 1.72, alt: 0.25, r: 1.1, b: 0.7 },
+          { a: 1.95, alt: 0.70, r: 1.3, b: 0.8 }, { a: 2.18, alt: 0.45, r: 2.0, b: 1.0 },
+          { a: 2.42, alt: 0.85, r: 0.8, b: 0.5 }, { a: 2.68, alt: 0.30, r: 1.4, b: 0.8 },
+          { a: 2.92, alt: 0.60, r: 1.1, b: 0.6 }, { a: 3.15, alt: 0.75, r: 1.7, b: 0.9 },
+          { a: 3.38, alt: 0.22, r: 1.2, b: 0.7 }, { a: 3.62, alt: 0.55, r: 1.5, b: 0.8 },
+          { a: 3.85, alt: 0.88, r: 1.0, b: 0.6 }, { a: 4.10, alt: 0.38, r: 1.9, b: 1.0 },
+          { a: 4.35, alt: 0.68, r: 0.9, b: 0.5 }, { a: 4.60, alt: 0.48, r: 1.3, b: 0.7 },
+          { a: 4.85, alt: 0.80, r: 1.6, b: 0.9 }, { a: 5.12, alt: 0.26, r: 1.1, b: 0.6 },
+          { a: 5.38, alt: 0.62, r: 1.4, b: 0.8 }, { a: 5.65, alt: 0.40, r: 2.2, b: 1.0 },
+          { a: 5.90, alt: 0.74, r: 1.0, b: 0.6 }, { a: 6.15, alt: 0.32, r: 1.5, b: 0.8 },
+          // Southern Cross (Crux) Asterism
+          { a: 1.80, alt: 0.58, r: 2.1, b: 1.0 },
+          { a: 1.82, alt: 0.44, r: 1.9, b: 0.95 },
+          { a: 1.76, alt: 0.51, r: 1.8, b: 0.9 },
+          { a: 1.87, alt: 0.50, r: 1.7, b: 0.85 },
+          { a: 1.84, alt: 0.48, r: 1.2, b: 0.7 },
+        ];
+        starSeed.forEach((st, idx) => {
+          let relA = (st.a - yaw) % (Math.PI * 2);
+          if (relA < -Math.PI) relA += Math.PI * 2;
+          if (relA > Math.PI) relA -= Math.PI * 2;
+          if (Math.abs(relA) < fovRad * 0.9) {
+            const sx = w * 0.5 + Math.tan(relA) * F + bobX * 0.2;
+            const sy = horizonY - st.alt * Math.max(80, horizonY * 0.9);
+            if (sy > 0 && sy < horizonY - 4) {
+              const twinkle = 0.75 + Math.sin(time * 0.003 + idx * 4.2) * 0.25;
+              const alpha = Math.min(1.0, st.b * twinkle * (sy / horizonY));
+              ctx.fillStyle = `rgba(235, 245, 255, ${alpha.toFixed(2)})`;
+              ctx.beginPath();
+              ctx.arc(sx, sy, st.r, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+        });
+        ctx.restore();
+      }
+
+      // C. Luminous Silver Crescent Moon & Atmospheric Halo
+      const moonAzimuth = 1.35; // Astronomical bearing
+      let moonRel = (moonAzimuth - yaw) % (Math.PI * 2);
+      if (moonRel < -Math.PI) moonRel += Math.PI * 2;
+      if (moonRel > Math.PI) moonRel -= Math.PI * 2;
+      if (Math.abs(moonRel) < fovRad * 0.85 && horizonY > 30) {
+        const moonX = w * 0.5 + Math.tan(moonRel) * F + bobX * 0.3;
+        const moonY = Math.max(30, horizonY - 145 - (this.camPitch || 0) * 80);
+        const moonR = 26;
+
+        // Volumetric Moon Halo
+        const haloGrad = ctx.createRadialGradient(moonX, moonY, moonR * 0.5, moonX, moonY, moonR * 4.5);
+        haloGrad.addColorStop(0, "rgba(224, 242, 254, 0.42)");
+        haloGrad.addColorStop(0.35, "rgba(186, 230, 253, 0.16)");
+        haloGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+        ctx.fillStyle = haloGrad;
+        ctx.beginPath();
+        ctx.arc(moonX, moonY, moonR * 4.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Moon Disc (Crescent Shape)
+        ctx.save();
+        ctx.fillStyle = "#f8fafc";
+        ctx.shadowColor = "#e0f2fe";
+        ctx.shadowBlur = 18;
+        ctx.beginPath();
+        ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Inner shadow to carve realistic waxing crescent
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.beginPath();
+        ctx.arc(moonX + moonR * 0.65, moonY - moonR * 0.2, moonR * 0.95, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // Faint nocturnal wispy cloud crossing over moon
+        ctx.fillStyle = "rgba(15, 23, 42, 0.35)";
+        ctx.beginPath();
+        ctx.ellipse(moonX + Math.sin(time * 0.0004) * 20, moonY + 8, moonR * 2.8, moonR * 0.45, -0.08, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // D. Multi-Depth Parallax Mountain Ranges (Sinharaja Mountain Massif)
       if (horizonY > 10) {
-        ctx.fillStyle = this.chapter === 2 ? "#061320" : (this.chapter === 3 ? "#07040f" : "#041008");
+        // 1. Far Mountain Ridge (Gongala & Rakwana Peaks - Deep Blue-Slate Mist)
+        ctx.save();
+        const farColor = this.chapter === 2 ? "#05101c" : (this.chapter === 3 ? "#0a0718" : (this.chapter === 5 ? "#240a0f" : "#04140b"));
+        ctx.fillStyle = farColor;
         ctx.beginPath();
         ctx.moveTo(0, horizonY);
-        const step = 20;
-        for (let x = 0; x <= w + step; x += step) {
-          const peak = Math.sin((x / w) * 10 + yaw * 2.2) * 32 + Math.cos((x / w) * 5 + yaw * 1.4) * 18;
-          ctx.lineTo(x, horizonY - 18 - peak);
+        for (let x = 0; x <= w + 25; x += 25) {
+          const farPeak = Math.sin((x / w) * 6.5 + yaw * 0.8) * 45 + Math.cos((x / w) * 3.2 + yaw * 0.5) * 25;
+          ctx.lineTo(x, horizonY - 42 - farPeak);
         }
         ctx.lineTo(w, horizonY);
         ctx.closePath();
         ctx.fill();
+
+        // 2. Rolling Valley Mist Inversion (Settled in Mountain Crevices)
+        const mistGrad = ctx.createLinearGradient(0, horizonY - 55, 0, horizonY);
+        mistGrad.addColorStop(0, "rgba(148, 163, 184, 0)");
+        mistGrad.addColorStop(0.5, this.chapter === 2 ? "rgba(56, 189, 248, 0.16)" : "rgba(186, 230, 253, 0.12)");
+        mistGrad.addColorStop(1, "rgba(15, 23, 42, 0.38)");
+        ctx.fillStyle = mistGrad;
+        ctx.beginPath();
+        ctx.moveTo(0, horizonY);
+        for (let x = 0; x <= w + 30; x += 30) {
+          const mistSway = Math.sin((x / w) * 8 + time * 0.0006 + yaw) * 14;
+          ctx.lineTo(x, horizonY - 24 - mistSway);
+        }
+        ctx.lineTo(w, horizonY);
+        ctx.closePath();
+        ctx.fill();
+
+        // 3. Mid-Distance Rainforest Jungle Ridges (Sharper Foreground Peaks)
+        const midColor = this.chapter === 2 ? "#081a28" : (this.chapter === 3 ? "#0f0b20" : (this.chapter === 5 ? "#321014" : "#072010"));
+        ctx.fillStyle = midColor;
+        ctx.beginPath();
+        ctx.moveTo(0, horizonY);
+        for (let x = 0; x <= w + 18; x += 18) {
+          const midPeak = Math.sin((x / w) * 11 + yaw * 1.8) * 26 + Math.cos((x / w) * 6.5 + yaw * 1.1) * 16;
+          ctx.lineTo(x, horizonY - 14 - midPeak);
+        }
+        ctx.lineTo(w, horizonY);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
       }
 
-      // Thunder Flash
+      // E. Overhead Rainforest Dipterocarp Canopy Silhouette Framing
+      ctx.save();
+      const canopyColor = "#020703";
+      ctx.fillStyle = canopyColor;
+      const windSway = Math.sin(time * 0.0012) * 5;
+
+      // Top-Left Ancient Tree Canopy Fronds & Hanging Lianas
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(w * 0.38 + windSway, 0);
+      ctx.bezierCurveTo(w * 0.30 + windSway, h * 0.12, w * 0.18, h * 0.22, 0, h * 0.30);
+      ctx.closePath();
+      ctx.fill();
+
+      // Hanging Lianas (Wild Forest Vines swaying in breeze)
+      ctx.strokeStyle = "rgba(4, 15, 7, 0.85)";
+      ctx.lineWidth = 2.5;
+      for (let v = 0; v < 4; v++) {
+        const vx = w * (0.06 + v * 0.07);
+        const vLen = h * (0.18 + (v % 2) * 0.10);
+        const vSway = Math.sin(time * 0.0015 + v * 1.2) * (6 + v * 3);
+        ctx.beginPath();
+        ctx.moveTo(vx, 0);
+        ctx.quadraticCurveTo(vx + vSway * 0.6, vLen * 0.5, vx + vSway, vLen);
+        ctx.stroke();
+      }
+
+      // Top-Right Arching Rainforest Giant Fern & Branch Silhouette
+      ctx.beginPath();
+      ctx.moveTo(w, 0);
+      ctx.lineTo(w * 0.64 - windSway, 0);
+      ctx.bezierCurveTo(w * 0.72 - windSway, h * 0.14, w * 0.84, h * 0.24, w, h * 0.32);
+      ctx.closePath();
+      ctx.fill();
+
+      // Hanging right vines
+      for (let v = 0; v < 3; v++) {
+        const vx = w * (0.92 - v * 0.08);
+        const vLen = h * (0.16 + (v % 2) * 0.12);
+        const vSway = Math.cos(time * 0.0014 + v * 1.5) * (5 + v * 2.5);
+        ctx.beginPath();
+        ctx.moveTo(vx, 0);
+        ctx.quadraticCurveTo(vx + vSway * 0.5, vLen * 0.5, vx + vSway, vLen);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // F. Atmospheric Thunder Lightning Flash
       if (this.stormActive && Math.random() < 0.012) {
-        ctx.fillStyle = "rgba(220, 245, 255, 0.4)";
+        ctx.fillStyle = "rgba(220, 245, 255, 0.42)";
         ctx.fillRect(0, 0, w, h);
       }
     }
@@ -8187,48 +8361,52 @@ export class SinharajaEngine {
         }
         // 3. Military / Field Research Canvas Tent
         else if (id.includes("tent")) {
-          const tW = Math.max(50, 110 * scale);
-          const tH = Math.max(35, 75 * scale);
+          if (this.textures?.canvas_tent && this.drawTextureProp(ctx, this.textures.canvas_tent, Sx, Sy, 120, 85, scale, light, fog, p.inTorch)) {
+            // Rendered with photorealistic canvas tent texture!
+          } else {
+            const tW = Math.max(50, 110 * scale);
+            const tH = Math.max(35, 75 * scale);
 
-          ctx.fillStyle = "rgba(0, 0, 0, 0.48)";
-          ctx.beginPath();
-          ctx.ellipse(Sx, Sy + 2, tW * 0.65, tW * 0.25, 0, 0, Math.PI * 2);
-          ctx.fill();
+            ctx.fillStyle = "rgba(0, 0, 0, 0.48)";
+            ctx.beginPath();
+            ctx.ellipse(Sx, Sy + 2, tW * 0.65, tW * 0.25, 0, 0, Math.PI * 2);
+            ctx.fill();
 
-          const tentGrad = ctx.createLinearGradient(0, Sy - tH, 0, Sy);
-          tentGrad.addColorStop(0, `rgb(${Math.round(85 * light)}, ${Math.round(98 * light)}, ${Math.round(75 * light)})`);
-          tentGrad.addColorStop(1, `rgb(${Math.round(45 * light)}, ${Math.round(58 * light)}, ${Math.round(40 * light)})`);
-          ctx.fillStyle = tentGrad;
+            const tentGrad = ctx.createLinearGradient(0, Sy - tH, 0, Sy);
+            tentGrad.addColorStop(0, `rgb(${Math.round(85 * light)}, ${Math.round(98 * light)}, ${Math.round(75 * light)})`);
+            tentGrad.addColorStop(1, `rgb(${Math.round(45 * light)}, ${Math.round(58 * light)}, ${Math.round(40 * light)})`);
+            ctx.fillStyle = tentGrad;
 
-          ctx.beginPath();
-          ctx.moveTo(Sx - tW * 0.5, Sy);
-          ctx.lineTo(Sx, Sy - tH);
-          ctx.lineTo(Sx + tW * 0.5, Sy);
-          ctx.closePath();
-          ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(Sx - tW * 0.5, Sy);
+            ctx.lineTo(Sx, Sy - tH);
+            ctx.lineTo(Sx + tW * 0.5, Sy);
+            ctx.closePath();
+            ctx.fill();
 
-          ctx.strokeStyle = `rgba(${Math.round(150 * light)}, ${Math.round(140 * light)}, ${Math.round(110 * light)}, 0.6)`;
-          ctx.lineWidth = Math.max(1, 1.2 * scale);
-          ctx.beginPath();
-          ctx.moveTo(Sx, Sy - tH); ctx.lineTo(Sx - tW * 0.68, Sy + 2);
-          ctx.moveTo(Sx, Sy - tH); ctx.lineTo(Sx + tW * 0.68, Sy + 2);
-          ctx.stroke();
+            ctx.strokeStyle = `rgba(${Math.round(150 * light)}, ${Math.round(140 * light)}, ${Math.round(110 * light)}, 0.6)`;
+            ctx.lineWidth = Math.max(1, 1.2 * scale);
+            ctx.beginPath();
+            ctx.moveTo(Sx, Sy - tH); ctx.lineTo(Sx - tW * 0.68, Sy + 2);
+            ctx.moveTo(Sx, Sy - tH); ctx.lineTo(Sx + tW * 0.68, Sy + 2);
+            ctx.stroke();
 
-          ctx.fillStyle = "#1e293b";
-          ctx.beginPath();
-          ctx.moveTo(Sx - tW * 0.18, Sy);
-          ctx.lineTo(Sx, Sy - tH * 0.65);
-          ctx.lineTo(Sx + tW * 0.18, Sy);
-          ctx.closePath();
-          ctx.fill();
+            ctx.fillStyle = "#1e293b";
+            ctx.beginPath();
+            ctx.moveTo(Sx - tW * 0.18, Sy);
+            ctx.lineTo(Sx, Sy - tH * 0.65);
+            ctx.lineTo(Sx + tW * 0.18, Sy);
+            ctx.closePath();
+            ctx.fill();
 
-          const tentGlow = ctx.createRadialGradient(Sx, Sy - tH * 0.35, 2, Sx, Sy - tH * 0.35, tW * 0.22);
-          tentGlow.addColorStop(0, "rgba(251, 191, 36, 0.75)");
-          tentGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
-          ctx.fillStyle = tentGlow;
-          ctx.beginPath();
-          ctx.arc(Sx, Sy - tH * 0.35, tW * 0.2, 0, Math.PI * 2);
-          ctx.fill();
+            const tentGlow = ctx.createRadialGradient(Sx, Sy - tH * 0.35, 2, Sx, Sy - tH * 0.35, tW * 0.22);
+            tentGlow.addColorStop(0, "rgba(251, 191, 36, 0.75)");
+            tentGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
+            ctx.fillStyle = tentGlow;
+            ctx.beginPath();
+            ctx.arc(Sx, Sy - tH * 0.35, tW * 0.2, 0, Math.PI * 2);
+            ctx.fill();
+          }
         }
         // 4. Military Supply Crates & Chests
         else if (id.includes("chest") || id.includes("crate") || id.includes("box") || id.includes("mine_cart_cache")) {
@@ -8539,6 +8717,7 @@ export class SinharajaEngine {
           ctx.fillStyle = `rgb(${Math.round(85 * light)}, ${Math.round(58 * light)}, ${Math.round(38 * light)})`;
           ctx.fillRect(Sx - 2.5 * scale, Sy - sH, 5 * scale, sH);
 
+          // Top Directional Board (Pointing Kudawa)
           ctx.fillStyle = `rgb(${Math.round(135 * light)}, ${Math.round(95 * light)}, ${Math.round(62 * light)})`;
           ctx.beginPath();
           ctx.moveTo(Sx - sW * 0.45, Sy - sH * 0.95);
@@ -8552,6 +8731,13 @@ export class SinharajaEngine {
           ctx.lineWidth = 1;
           ctx.stroke();
 
+          // Carved Gold Lettering on Top Board
+          ctx.fillStyle = `rgba(${Math.round(254 * light)}, ${Math.round(240 * light)}, ${Math.round(138 * light)}, 0.9)`;
+          ctx.font = `bold ${Math.max(6, Math.round(5.5 * scale))}px monospace`;
+          ctx.textAlign = "center";
+          ctx.fillText("KUDAWA ▶", Sx, Sy - sH * 0.78);
+
+          // Bottom Directional Board (Pointing Sinhagala)
           ctx.fillStyle = `rgb(${Math.round(115 * light)}, ${Math.round(80 * light)}, ${Math.round(52 * light)})`;
           ctx.beginPath();
           ctx.moveTo(Sx + sW * 0.45, Sy - sH * 0.65);
@@ -8562,6 +8748,10 @@ export class SinharajaEngine {
           ctx.closePath();
           ctx.fill();
           ctx.stroke();
+
+          // Carved Gold Lettering on Bottom Board
+          ctx.fillStyle = `rgba(${Math.round(254 * light)}, ${Math.round(240 * light)}, ${Math.round(138 * light)}, 0.9)`;
+          ctx.fillText("◀ SINHAGALA", Sx, Sy - sH * 0.48);
         }
         // 11. Ancient Rune Slates, Field Journals & Audio Tapes
         else if (id.includes("slate") || id.includes("diary") || id.includes("log") || id.includes("tape") || id.includes("doc") || id.includes("truth") || id.includes("blackbox")) {
@@ -8893,12 +9083,343 @@ export class SinharajaEngine {
     ctx.fillRect(0, 0, w, h);
     ctx.restore();
 
-    // 7. First-Person Viewmodel: I.G.I. Tactical Hands & Military Maglite
+    // 7. First-Person True Body Awareness & Viewmodel (Legs, Boots, Vest & Maglite)
     ctx.save();
     const handBobX = bobX * 0.85;
     const handBobY = bobY * 0.85;
     const torchBaseX = w * 0.72 + handBobX;
     const torchBaseY = h * 0.82 + handBobY;
+
+    // ── A. Tactical Lower Body (Pants & Jungle Combat Boots - Dynamic Pitch Ground-Look) ──
+    const pitch = this.camPitch || 0;
+    // Activates as player tilts camera downward towards the floor/ground
+    const legVis = Math.min(1.0, Math.max(0, (pitch - 0.02) / 0.20));
+
+    if (legVis > 0.01) {
+      ctx.save();
+      ctx.globalAlpha = legVis;
+
+      const isMoving = !!this.player.isMoving;
+      const isSprint = !!this.player.isSprinting;
+      const walkCycle = this.headBob || 0;
+
+      // Dynamic footsteps & stride simulation
+      let strideL = 0, strideR = 0;
+      let liftL = 0, liftR = 0;
+      let tiltL = 0, tiltR = 0;
+
+      if (isMoving) {
+        strideL = Math.sin(walkCycle);
+        strideR = -strideL;
+        liftL = Math.max(0, Math.cos(walkCycle)) * (isSprint ? 22 : 14);
+        liftR = Math.max(0, -Math.cos(walkCycle)) * (isSprint ? 22 : 14);
+        tiltL = strideL * (isSprint ? 0.28 : 0.16);
+        tiltR = strideR * (isSprint ? 0.28 : 0.16);
+      } else {
+        // Idle breathing & slight outward tactical stance
+        const idleSway = Math.sin(time * 0.002) * 1.5;
+        strideL = idleSway * 0.2;
+        strideR = -idleSway * 0.2;
+      }
+
+      // Base Y position for feet, smoothly sliding into view as camera pitches downward
+      const bootBaseY = h - (1.0 - legVis) * 190 + (pitch - 0.12) * 120 + bobY * 0.45;
+      const strideSpread = isSprint ? 30 : 18;
+
+      const legs = [
+        {
+          isLeft: true,
+          cx: w * 0.38 + bobX * 0.3 + strideL * strideSpread,
+          cy: bootBaseY - liftL + strideL * 14,
+          lift: liftL,
+          tilt: tiltL + (isMoving ? 0 : -0.08),
+          stride: strideL
+        },
+        {
+          isLeft: false,
+          cx: w * 0.62 + bobX * 0.3 + strideR * strideSpread,
+          cy: bootBaseY - liftR + strideR * 14,
+          lift: liftR,
+          tilt: tiltR + (isMoving ? 0 : 0.08),
+          stride: strideR
+        }
+      ];
+
+      legs.forEach((leg) => {
+        const { cx, cy, tilt, isLeft } = leg;
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(tilt);
+
+        // 1. Soft Dynamic Contact Shadow on Ground/Planks
+        const shadowScale = Math.max(0.3, 1.0 - leg.lift / 30);
+        ctx.fillStyle = "rgba(0, 0, 0, 0.58)";
+        ctx.beginPath();
+        ctx.ellipse(0, 32, 28 * shadowScale, 11 * shadowScale, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 2. Ranger Tactical Ripstop Cargo Pants (Khaki / Forest Camo)
+        // Upper leg cylinder extending upward from off-screen
+        const pantGrad = ctx.createLinearGradient(-26, 0, 26, 0);
+        pantGrad.addColorStop(0, "#233022");
+        pantGrad.addColorStop(0.35, "#3d4f39");
+        pantGrad.addColorStop(0.7, "#2e3d2a");
+        pantGrad.addColorStop(1, "#1c261b");
+        ctx.fillStyle = pantGrad;
+
+        ctx.beginPath();
+        ctx.moveTo(-24, -130);
+        ctx.lineTo(24, -130);
+        ctx.lineTo(19, -8);
+        ctx.lineTo(-19, -8);
+        ctx.closePath();
+        ctx.fill();
+
+        // Double-stitched outseam lines
+        ctx.strokeStyle = "#162015";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(isLeft ? -22 : 22, -130);
+        ctx.lineTo(isLeft ? -17 : 17, -8);
+        ctx.stroke();
+
+        // Cargo Pocket Flap (on outer thigh)
+        ctx.fillStyle = "#273725";
+        const pocketX = isLeft ? -24 : 14;
+        ctx.beginPath();
+        ctx.roundRect(pocketX, -95, 12, 24, 2);
+        ctx.fill();
+        ctx.strokeStyle = "#1a2519";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Tactical Knee Pad Armor Plate
+        ctx.fillStyle = "#161e15";
+        ctx.beginPath();
+        ctx.roundRect(-16, -65, 32, 26, 4);
+        ctx.fill();
+        ctx.strokeStyle = "#2e3d2a";
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+        // Diamond grip pattern on knee pad
+        ctx.strokeStyle = "rgba(61, 79, 57, 0.45)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(-12, -58); ctx.lineTo(12, -44);
+        ctx.moveTo(12, -58); ctx.lineTo(-12, -44);
+        ctx.stroke();
+
+        // Trouser ankle cuffs & fabric wrinkles tucking into boot
+        ctx.fillStyle = "#263524";
+        [-20, -14, -8].forEach((wy) => {
+          ctx.beginPath();
+          ctx.ellipse(0, wy, 18, 4, 0, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // 3. 1987 Military Jungle Combat Boots (Heavy Oiled Leather)
+        // Padded Leather Boot Collar
+        ctx.fillStyle = "#1e201e";
+        ctx.fillRect(-17, -8, 34, 12);
+        ctx.strokeStyle = "#0f100f";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(-17, -8, 34, 12);
+
+        // Leather Boot Shaft & Vamp
+        const bootGrad = ctx.createLinearGradient(-18, 0, 18, 0);
+        bootGrad.addColorStop(0, "#121413");
+        bootGrad.addColorStop(0.35, "#2b2e2a");
+        bootGrad.addColorStop(0.7, "#1c1e1c");
+        bootGrad.addColorStop(1, "#0d0e0d");
+        ctx.fillStyle = bootGrad;
+
+        ctx.beginPath();
+        ctx.moveTo(-16, 4);
+        ctx.lineTo(-15, 26);
+        ctx.lineTo(15, 26);
+        ctx.lineTo(16, 4);
+        ctx.closePath();
+        ctx.fill();
+
+        // Stitched Protective Leather Toe Cap
+        const toeGrad = ctx.createRadialGradient(0, 24, 2, 0, 24, 18);
+        toeGrad.addColorStop(0, "#3a3e39");
+        toeGrad.addColorStop(0.6, "#1f221f");
+        toeGrad.addColorStop(1, "#0f100f");
+        ctx.fillStyle = toeGrad;
+        ctx.beginPath();
+        ctx.ellipse(0, 22, 17, 10, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Brass Lace Eyelets & Crisscrossed Tactical Laces
+        ctx.strokeStyle = "#4d5448";
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        for (let lz = -4; lz <= 16; lz += 5) {
+          ctx.moveTo(-7, lz); ctx.lineTo(7, lz + 3);
+          ctx.moveTo(7, lz); ctx.lineTo(-7, lz + 3);
+        }
+        ctx.stroke();
+
+        ctx.fillStyle = "#ca8a04";
+        [-4, 1, 6, 11, 16].forEach((ey) => {
+          ctx.beginPath();
+          ctx.arc(-8, ey, 1.2, 0, Math.PI * 2);
+          ctx.arc(8, ey, 1.2, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // Heavy-Duty Commando Vibram Lug Sole
+        ctx.fillStyle = "#090a0a";
+        ctx.beginPath();
+        ctx.roundRect(-19, 26, 38, 9, 3);
+        ctx.fill();
+
+        // Sole Side Tread Cleat Notches
+        ctx.fillStyle = "#1e2220";
+        for (let tn = -16; tn <= 14; tn += 5) {
+          ctx.fillRect(tn, 30, 2.5, 4);
+        }
+
+        // 4. Dynamic Lighting: Flashlight / UV Sheen on Boots
+        if (this.torchOn) {
+          ctx.save();
+          ctx.globalCompositeOperation = "source-atop";
+          if (this.uvMode) {
+            const uvSheen = ctx.createLinearGradient(0, -60, 0, 34);
+            uvSheen.addColorStop(0, "rgba(168, 85, 247, 0.45)");
+            uvSheen.addColorStop(0.7, "rgba(56, 189, 248, 0.2)");
+            uvSheen.addColorStop(1, "rgba(0, 0, 0, 0)");
+            ctx.fillStyle = uvSheen;
+          } else {
+            const torchSheen = ctx.createLinearGradient(0, -60, 0, 34);
+            torchSheen.addColorStop(0, "rgba(255, 250, 220, 0.38)");
+            torchSheen.addColorStop(0.65, "rgba(255, 235, 170, 0.18)");
+            torchSheen.addColorStop(1, "rgba(0, 0, 0, 0)");
+            ctx.fillStyle = torchSheen;
+          }
+          ctx.fillRect(-26, -130, 52, 170);
+          ctx.restore();
+        }
+
+        ctx.restore();
+      });
+
+      ctx.restore();
+    }
+
+    // ── B. Tactical Upper Body (Ranger Vest, Harness Straps & Support Left Arm) ──
+    ctx.save();
+    // 1. Left Tactical Support Arm & Long-Sleeve Safari Cuff
+    const leftArmX = w * 0.16 + handBobX * 0.6;
+    const leftArmY = h * 0.88 + handBobY * 0.7;
+
+    ctx.save();
+    ctx.translate(leftArmX, leftArmY);
+    ctx.rotate(0.32);
+
+    // Left Sleeve Forearm
+    const lArmGrad = ctx.createLinearGradient(-26, 0, 26, 0);
+    lArmGrad.addColorStop(0, "#192418");
+    lArmGrad.addColorStop(0.4, "#2e3e2c");
+    lArmGrad.addColorStop(1, "#182217");
+    ctx.fillStyle = lArmGrad;
+    ctx.beginPath();
+    ctx.roundRect(-24, 0, 48, 85, 6);
+    ctx.fill();
+
+    // Wrist Navigation Survival Compass
+    ctx.fillStyle = "#0f172a";
+    ctx.beginPath();
+    ctx.arc(0, 22, 14, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#475569";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Compass Tritium Dial & Glowing Needle
+    ctx.fillStyle = "#1e293b";
+    ctx.beginPath();
+    ctx.arc(0, 22, 11, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#22c55e";
+    ctx.beginPath();
+    ctx.arc(0, 22, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    // Needle pointing North based on player yaw
+    const compNeedleAngle = -yaw;
+    ctx.strokeStyle = "#4ade80";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(0, 22);
+    ctx.lineTo(Math.sin(compNeedleAngle) * 9, 22 - Math.cos(compNeedleAngle) * 9);
+    ctx.stroke();
+
+    // Left Tactical Assault Glove (in steady support position)
+    ctx.fillStyle = "#1e2920";
+    ctx.beginPath();
+    ctx.roundRect(-22, 38, 44, 48, 8);
+    ctx.fill();
+    // Carbon Knuckle Guard
+    ctx.fillStyle = "#0a0e0b";
+    ctx.beginPath();
+    ctx.roundRect(-18, 44, 36, 14, 4);
+    ctx.fill();
+
+    ctx.restore();
+
+    // 2. Tactical Chest Rig & Shoulder Webbing Harness along bottom viewport border
+    const vestY = h - 28 + bobY * 0.4;
+    const vestGrad = ctx.createLinearGradient(0, vestY - 35, 0, h);
+    vestGrad.addColorStop(0, "rgba(25, 36, 24, 0)");
+    vestGrad.addColorStop(0.35, "rgba(35, 50, 33, 0.75)");
+    vestGrad.addColorStop(1, "#182317");
+    ctx.fillStyle = vestGrad;
+
+    ctx.beginPath();
+    ctx.moveTo(0, h);
+    ctx.lineTo(0, vestY);
+    ctx.quadraticCurveTo(w * 0.30, vestY - 14, w * 0.50, vestY);
+    ctx.quadraticCurveTo(w * 0.70, vestY - 14, w, vestY);
+    ctx.lineTo(w, h);
+    ctx.closePath();
+    ctx.fill();
+
+    // Heavy Webbing Shoulder Harness Straps
+    ctx.fillStyle = "#162015";
+    ctx.fillRect(w * 0.22 + handBobX * 0.4, vestY - 12, 32, 45);
+    ctx.fillRect(w * 0.68 + handBobX * 0.4, vestY - 12, 32, 45);
+
+    // Quick-Release Polymer Buckles
+    ctx.fillStyle = "#0f172a";
+    ctx.fillRect(w * 0.24 + handBobX * 0.4, vestY + 6, 28, 14);
+    ctx.fillRect(w * 0.70 + handBobX * 0.4, vestY + 6, 28, 14);
+
+    // Clip-On Shoulder Field Radio Microphone on Left Harness Strap
+    const micX = w * 0.23 + handBobX * 0.4;
+    const micY = vestY - 18;
+    ctx.fillStyle = "#0f172a";
+    ctx.beginPath();
+    ctx.roundRect(micX, micY, 20, 24, 4);
+    ctx.fill();
+    ctx.strokeStyle = "#334155";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    // Mic speaker grille dots
+    ctx.fillStyle = "#64748b";
+    for (let mg = 0; mg < 4; mg++) {
+      ctx.fillRect(micX + 4 + (mg % 2) * 8, micY + 6 + Math.floor(mg / 2) * 8, 3, 3);
+    }
+    // Coiled radio cord descending to vest
+    ctx.strokeStyle = "#090d16";
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.moveTo(micX + 10, micY + 24);
+    ctx.quadraticCurveTo(micX + 2, micY + 36, micX + 8, micY + 48);
+    ctx.stroke();
+
+    ctx.restore();
 
     // Volumetric Flashlight Beam Emanating from Torch Head
     if (this.torchOn) {
@@ -9767,21 +10288,29 @@ export class SinharajaEngine {
       ctx.restore();
 
       // Outpost Broken Radio on Desk (495, 670)
-      ctx.fillStyle = "#37474f";
-      ctx.fillRect(490, 665, 14, 18);
-      ctx.strokeStyle = "#cfd8dc";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(497, 665); ctx.lineTo(497, 650);
-      ctx.stroke();
+      if (this.textures?.outpost_radio) {
+        ctx.drawImage(this.textures.outpost_radio, 482, 652, 28, 24);
+      } else {
+        ctx.fillStyle = "#37474f";
+        ctx.fillRect(490, 665, 14, 18);
+        ctx.strokeStyle = "#cfd8dc";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(497, 665); ctx.lineTo(497, 650);
+        ctx.stroke();
+      }
 
       // Outpost Herbal Balm Bottle (465, 690)
-      ctx.fillStyle = "#2e7d32";
-      ctx.beginPath();
-      ctx.arc(465, 690, 6, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = "#ffe082";
-      ctx.fillRect(463, 682, 4, 3);
+      if (this.textures?.balm_bottle) {
+        ctx.drawImage(this.textures.balm_bottle, 456, 676, 18, 26);
+      } else {
+        ctx.fillStyle = "#2e7d32";
+        ctx.beginPath();
+        ctx.arc(465, 690, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#ffe082";
+        ctx.fillRect(463, 682, 4, 3);
+      }
 
       // Kudawa Post Lantern
       ctx.fillStyle = "#795548";
@@ -9960,26 +10489,41 @@ export class SinharajaEngine {
       });
 
       // 4. Geologist Highland Camp Tent & Workbench
-      ctx.save();
-      ctx.translate(420, 380);
-      ctx.fillStyle = "rgba(0,0,0,0.35)";
-      ctx.beginPath();
-      ctx.ellipse(0, 12, 38, 16, 0, 0, Math.PI * 2);
-      ctx.fill();
-      // Tent body
-      ctx.fillStyle = "#455a64";
-      ctx.beginPath();
-      ctx.moveTo(0, -32); ctx.lineTo(-34, 12); ctx.lineTo(34, 12); ctx.closePath();
-      ctx.fill();
-      ctx.fillStyle = "#ffb300"; // Warm lantern inside tent
-      ctx.beginPath();
-      ctx.arc(0, 0, 6, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = "#fff";
-      ctx.font = "bold 11px 'Noto Sans Sinhala', sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText("⛺ භූවිද්‍යා කූඩාරම (Warmth)", 0, -38);
-      ctx.restore();
+      if (this.textures?.canvas_tent) {
+        ctx.save();
+        ctx.translate(420, 380);
+        ctx.fillStyle = "rgba(0,0,0,0.45)";
+        ctx.beginPath();
+        ctx.ellipse(0, 16, 48, 20, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.drawImage(this.textures.canvas_tent, -48, -48, 96, 68);
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 11px 'Noto Sans Sinhala', sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("⛺ භූවිද්‍යා කූඩාරම (Warmth)", 0, -52);
+        ctx.restore();
+      } else {
+        ctx.save();
+        ctx.translate(420, 380);
+        ctx.fillStyle = "rgba(0,0,0,0.35)";
+        ctx.beginPath();
+        ctx.ellipse(0, 12, 38, 16, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Tent body
+        ctx.fillStyle = "#455a64";
+        ctx.beginPath();
+        ctx.moveTo(0, -32); ctx.lineTo(-34, 12); ctx.lineTo(34, 12); ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "#ffb300"; // Warm lantern inside tent
+        ctx.beginPath();
+        ctx.arc(0, 0, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 11px 'Noto Sans Sinhala', sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("⛺ භූවිද්‍යා කූඩාරම (Warmth)", 0, -38);
+        ctx.restore();
+      }
 
       // Field Research Workbench at (520, 440)
       ctx.fillStyle = "#4e342e";
