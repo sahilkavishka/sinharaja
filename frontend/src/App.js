@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+// eslint-disable-next-line no-unused-vars
 import { SinharajaEngine } from "./SinharajaEngine";
+import { Sinharaja3DEngine } from "./Sinharaja3DEngine";
 import { I18N } from "./i18n";
 import "./App.css";
 
@@ -901,7 +903,8 @@ export default function App() {
     handleResize();
     window.addEventListener("resize", handleResize);
 
-    const engine = new SinharajaEngine(canvas, {
+    // Instantiate genuine 3D WebGL renderer for true First-Person I.G.I. exploration
+    const engine = new Sinharaja3DEngine(canvas, {
       chapter: activeChapter,
       onStatsUpdate: (newStats) => {
         setStats(newStats);
