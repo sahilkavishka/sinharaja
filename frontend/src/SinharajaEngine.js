@@ -367,85 +367,117 @@ export class SinharajaEngine {
   initTextures() {
     this.textures = {};
     const textureList = [
-      { key: "outpost_radio", src: "/textures/outpost_radio.jpg", darkBg: true },
-      { key: "douglas_reel", src: "/textures/douglas_reel.jpg", darkBg: true },
-      { key: "balm_bottle", src: "/textures/balm_bottle.jpg", darkBg: true },
-      { key: "kudawa_door", src: "/textures/kudawa_door.jpg", darkBg: false },
-      { key: "ranger_gunadasa", src: "/textures/ranger_gunadasa.jpg", darkBg: true },
-      { key: "uv_lens", src: "/textures/uv_lens.jpg", darkBg: true },
-      { key: "flare_gun", src: "/textures/flare_gun.jpg", darkBg: true },
-      { key: "solar_charger", src: "/textures/solar_charger.jpg", darkBg: true },
-      { key: "black_leopard", src: "/textures/black_leopard.jpg", darkBg: true },
-      { key: "rainforest_herb", src: "/textures/rainforest_herb.jpg", darkBg: true },
-      { key: "salt_pouch", src: "/textures/salt_pouch.jpg", darkBg: true },
-      { key: "canvas_tent", src: "/textures/canvas_tent.jpg", darkBg: true },
+      { key: "outpost_radio", src: "/textures/outpost_radio.png" },
+      { key: "douglas_reel", src: "/textures/douglas_reel.png" },
+      { key: "balm_bottle", src: "/textures/balm_bottle.png" },
+      { key: "kudawa_door", src: "/textures/kudawa_door.png" },
+      { key: "ranger_gunadasa", src: "/textures/ranger_gunadasa.png" },
+      { key: "uv_lens", src: "/textures/uv_lens.png" },
+      { key: "flare_gun", src: "/textures/flare_gun.png" },
+      { key: "solar_charger", src: "/textures/solar_charger.png" },
+      { key: "black_leopard", src: "/textures/black_leopard.png" },
+      { key: "rainforest_herb", src: "/textures/rainforest_herb.png" },
+      { key: "salt_pouch", src: "/textures/salt_pouch.png" },
+      { key: "canvas_tent", src: "/textures/canvas_tent.png" },
     ];
 
-    textureList.forEach(({ key, src, darkBg }) => {
+    textureList.forEach(({ key, src }) => {
       const img = new Image();
       img.src = src;
       img.onload = () => {
-        if (darkBg) {
-          try {
-            const oc = document.createElement("canvas");
-            oc.width = img.naturalWidth || img.width;
-            oc.height = img.naturalHeight || img.height;
-            const octx = oc.getContext("2d");
-            octx.drawImage(img, 0, 0);
-            const imgData = octx.getImageData(0, 0, oc.width, oc.height);
-            const d = imgData.data;
-            for (let i = 0; i < d.length; i += 4) {
-              const r = d[i], g = d[i + 1], b = d[i + 2];
-              if (r < 28 && g < 28 && b < 28) {
-                d[i + 3] = 0;
-              } else if (r < 48 && g < 48 && b < 48) {
-                d[i + 3] = Math.round(((Math.max(r, g, b) - 28) / 20) * 255);
-              }
-            }
-            octx.putImageData(imgData, 0, 0);
-            this.textures[key] = oc;
-            return;
-          } catch (e) {}
-        }
         this.textures[key] = img;
       };
     });
   }
 
-  drawTextureProp(ctx, tex, Sx, Sy, baseW, baseH, scale, light, fog, inTorch) {
-    if (!tex) return false;
-    const drawW = Math.max(16, baseW * scale);
+  drawTextureProp(ctx, tex, Sx, Sy, baseW, baseH, scale, light, fog, inTorch, isTargeted = false) {
+    if (!tex || !tex.complete || (tex.naturalWidth === 0)) return false;
+
+    // 1. Maintain True 3D Aspect Ratio from Native Texture Dimensions
+    const aspect = (tex.naturalWidth && tex.naturalHeight)
+      ? (tex.naturalWidth / tex.naturalHeight)
+      : (baseW / baseH);
     const drawH = Math.max(16, baseH * scale);
+    const drawW = drawH * aspect;
     const posX = Sx - drawW * 0.5;
     const posY = Sy - drawH;
 
     ctx.save();
     ctx.globalAlpha = fog;
 
-    // 1. Soft 3D Ground Contact Shadow
-    ctx.fillStyle = "rgba(0, 0, 0, 0.52)";
+    // 2. Realistic Multi-Stage 3D Ground Contact Shadow & Ambient Occlusion
+    // A. Outer soft ambient ground contact shadow
+    ctx.fillStyle = "rgba(0, 0, 0, 0.38)";
     ctx.beginPath();
-    ctx.ellipse(Sx, Sy + 2, drawW * 0.44, drawW * 0.16, 0, 0, Math.PI * 2);
+    ctx.ellipse(Sx, Sy + 2, drawW * 0.55, drawW * 0.18, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // 2. Draw the Photorealistic Texture
+    // B. Inner deep contact occlusion right at the ground interface
+    ctx.fillStyle = "rgba(0, 0, 0, 0.72)";
+    ctx.beginPath();
+    ctx.ellipse(Sx, Sy + 1, drawW * 0.35, drawW * 0.10, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 3. Draw the Clean Transparent 3D Entity Texture
     ctx.drawImage(tex, posX, posY, drawW, drawH);
 
-    // 3. Dynamic Night Atmospheric & Flashlight Shading
+    // 4. Volumetric Directional Lighting & Night Atmospheric Depth Shading
     if (!inTorch || light < 0.90) {
       ctx.globalCompositeOperation = "source-atop";
-      const darkness = Math.max(0, Math.min(0.82, 1.0 - light));
-      ctx.fillStyle = `rgba(3, 7, 18, ${darkness})`;
+      const darkness = Math.max(0, Math.min(0.85, 1.0 - light));
+      const ambientGrad = ctx.createLinearGradient(posX, posY, posX, posY + drawH);
+      ambientGrad.addColorStop(0, `rgba(4, 9, 20, ${darkness * 0.82})`);
+      ambientGrad.addColorStop(0.65, `rgba(2, 6, 14, ${darkness * 0.94})`);
+      ambientGrad.addColorStop(1, `rgba(1, 3, 8, ${darkness})`);
+      ctx.fillStyle = ambientGrad;
       ctx.fillRect(posX, posY, drawW, drawH);
     }
 
+    // 5. Dynamic Flashlight Specular Hot Spot & UV Mode Phosphorescence
     if (inTorch) {
       ctx.globalCompositeOperation = "source-atop";
-      const torchSheen = ctx.createLinearGradient(posX, posY, posX, posY + drawH);
-      torchSheen.addColorStop(0, "rgba(255, 255, 230, 0.22)");
-      torchSheen.addColorStop(1, "rgba(255, 240, 180, 0.04)");
-      ctx.fillStyle = torchSheen;
+      if (this.uvMode) {
+        // Ultraviolet blacklight luminescence with cyan edge sheen
+        const uvGrad = ctx.createRadialGradient(
+          Sx, posY + drawH * 0.45, 4,
+          Sx, posY + drawH * 0.50, drawW * 0.85
+        );
+        uvGrad.addColorStop(0, "rgba(168, 85, 247, 0.45)");
+        uvGrad.addColorStop(0.45, "rgba(56, 189, 248, 0.22)");
+        uvGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+        ctx.fillStyle = uvGrad;
+      } else {
+        // Realistic Maglite warm incandescent directional specular highlight
+        const torchGrad = ctx.createRadialGradient(
+          Sx, posY + drawH * 0.38, 6,
+          Sx, posY + drawH * 0.46, drawW * 0.75
+        );
+        torchGrad.addColorStop(0, "rgba(255, 255, 230, 0.36)");
+        torchGrad.addColorStop(0.45, "rgba(255, 235, 160, 0.15)");
+        torchGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+        ctx.fillStyle = torchGrad;
+      }
       ctx.fillRect(posX, posY, drawW, drawH);
+    }
+
+    // 6. Tactical Targeting Brackets when Crosshair Points at Entity
+    if (isTargeted) {
+      ctx.globalCompositeOperation = "source-over";
+      const pulse = 0.75 + Math.sin(performance.now() * 0.008) * 0.25;
+      ctx.strokeStyle = `rgba(74, 222, 128, ${pulse})`;
+      ctx.lineWidth = Math.max(1.5, 2 * scale);
+
+      const brLen = Math.min(14, drawW * 0.2);
+      // Top-Left bracket
+      ctx.beginPath();
+      ctx.moveTo(posX, posY + brLen); ctx.lineTo(posX, posY); ctx.lineTo(posX + brLen, posY);
+      // Top-Right bracket
+      ctx.moveTo(posX + drawW - brLen, posY); ctx.lineTo(posX + drawW, posY); ctx.lineTo(posX + drawW, posY + brLen);
+      // Bottom-Left bracket
+      ctx.moveTo(posX, posY + brLen); ctx.lineTo(posX, posY + drawH); ctx.lineTo(posX + brLen, posY + drawH);
+      // Bottom-Right bracket
+      ctx.moveTo(posX + drawW - brLen, posY + drawH); ctx.lineTo(posX + drawW, posY + drawH); ctx.lineTo(posX + drawW, posY + drawH - brLen);
+      ctx.stroke();
     }
 
     ctx.restore();
@@ -7702,6 +7734,7 @@ export class SinharajaEngine {
 
         // Check if aimed near crosshair (center of screen)
         const distToCenter = Math.hypot(Sx - w * 0.5, (Sy - 25 * scale) - h * 0.5);
+        const isAim = (distToCenter < 65 && p.fwd < 160);
         if (distToCenter < minCrosshairDist && p.fwd < 160) {
           minCrosshairDist = distToCenter;
           crosshairTarget = obj;
@@ -7712,7 +7745,7 @@ export class SinharajaEngine {
           const gH = Math.max(50, 110 * scale);
           const gW = Math.max(26, 56 * scale);
 
-          if (this.textures?.ranger_gunadasa && this.drawTextureProp(ctx, this.textures.ranger_gunadasa, Sx, Sy, 56, 110, scale, light, fog, p.inTorch)) {
+          if (this.textures?.ranger_gunadasa && this.drawTextureProp(ctx, this.textures.ranger_gunadasa, Sx, Sy, 56, 110, scale, light, fog, p.inTorch, isAim)) {
             // Dialogue Beacon
             if (!this.npc.helped) {
               const bPulse = Math.sin(time * 0.005) * 5 * scale;
@@ -8150,7 +8183,7 @@ export class SinharajaEngine {
         }
         // 2B. 1987 Military VHF Radio Transceiver (රේඩියෝ උපකරණය)
         else if (id === "outpost_radio" || id.includes("radio")) {
-          if (this.textures?.outpost_radio && this.drawTextureProp(ctx, this.textures.outpost_radio, Sx, Sy, 52, 42, scale, light, fog, p.inTorch)) {
+          if (this.textures?.outpost_radio && this.drawTextureProp(ctx, this.textures.outpost_radio, Sx, Sy, 52, 42, scale, light, fog, p.inTorch, isAim)) {
             // Rendered with photorealistic 1987 military radio texture!
           } else {
             const rW = Math.max(16, 32 * scale);
@@ -8197,7 +8230,7 @@ export class SinharajaEngine {
         }
         // 2C. Reel-to-Reel Tape Machine (ඩග්ලස්ගේ හඬපට යන්ත්‍රය)
         else if (id === "outpost_douglas_reel" || id.includes("reel")) {
-          if (this.textures?.douglas_reel && this.drawTextureProp(ctx, this.textures.douglas_reel, Sx, Sy, 52, 42, scale, light, fog, p.inTorch)) {
+          if (this.textures?.douglas_reel && this.drawTextureProp(ctx, this.textures.douglas_reel, Sx, Sy, 52, 42, scale, light, fog, p.inTorch, isAim)) {
             // Rendered with photorealistic reel-to-reel tape machine texture!
           } else {
             const tW = Math.max(18, 34 * scale);
@@ -8232,7 +8265,7 @@ export class SinharajaEngine {
         }
         // 2D. Herbal Balm Medicine Vial (කූඩැලි ආරක්ෂක තෙල් බෝතලය)
         else if (id === "outpost_balm_bottle" || id.includes("balm")) {
-          if (this.textures?.balm_bottle && this.drawTextureProp(ctx, this.textures.balm_bottle, Sx, Sy, 32, 48, scale, light, fog, p.inTorch)) {
+          if (this.textures?.balm_bottle && this.drawTextureProp(ctx, this.textures.balm_bottle, Sx, Sy, 32, 48, scale, light, fog, p.inTorch, isAim)) {
             // Rendered with photorealistic amber glass herbal balm bottle texture!
           } else {
             const bW = Math.max(10, 18 * scale);
@@ -8267,7 +8300,7 @@ export class SinharajaEngine {
         }
         // 2E. UV Blacklight Optical Lens (පාරජම්බුල කාචය)
         else if (id === "outpost_uv_lens" || id.includes("lens")) {
-          if (this.textures?.uv_lens && this.drawTextureProp(ctx, this.textures.uv_lens, Sx, Sy, 36, 36, scale, light, fog, p.inTorch)) {
+          if (this.textures?.uv_lens && this.drawTextureProp(ctx, this.textures.uv_lens, Sx, Sy, 36, 36, scale, light, fog, p.inTorch, isAim)) {
             // Rendered with photorealistic optical lens texture!
           } else {
             const lR = Math.max(10, 18 * scale);
@@ -8302,7 +8335,7 @@ export class SinharajaEngine {
         }
         // 2F. Tactical Emergency Flare Launcher (සංඥා පිස්තෝලය)
         else if (id === "outpost_flaregun" || id.includes("flaregun")) {
-          if (this.textures?.flare_gun && this.drawTextureProp(ctx, this.textures.flare_gun, Sx, Sy, 46, 36, scale, light, fog, p.inTorch)) {
+          if (this.textures?.flare_gun && this.drawTextureProp(ctx, this.textures.flare_gun, Sx, Sy, 46, 36, scale, light, fog, p.inTorch, isAim)) {
             // Rendered with photorealistic orange flare launcher texture!
           } else {
             const fW = Math.max(16, 32 * scale);
@@ -8326,7 +8359,7 @@ export class SinharajaEngine {
         }
         // 2G. Solar Charger & Battery Station (සූර්ය කෝෂ ආරෝපකය)
         else if (id === "outpost_solar_charger" || id.includes("solar")) {
-          if (this.textures?.solar_charger && this.drawTextureProp(ctx, this.textures.solar_charger, Sx, Sy, 54, 44, scale, light, fog, p.inTorch)) {
+          if (this.textures?.solar_charger && this.drawTextureProp(ctx, this.textures.solar_charger, Sx, Sy, 54, 44, scale, light, fog, p.inTorch, isAim)) {
             // Rendered with photorealistic solar station texture!
           } else {
             const sW = Math.max(22, 44 * scale);
@@ -8361,7 +8394,7 @@ export class SinharajaEngine {
         }
         // 3. Military / Field Research Canvas Tent
         else if (id.includes("tent")) {
-          if (this.textures?.canvas_tent && this.drawTextureProp(ctx, this.textures.canvas_tent, Sx, Sy, 120, 85, scale, light, fog, p.inTorch)) {
+          if (this.textures?.canvas_tent && this.drawTextureProp(ctx, this.textures.canvas_tent, Sx, Sy, 120, 85, scale, light, fog, p.inTorch, isAim)) {
             // Rendered with photorealistic canvas tent texture!
           } else {
             const tW = Math.max(50, 110 * scale);
@@ -8861,6 +8894,7 @@ export class SinharajaEngine {
 
         // Check if aimed near crosshair (center of screen) for precise pickup
         const distToCenter = Math.hypot(Sx - w * 0.5, (Sy - 8 * scale) - h * 0.5);
+        const isItemAim = (distToCenter < 55 && p.fwd < 160);
         if (distToCenter < minCrosshairDist && p.fwd < 160) {
           minCrosshairDist = distToCenter;
           const itemName = it?.type === "salt"
@@ -8886,7 +8920,7 @@ export class SinharajaEngine {
         ctx.fill();
 
         if (it?.type === "salt") {
-          if (this.textures?.salt_pouch && this.drawTextureProp(ctx, this.textures.salt_pouch, Sx, Sy, 28, 28, scale, light, fog, p.inTorch)) {
+          if (this.textures?.salt_pouch && this.drawTextureProp(ctx, this.textures.salt_pouch, Sx, Sy, 28, 28, scale, light, fog, p.inTorch, isItemAim)) {
             // Rendered with photorealistic salt pouch texture!
           } else {
             // Sea Salt Pouch with Spilled Glittering White Crystals
@@ -8901,7 +8935,7 @@ export class SinharajaEngine {
             });
           }
         } else if (it?.type === "herb") {
-          if (this.textures?.rainforest_herb && this.drawTextureProp(ctx, this.textures.rainforest_herb, Sx, Sy, 30, 30, scale, light, fog, p.inTorch)) {
+          if (this.textures?.rainforest_herb && this.drawTextureProp(ctx, this.textures.rainforest_herb, Sx, Sy, 30, 30, scale, light, fog, p.inTorch, isItemAim)) {
             // Rendered with photorealistic rainforest herb texture!
           } else {
             // Bushy Endemic Rainforest Herb with Serrated Leaves
@@ -8934,7 +8968,18 @@ export class SinharajaEngine {
         const catW = Math.max(38, 98 * scale);
 
         if (this.textures?.black_leopard && this.drawTextureProp(ctx, this.textures.black_leopard, Sx, Sy, 98, 68, scale, light, fog, p.inTorch)) {
-          // Rendered with photorealistic black leopard stalker texture!
+          // Tapetum Lucidum Eye Glow (Amber predator eyes piercing through darkness)
+          const eyeFlare = p.inTorch ? 1.0 : (stalker.eyesAlpha || 0.45);
+          ctx.save();
+          ctx.fillStyle = `rgba(251, 191, 36, ${eyeFlare})`;
+          ctx.shadowColor = "#fbbf24";
+          ctx.shadowBlur = (p.inTorch ? 18 : 8) * scale;
+          ctx.beginPath();
+          ctx.arc(Sx - 6 * scale, Sy - 36 * scale, Math.max(1.5, 2.5 * scale), 0, Math.PI * 2);
+          ctx.arc(Sx + 4 * scale, Sy - 36 * scale, Math.max(1.5, 2.5 * scale), 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+          ctx.restore();
         } else {
           ctx.save();
           ctx.globalAlpha = fog;
