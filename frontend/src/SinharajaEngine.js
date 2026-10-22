@@ -474,7 +474,7 @@ export class SinharajaEngine {
       // Top-Right bracket
       ctx.moveTo(posX + drawW - brLen, posY); ctx.lineTo(posX + drawW, posY); ctx.lineTo(posX + drawW, posY + brLen);
       // Bottom-Left bracket
-      ctx.moveTo(posX, posY + brLen); ctx.lineTo(posX, posY + drawH); ctx.lineTo(posX + brLen, posY + drawH);
+      ctx.moveTo(posX, posY + drawH - brLen); ctx.lineTo(posX, posY + drawH); ctx.lineTo(posX + brLen, posY + drawH);
       // Bottom-Right bracket
       ctx.moveTo(posX + drawW - brLen, posY + drawH); ctx.lineTo(posX + drawW, posY + drawH); ctx.lineTo(posX + drawW, posY + drawH - brLen);
       ctx.stroke();
@@ -2200,13 +2200,13 @@ export class SinharajaEngine {
 
     // 2. Obstacles (Boulders, Giant Trees, Cabin Walls)
     this.obstacles = [
-      // Outpost cabin walls & entrance doorway
+      // Outpost cabin walls & entrance doorway (Wide 66px opening for smooth FPS entry)
       { x: 420, y: 650, w: 220, h: 15 },
       { x: 420, y: 650, w: 15, h: 180 },
       { x: 625, y: 650, w: 15, h: 180 },
-      { x: 420, y: 820, w: 90, h: 15 },
-      { x: 550, y: 820, w: 90, h: 15 },
-      { x: 510, y: 818, w: 40, h: 18, isDoor: true }, // Cabin door obstacle (passable when open)
+      { x: 420, y: 820, w: 77, h: 15 },
+      { x: 563, y: 820, w: 77, h: 15 },
+      { x: 497, y: 816, w: 66, h: 22, isDoor: true }, // Cabin door obstacle (passable when open)
       // Big boulders
       { x: 1200, y: 350, r: 60 },
       { x: 1450, y: 620, r: 75 },
@@ -3069,19 +3069,22 @@ export class SinharajaEngine {
       this.mouse.worldY = this.mouse.y / this.zoom + this.camera.y;
 
       if (this.viewMode === "fps") {
-        // In FPS Mode, mouse movement provides unrestricted 360° turning (yaw) and smooth vertical look (pitch)
-        if (document.pointerLockElement === this.canvas) {
-          this.player.facingAngle += e.movementX * 0.0032;
-          this.camPitch = Math.max(-0.75, Math.min(0.75, (this.camPitch || 0) - e.movementY * 0.0032));
+        this.pointerLocked = document.pointerLockElement === this.canvas;
+        const sens = 0.0030;
+        if (this.pointerLocked) {
+          this.player.facingAngle += (e.movementX || 0) * sens;
+          this.camPitch = Math.max(-0.85, Math.min(0.85, (this.camPitch || 0) - (e.movementY || 0) * sens));
         } else {
-          const deltaX = (e.movementX !== undefined && Math.abs(e.movementX) < 120)
-            ? e.movementX * 0.0035
-            : ((this.mouse.x - rect.width / 2) / (rect.width / 2)) * 0.035;
-          this.player.facingAngle += deltaX;
-          if (e.movementY !== undefined && Math.abs(e.movementY) < 120) {
-            this.camPitch = Math.max(-0.75, Math.min(0.75, (this.camPitch || 0) - e.movementY * 0.0032));
+          // In unlocked mode, apply delta when user drags/moves mouse without infinite continuous spin
+          if (e.movementX !== undefined && Math.abs(e.movementX) < 160) {
+            this.player.facingAngle += e.movementX * sens;
+          }
+          if (e.movementY !== undefined && Math.abs(e.movementY) < 160) {
+            this.camPitch = Math.max(-0.85, Math.min(0.85, (this.camPitch || 0) - e.movementY * sens));
           }
         }
+        while (this.player.facingAngle > Math.PI) this.player.facingAngle -= Math.PI * 2;
+        while (this.player.facingAngle < -Math.PI) this.player.facingAngle += Math.PI * 2;
       } else {
         const dx = this.mouse.worldX - this.player.x;
         const dy = this.mouse.worldY - this.player.y;
@@ -3321,6 +3324,17 @@ export class SinharajaEngine {
 
   toggleViewMode() {
     this.viewMode = this.viewMode === "fps" ? "isometric" : "fps";
+    if (this.viewMode === "fps") {
+      try {
+        this.canvas.requestPointerLock();
+      } catch (err) {}
+    } else {
+      if (document.pointerLockElement === this.canvas) {
+        try {
+          document.exitPointerLock();
+        } catch (err) {}
+      }
+    }
     this.cb.onNotify(
       this.viewMode === "fps"
         ? "🎯 ප්‍රථම-පුද්ගල දසුන (1st Person I.G.I. Mode) සක්‍රියයි! [V] ඔබන්න"
@@ -3372,41 +3386,102 @@ export class SinharajaEngine {
   }
 
   interactTarget() {
-    if (this.viewMode === "fps" && this.activeCrosshairTarget) {
-      const target = this.activeCrosshairTarget;
-      if (target.isDoor) {
-        this.toggleCabinDoor();
-        return true;
+    if (this.viewMode === "fps") {
+      if (this.activeCrosshairTarget) {
+        const target = this.activeCrosshairTarget;
+        if (target.isDoor) {
+          this.toggleCabinDoor();
+          return true;
+        }
+        if (target.isItem) {
+          return this.pickupItem(target.itemIndex);
+        }
+        if (target.action) {
+          target.action(target);
+          return true;
+        }
       }
-      if (target.isItem) {
-        return this.pickupItem(target.itemIndex);
-      }
-      if (target.action) {
-        target.action(target);
-        return true;
-      }
+      // In FPS mode, if nothing is locked in the crosshair, only interact with objects directly in the player's front view cone
+      return this.interactInFront(45, 140);
     }
     return this.interactNearest();
   }
 
-  interactNearest() {
-    // 1. In FPS mode: prioritize active crosshair target
-    if (this.viewMode === "fps" && this.activeCrosshairTarget) {
-      const target = this.activeCrosshairTarget;
-      if (target.isDoor) {
-        this.toggleCabinDoor();
-        return true;
-      }
-      if (target.isItem) {
-        return this.pickupItem(target.itemIndex);
-      }
-      if (target.action) {
-        target.action(target);
-        return true;
+  interactInFront(maxAngleDeg = 45, maxDist = 140) {
+    const maxRad = (maxAngleDeg * Math.PI) / 180;
+    let bestObj = null;
+    let minScore = 999;
+
+    // 1. Cabin door in front of player (Chapter 1)
+    if (this.chapter === 1) {
+      const doorDist = Math.hypot(this.player.x - 530, this.player.y - 820);
+      if (doorDist < maxDist + 20) {
+        const angle = Math.atan2(820 - this.player.y, 530 - this.player.x);
+        let diff = Math.abs(angle - this.player.facingAngle);
+        while (diff > Math.PI) diff = Math.abs(diff - Math.PI * 2);
+        if (diff < maxRad) {
+          const score = diff * 40 + doorDist;
+          if (score < minScore) {
+            minScore = score;
+            bestObj = { type: "door" };
+          }
+        }
       }
     }
 
-    // 2. Outpost cabin door check (Chapter 1)
+    // 2. Interactive objects directly in front
+    for (let obj of (this.interactiveObjects || [])) {
+      const dist = Math.hypot(obj.x - this.player.x, obj.y - this.player.y);
+      if (dist < maxDist + (obj.radius || 30)) {
+        const angle = Math.atan2(obj.y - this.player.y, obj.x - this.player.x);
+        let diff = Math.abs(angle - this.player.facingAngle);
+        while (diff > Math.PI) diff = Math.abs(diff - Math.PI * 2);
+        if (diff < maxRad) {
+          const score = diff * 45 + dist;
+          if (score < minScore) {
+            minScore = score;
+            bestObj = { type: "interactive", obj };
+          }
+        }
+      }
+    }
+
+    // 3. Ground items directly in front
+    for (let i = 0; i < (this.items || []).length; i++) {
+      const it = this.items[i];
+      const dist = Math.hypot(it.x - this.player.x, it.y - this.player.y);
+      if (dist < maxDist) {
+        const angle = Math.atan2(it.y - this.player.y, it.x - this.player.x);
+        let diff = Math.abs(angle - this.player.facingAngle);
+        while (diff > Math.PI) diff = Math.abs(diff - Math.PI * 2);
+        if (diff < maxRad) {
+          const score = diff * 45 + dist;
+          if (score < minScore) {
+            minScore = score;
+            bestObj = { type: "item", index: i };
+          }
+        }
+      }
+    }
+
+    if (bestObj) {
+      if (bestObj.type === "door") {
+        this.toggleCabinDoor();
+        return true;
+      }
+      if (bestObj.type === "item") {
+        return this.pickupItem(bestObj.index);
+      }
+      if (bestObj.type === "interactive" && bestObj.obj.action) {
+        bestObj.obj.action(bestObj.obj);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  interactNearest() {
+    // 1. Outpost cabin door check (Chapter 1)
     if (this.chapter === 1) {
       const doorDist = Math.hypot(this.player.x - 530, this.player.y - 820);
       if (doorDist < 55) {
@@ -3415,7 +3490,7 @@ export class SinharajaEngine {
       }
     }
 
-    // 3. Ground items proximity check
+    // 2. Ground items proximity check
     for (let i = 0; i < (this.items || []).length; i++) {
       const it = this.items[i];
       const dist = Math.hypot(it.x - this.player.x, it.y - this.player.y);
@@ -3424,7 +3499,7 @@ export class SinharajaEngine {
       }
     }
 
-    // 4. Interactive objects in front of player
+    // 3. Interactive objects in front of player
     let bestObj = null;
     let minAngleDiff = 0.70;
     for (let obj of (this.interactiveObjects || [])) {
@@ -3445,7 +3520,7 @@ export class SinharajaEngine {
       return true;
     }
 
-    // 5. Radius fallback
+    // 4. Radius fallback
     for (let obj of (this.interactiveObjects || [])) {
       const dist = Math.hypot(obj.x - this.player.x, obj.y - this.player.y);
       if (dist < (obj.radius || 35) + 40) {
@@ -3585,6 +3660,11 @@ export class SinharajaEngine {
       return;
     }
 
+    // Smooth animated Kudawa Cabin door swing (0.0 = closed, 1.0 = fully open)
+    const targetDoorSwing = this.kudawaDoorOpen ? 1.0 : 0.0;
+    if (this.doorSwingAngle === undefined) this.doorSwingAngle = targetDoorSwing;
+    this.doorSwingAngle += (targetDoorSwing - this.doorSwingAngle) * Math.min(1.0, dt * 7.5);
+
     // 1. Movement Handling (Dual Support: WASD / Arrow Keys + Click/Tap-to-Move)
     let dx = 0;
     let dy = 0;
@@ -3608,20 +3688,29 @@ export class SinharajaEngine {
     } else if (isKeyMoving) {
       this.moveTarget = null; // Keyboard overrides click-to-move
       if (this.viewMode === "fps") {
-        // ── First-Person I.G.I. Tactical Movement & Turning ──
+        // ── First-Person I.G.I. Tactical Camera Look (Arrow keys) ──
         if (this.keys["arrowleft"]) {
-          this.player.facingAngle -= 2.5 * dt;
+          this.player.facingAngle -= 2.4 * dt;
         }
         if (this.keys["arrowright"]) {
-          this.player.facingAngle += 2.5 * dt;
+          this.player.facingAngle += 2.4 * dt;
         }
+        if (this.keys["arrowup"]) {
+          this.camPitch = Math.max(-0.85, (this.camPitch || 0) - 1.6 * dt);
+        }
+        if (this.keys["arrowdown"]) {
+          this.camPitch = Math.min(0.85, (this.camPitch || 0) + 1.6 * dt);
+        }
+        while (this.player.facingAngle > Math.PI) this.player.facingAngle -= Math.PI * 2;
+        while (this.player.facingAngle < -Math.PI) this.player.facingAngle += Math.PI * 2;
 
+        // Tactical Movement (WASD)
         // Forward & Backward in look direction
-        if (this.keys["w"] || this.keys["arrowup"]) {
+        if (this.keys["w"]) {
           dx += Math.cos(this.player.facingAngle);
           dy += Math.sin(this.player.facingAngle);
         }
-        if (this.keys["s"] || this.keys["arrowdown"]) {
+        if (this.keys["s"]) {
           dx -= Math.cos(this.player.facingAngle);
           dy -= Math.sin(this.player.facingAngle);
         }
@@ -3831,11 +3920,18 @@ export class SinharajaEngine {
       }
     } else {
       const moveDelta = speed * Math.min(dt * 60, 2.0);
-      const nextX = Math.max(20, Math.min(this.worldWidth - 20, this.player.x + dx * moveDelta));
-      const nextY = Math.max(20, Math.min(this.worldHeight - 20, this.player.y + dy * moveDelta));
+      if (dx !== 0 || dy !== 0) {
+        this.player.x += dx * moveDelta;
+        this.player.y += dy * moveDelta;
 
-      if (!this.checkCollision(nextX, this.player.y)) this.player.x = nextX;
-      if (!this.checkCollision(this.player.x, nextY)) this.player.y = nextY;
+        // Smooth obstacle sliding & deflection (slides along cabin walls, doorframe and boulders)
+        this.resolveCollisions();
+        this.resolveCollisions();
+
+        // Enforce world bounds
+        this.player.x = Math.max(20, Math.min(this.worldWidth - 20, this.player.x));
+        this.player.y = Math.max(20, Math.min(this.worldHeight - 20, this.player.y));
+      }
     }
 
     if (isMoving && (!this.raft || !this.raft.riding) && (!this.cableway || !this.cableway.riding)) {
@@ -4649,6 +4745,50 @@ export class SinharajaEngine {
         difficulty: this.difficulty || "tactical",
         tasks: { ...this.tasks },
       });
+    }
+  }
+
+  resolveCollisions() {
+    const pr = this.player.radius || 18;
+    for (let obs of (this.obstacles || [])) {
+      if (obs.isDoor && this.kudawaDoorOpen) continue; // Outpost cabin door is swung open!
+      if (obs.radius) {
+        // Circular Obstacle (Tree trunk / Boulder)
+        const ox = this.player.x - obs.x;
+        const oy = this.player.y - obs.y;
+        const dist = Math.hypot(ox, oy);
+        const minDist = obs.radius + pr;
+        if (dist < minDist && dist > 0.001) {
+          const push = minDist - dist;
+          this.player.x += (ox / dist) * push;
+          this.player.y += (oy / dist) * push;
+        }
+      } else if (obs.w && obs.h) {
+        // Rectangular Obstacle (Cabin walls & doorframe)
+        const closestX = Math.max(obs.x, Math.min(obs.x + obs.w, this.player.x));
+        const closestY = Math.max(obs.y, Math.min(obs.y + obs.h, this.player.y));
+        const ox = this.player.x - closestX;
+        const oy = this.player.y - closestY;
+        const dist = Math.hypot(ox, oy);
+        if (dist < pr) {
+          if (dist > 0.001) {
+            const push = pr - dist;
+            this.player.x += (ox / dist) * push;
+            this.player.y += (oy / dist) * push;
+          } else {
+            // Player is inside the box: push out along smallest penetration axis
+            const dLeft = this.player.x - obs.x;
+            const dRight = (obs.x + obs.w) - this.player.x;
+            const dTop = this.player.y - obs.y;
+            const dBottom = (obs.y + obs.h) - this.player.y;
+            const minPen = Math.min(dLeft, dRight, dTop, dBottom);
+            if (minPen === dLeft) this.player.x = obs.x - pr;
+            else if (minPen === dRight) this.player.x = obs.x + obs.w + pr;
+            else if (minPen === dTop) this.player.y = obs.y - pr;
+            else this.player.y = obs.y + obs.h + pr;
+          }
+        }
+      }
     }
   }
 
@@ -7065,7 +7205,24 @@ export class SinharajaEngine {
       }
     }
 
-    // 3. Perspective Ground Plane / Cabin Floor
+    // ── 3. Perspective Projection Helper ──
+    const projectPoint = (ox, oy, oz = 0) => {
+      const dx = ox - camX;
+      const dy = oy - camY;
+      const fwd = dx * cosYaw + dy * sinYaw;
+      const rgt = -dx * sinYaw + dy * cosYaw;
+      if (fwd < 10 || fwd > 950) return null;
+      const scale = F / fwd;
+      const Sx = w * 0.5 + rgt * scale + bobX + shakeX;
+      const Sy = horizonY + (camZ - oz) * scale;
+      const angle = Math.atan2(rgt, fwd);
+      const inTorch = this.torchOn && Math.abs(angle) < 0.40;
+      const fog = Math.max(0, Math.min(1.0, 1.0 - (fwd - 60) / 800));
+      const light = Math.min(1.0, (inKudawaCabin ? 0.70 : 0.22) + (inTorch ? Math.max(0.3, 1.0 - (fwd / 520)) * 0.85 : 0));
+      return { fwd, rgt, scale, Sx, Sy, fog, light, inTorch, angle };
+    };
+
+    // ── 3B. Perspective Ground Plane / Cabin Floor & Interior Architecture ──
     if (horizonY < h) {
       if (inKudawaCabin) {
         // Polished Timber Floorboards inside Kudawa Outpost Cabin
@@ -7098,6 +7255,140 @@ export class SinharajaEngine {
           ctx.moveTo(0, py);
           ctx.lineTo(w, py);
           ctx.stroke();
+        }
+
+        // ── 3C. Kudawa Cabin 3D Timber Walls & Workbench Architecture ──
+        const drawWallQuad = (x1, y1, x2, y2, wallH = 65, wallColor = "#301d12", plankLines = 7) => {
+          const b1 = projectPoint(x1, y1, 0);
+          const t1 = projectPoint(x1, y1, wallH);
+          const b2 = projectPoint(x2, y2, 0);
+          const t2 = projectPoint(x2, y2, wallH);
+          if (!b1 || !b2 || !t1 || !t2) return;
+
+          ctx.save();
+          ctx.fillStyle = wallColor;
+          ctx.beginPath();
+          ctx.moveTo(b1.Sx, b1.Sy);
+          ctx.lineTo(t1.Sx, t1.Sy);
+          ctx.lineTo(t2.Sx, t2.Sy);
+          ctx.lineTo(b2.Sx, b2.Sy);
+          ctx.closePath();
+          ctx.fill();
+
+          // Horizontal timber log grooves
+          ctx.strokeStyle = "rgba(18, 10, 5, 0.55)";
+          ctx.lineWidth = 1.2;
+          for (let p = 1; p < plankLines; p++) {
+            const frac = p / plankLines;
+            const xL = b1.Sx + (t1.Sx - b1.Sx) * frac;
+            const yL = b1.Sy + (t1.Sy - b1.Sy) * frac;
+            const xR = b2.Sx + (t2.Sx - b2.Sx) * frac;
+            const yR = b2.Sy + (t2.Sy - b2.Sy) * frac;
+            ctx.beginPath();
+            ctx.moveTo(xL, yL);
+            ctx.lineTo(xR, yR);
+            ctx.stroke();
+          }
+          ctx.restore();
+        };
+
+        // North Wall (Back Wall)
+        drawWallQuad(420, 650, 635, 650, 65, "#341f13", 8);
+        // West Wall (Left Wall)
+        drawWallQuad(420, 650, 420, 820, 65, "#2b190f", 8);
+        // East Wall (Right Wall)
+        drawWallQuad(635, 650, 635, 820, 65, "#2d1a10", 8);
+        // South Wall (Front Wall with Doorway Opening)
+        drawWallQuad(420, 820, 497, 820, 65, "#2f1b11", 8);
+        drawWallQuad(563, 820, 635, 820, 65, "#2f1b11", 8);
+        drawWallQuad(497, 820, 563, 820, 65, "#22130b", 3); // Lintel above door
+
+        // Pinned Topographical Map Board on North Wall
+        const mapBL = projectPoint(480, 651, 24);
+        const mapTL = projectPoint(480, 651, 48);
+        const mapBR = projectPoint(575, 651, 24);
+        const mapTR = projectPoint(575, 651, 48);
+        if (mapBL && mapTL && mapBR && mapTR) {
+          ctx.save();
+          ctx.fillStyle = "#e2d9c8";
+          ctx.beginPath();
+          ctx.moveTo(mapBL.Sx, mapBL.Sy);
+          ctx.lineTo(mapTL.Sx, mapTL.Sy);
+          ctx.lineTo(mapTR.Sx, mapTR.Sy);
+          ctx.lineTo(mapBR.Sx, mapBR.Sy);
+          ctx.closePath();
+          ctx.fill();
+          ctx.strokeStyle = "#78350f";
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+
+          // Green forest zone & red expedition trail lines
+          ctx.fillStyle = "rgba(34, 197, 94, 0.35)";
+          ctx.beginPath();
+          ctx.ellipse((mapBL.Sx + mapBR.Sx) * 0.5, (mapBL.Sy + mapTL.Sy) * 0.5, (mapBR.Sx - mapBL.Sx) * 0.35, Math.abs(mapTL.Sy - mapBL.Sy) * 0.3, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.strokeStyle = "#ef4444";
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.moveTo(mapBL.Sx + (mapBR.Sx - mapBL.Sx) * 0.2, mapBL.Sy - (mapBL.Sy - mapTL.Sy) * 0.3);
+          ctx.lineTo((mapBL.Sx + mapBR.Sx) * 0.5, (mapBL.Sy + mapTL.Sy) * 0.5);
+          ctx.lineTo(mapBR.Sx - (mapBR.Sx - mapBL.Sx) * 0.25, mapTL.Sy + (mapBL.Sy - mapTL.Sy) * 0.35);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // Heavy Teak Ranger Workbench / Desk (North-East Room Quadrant)
+        const tTL = projectPoint(450, 660, 14);
+        const tTR = projectPoint(615, 660, 14);
+        const tBR = projectPoint(615, 730, 14);
+        const tBL = projectPoint(450, 730, 14);
+        const fBL = projectPoint(450, 730, 0);
+        const fBR = projectPoint(615, 730, 0);
+
+        if (tTL && tTR && tBR && tBL && fBL && fBR) {
+          ctx.save();
+          // Front Wooden Skirt & Heavy Sturdy Legs
+          ctx.fillStyle = "#3e2723";
+          ctx.beginPath();
+          ctx.moveTo(tBL.Sx, tBL.Sy);
+          ctx.lineTo(tBR.Sx, tBR.Sy);
+          ctx.lineTo(fBR.Sx, fBR.Sy);
+          ctx.lineTo(fBL.Sx, fBL.Sy);
+          ctx.closePath();
+          ctx.fill();
+          ctx.strokeStyle = "#27160c";
+          ctx.lineWidth = 1.2;
+          ctx.stroke();
+
+          // Leg posts
+          const legW = Math.max(4, 8 * tBL.scale);
+          ctx.fillStyle = "#27160c";
+          ctx.fillRect(tBL.Sx, tBL.Sy, legW, fBL.Sy - tBL.Sy);
+          ctx.fillRect(tBR.Sx - legW, tBR.Sy, legW, fBR.Sy - tBR.Sy);
+
+          // Polished Teak Wood Tabletop Surface
+          const deskGrad = ctx.createLinearGradient(0, tTL.Sy, 0, tBL.Sy);
+          deskGrad.addColorStop(0, "#4a301f");
+          deskGrad.addColorStop(0.5, "#5d3c27");
+          deskGrad.addColorStop(1, "#6d472f");
+          ctx.fillStyle = deskGrad;
+          ctx.beginPath();
+          ctx.moveTo(tTL.Sx, tTL.Sy);
+          ctx.lineTo(tTR.Sx, tTR.Sy);
+          ctx.lineTo(tBR.Sx, tBR.Sy);
+          ctx.lineTo(tBL.Sx, tBL.Sy);
+          ctx.closePath();
+          ctx.fill();
+
+          // Beveled edge highlight on front of table
+          ctx.strokeStyle = "#8d5b38";
+          ctx.lineWidth = Math.max(1, 1.8 * tBL.scale);
+          ctx.beginPath();
+          ctx.moveTo(tBL.Sx, tBL.Sy);
+          ctx.lineTo(tBR.Sx, tBR.Sy);
+          ctx.stroke();
+          ctx.restore();
         }
 
         // Warm Storm Lantern Hanging from Center Ceiling Rafter
@@ -7236,23 +7527,6 @@ export class SinharajaEngine {
     // 4. Transform & Project All Game Entities into 3D Depth
     const fpsEntities = [];
 
-    // Helper to transform world coords (ox, oy, oz) to camera space
-    const projectPoint = (ox, oy, oz = 0) => {
-      const dx = ox - camX;
-      const dy = oy - camY;
-      const fwd = dx * cosYaw + dy * sinYaw;
-      const rgt = -dx * sinYaw + dy * cosYaw;
-      if (fwd < 10 || fwd > 950) return null;
-      const scale = F / fwd;
-      const Sx = w * 0.5 + rgt * scale + bobX + shakeX;
-      const Sy = horizonY + (camZ - oz) * scale;
-      const angle = Math.atan2(rgt, fwd);
-      const inTorch = this.torchOn && Math.abs(angle) < 0.40;
-      const fog = Math.max(0, Math.min(1.0, 1.0 - (fwd - 60) / 800));
-      const light = Math.min(1.0, (inKudawaCabin ? 0.65 : 0.22) + (inTorch ? Math.max(0.3, 1.0 - (fwd / 520)) * 0.85 : 0));
-      return { fwd, rgt, scale, Sx, Sy, fog, light, inTorch, angle };
-    };
-
     // A. Trees
     const allTrees = [...(this.ambientTrees || []), ...(this.trees || [])];
     allTrees.forEach((t) => {
@@ -7295,7 +7569,8 @@ export class SinharajaEngine {
 
     // D. Interactive Objects (Cabin, Gunadasa, Crates, Keys, Slates, etc.)
     (this.interactiveObjects || []).forEach((obj) => {
-      const p = projectPoint(obj.x, obj.y, 0);
+      const isDeskProp = (this.chapter === 1 && (obj.id === "outpost_radio" || obj.id === "outpost_douglas_reel" || obj.id === "outpost_balm_bottle" || obj.id === "outpost_uv_lens"));
+      const p = projectPoint(obj.x, obj.y, isDeskProp ? 14 : 0);
       if (p) {
         fpsEntities.push({
           type: "interactive",
@@ -7357,12 +7632,163 @@ export class SinharajaEngine {
       }
     });
 
+    // ── Pre-Pass: Precision 3D Bounding-Box Raycast Target Selection ──
+    const cx = w * 0.5;
+    const cy = h * 0.5;
+    let crosshairTarget = null;
+    let bestTargetScore = 999999;
+
+    // 1. Kudawa Cabin Door Raycast Target (Chapter 1)
+    if (this.chapter === 1) {
+      const doorPt = projectPoint(530, 820, 0);
+      if (doorPt && doorPt.fwd > 5 && doorPt.fwd < 210) {
+        const dScale = doorPt.scale;
+        const dW = inKudawaCabin ? Math.max(30, 80 * dScale) : Math.max(30, 70 * dScale);
+        const dH = inKudawaCabin ? Math.max(50, 130 * dScale) : Math.max(45, 100 * dScale);
+        const minX = doorPt.Sx - dW * 0.5;
+        const maxX = doorPt.Sx + dW * 0.5;
+        const minY = doorPt.Sy - dH;
+        const maxY = doorPt.Sy;
+
+        const inside = (cx >= minX && cx <= maxX && cy >= minY && cy <= maxY);
+        const edX = Math.max(minX - cx, 0, cx - maxX);
+        const edY = Math.max(minY - cy, 0, cy - maxY);
+        const boxDist = Math.hypot(edX, edY);
+        const centerDist = Math.hypot(cx - (minX + maxX) * 0.5, cy - (minY + maxY) * 0.5);
+
+        if (inside || boxDist < 45) {
+          const score = (inside ? 0 : 1000) + boxDist * 12 + centerDist * 0.4 + doorPt.fwd * 0.1;
+          if (score < bestTargetScore) {
+            bestTargetScore = score;
+            crosshairTarget = {
+              isDoor: true,
+              id: "kudawa_outpost_door",
+              title: "කුඩව මුරපොළ දොරටුව (Outpost Door)",
+              prompt: this.kudawaDoorOpen ? "[E] දොර වහන්න (Close Door)" : "[E] දොර අරින්න (Open Door)",
+              icon: "🚪",
+              box: { minX, minY, maxX, maxY },
+              action: () => this.toggleCabinDoor(),
+            };
+          }
+        }
+      }
+    }
+
+    // 2. Interactive Objects & Ground Items Precision Raycast Check
+    fpsEntities.forEach((ent) => {
+      const { p } = ent;
+      if (!p || p.fwd < 6 || p.fwd > 200) return;
+
+      let boxW = 30 * p.scale;
+      let boxH = 30 * p.scale;
+      let title = "";
+      let prompt = "[E] පරීක්ෂා කරන්න";
+      let icon = "🔍";
+
+      if (ent.type === "interactive") {
+        const obj = ent.obj;
+        if (!obj || obj.picked) return;
+        const id = obj.id || "";
+        title = obj.title || "අන්තර්ක්‍රියාකාරී වස්තුව";
+        prompt = obj.prompt || "[E] පරීක්ෂා කරන්න";
+        icon = obj.icon || "🔍";
+
+        if (id === "gunadasa_npc" || id === "npc") {
+          boxW = 56 * p.scale;
+          boxH = 110 * p.scale;
+        } else if (id === "kudawa_camp_tent") {
+          boxW = 120 * p.scale;
+          boxH = 85 * p.scale;
+        } else if (id === "outpost_solar_charger") {
+          boxW = 54 * p.scale;
+          boxH = 44 * p.scale;
+        } else if (id === "outpost_radio") {
+          boxW = 52 * p.scale;
+          boxH = 42 * p.scale;
+        } else if (id === "outpost_douglas_reel") {
+          boxW = 52 * p.scale;
+          boxH = 42 * p.scale;
+        } else if (id === "outpost_balm_bottle") {
+          boxW = 32 * p.scale;
+          boxH = 48 * p.scale;
+        } else if (id === "outpost_uv_lens") {
+          boxW = 36 * p.scale;
+          boxH = 36 * p.scale;
+        } else if (id === "outpost_flaregun") {
+          boxW = 46 * p.scale;
+          boxH = 36 * p.scale;
+        } else if (id === "kudawa_outpost_door") {
+          return; // Handled in door section above
+        } else {
+          boxW = Math.max(26, (obj.radius || 30) * 1.5 * p.scale);
+          boxH = Math.max(26, (obj.radius || 30) * 1.5 * p.scale);
+        }
+      } else if (ent.type === "item") {
+        const it = ent.item;
+        if (!it) return;
+        boxW = Math.max(22, 28 * p.scale);
+        boxH = Math.max(22, 28 * p.scale);
+        title = it?.type === "salt"
+          ? "ලුණු කුඩු මල්ල (Sea Salt Pouch)"
+          : it?.type === "herb"
+          ? "ඖෂධීය පැළෑටිය (Rainforest Herb)"
+          : it?.type === "feather"
+          ? "නිල් කැහිබෙලි පිහාටුව (Blue Magpie Feather)"
+          : "උණුසුම් ඉඟුරු තේ (Ginger Tea Flask)";
+        prompt = "[E] අහුලාගන්න (Pick Up)";
+        icon = it?.type === "salt" ? "🧂" : (it?.type === "herb" ? "🌿" : (it?.type === "feather" ? "🪶" : "🫖"));
+      } else {
+        return;
+      }
+
+      const minX = p.Sx - boxW * 0.5;
+      const maxX = p.Sx + boxW * 0.5;
+      const minY = p.Sy - boxH;
+      const maxY = p.Sy;
+
+      const inside = (cx >= minX && cx <= maxX && cy >= minY && cy <= maxY);
+      const edX = Math.max(minX - cx, 0, cx - maxX);
+      const edY = Math.max(minY - cy, 0, cy - maxY);
+      const boxDist = Math.hypot(edX, edY);
+      const centerDist = Math.hypot(cx - (minX + maxX) * 0.5, cy - (minY + maxY) * 0.5);
+
+      if (inside || boxDist < 42) {
+        // Direct hit inside bounding box gets score < 100; near miss edge snap gets score >= 1000
+        const score = (inside ? 0 : 1000) + boxDist * 12 + centerDist * 0.4 + p.fwd * 0.1;
+        if (score < bestTargetScore) {
+          bestTargetScore = score;
+          if (ent.type === "item") {
+            crosshairTarget = {
+              isItem: true,
+              item: ent.item,
+              itemIndex: ent.itemIndex,
+              title,
+              prompt,
+              icon,
+              box: { minX, minY, maxX, maxY },
+              action: () => this.pickupItem(ent.itemIndex),
+            };
+          } else {
+            crosshairTarget = {
+              isInteractive: true,
+              obj: ent.obj,
+              title,
+              prompt,
+              icon,
+              box: { minX, minY, maxX, maxY },
+              action: () => {
+                if (ent.obj.action) ent.obj.action(ent.obj);
+              },
+            };
+          }
+        }
+      }
+    });
+
+    this.activeCrosshairTarget = crosshairTarget;
+
     // Sort entities descending by distance (Painter's Algorithm: Far -> Near)
     fpsEntities.sort((a, b) => b.fwd - a.fwd);
-
-    // Keep track of the entity closest to the center crosshair for interaction
-    let crosshairTarget = null;
-    let minCrosshairDist = 75;
 
     // 5. Render 3D Entities
     fpsEntities.forEach((ent) => {
@@ -7732,13 +8158,8 @@ export class SinharajaEngine {
         ctx.save();
         ctx.globalAlpha = fog;
 
-        // Check if aimed near crosshair (center of screen)
-        const distToCenter = Math.hypot(Sx - w * 0.5, (Sy - 25 * scale) - h * 0.5);
-        const isAim = (distToCenter < 65 && p.fwd < 160);
-        if (distToCenter < minCrosshairDist && p.fwd < 160) {
-          minCrosshairDist = distToCenter;
-          crosshairTarget = obj;
-        }
+        // Targeted check from pre-pass raycast
+        const isAim = crosshairTarget && ((crosshairTarget === obj) || (crosshairTarget.obj === obj) || (crosshairTarget.isDoor && (obj.isDoor || id === "kudawa_outpost_door")));
 
         // 1. Old Ranger Gunadasa (ගුණදාස මාමා - Realistic Anatomical Model)
         if (id === "gunadasa_npc" || id === "npc") {
@@ -7960,49 +8381,62 @@ export class SinharajaEngine {
             ctx.fillStyle = `rgb(${Math.round(45 * light)}, ${Math.round(28 * light)}, ${Math.round(18 * light)})`;
             ctx.fillRect(dX - 10 * scale, dY - 10 * scale, dW + 20 * scale, dH + 10 * scale);
 
-            if (this.kudawaDoorOpen) {
-              // Open doorway looking out into the misty rainforest
-              ctx.fillStyle = "#030c05";
-              ctx.fillRect(dX, dY, dW, dH);
+            // Doorway Opening Portal (Misty Rainforest Outside)
+            ctx.fillStyle = "#030c05";
+            ctx.fillRect(dX, dY, dW, dH);
 
-              // Silhouette of Sinharaja trees and moonlit mist outside
-              ctx.fillStyle = "#064e3b";
-              ctx.beginPath();
-              ctx.ellipse(dX + dW * 0.5, dY + dH * 0.75, dW * 0.42, dH * 0.35, 0, 0, Math.PI * 2);
-              ctx.fill();
+            // Silhouette of Sinharaja trees and moonlit mist outside
+            ctx.fillStyle = "#064e3b";
+            ctx.beginPath();
+            ctx.ellipse(dX + dW * 0.5, dY + dH * 0.75, dW * 0.42, dH * 0.35, 0, 0, Math.PI * 2);
+            ctx.fill();
 
-              // Swung door resting against inside wall
-              ctx.fillStyle = `rgb(${Math.round(65 * light)}, ${Math.round(42 * light)}, ${Math.round(28 * light)})`;
-              ctx.fillRect(dX - 6 * scale, dY, 10 * scale, dH);
-            } else {
-              // Closed heavy timber door from inside with diagonal brace and iron slide bolt
-              if (this.textures?.kudawa_door) {
-                ctx.drawImage(this.textures.kudawa_door, dX, dY, dW, dH);
-                if (!p.inTorch || light < 0.90) {
-                  ctx.globalCompositeOperation = "source-atop";
-                  const darkness = Math.max(0, Math.min(0.78, 1.0 - light));
-                  ctx.fillStyle = `rgba(3, 7, 18, ${darkness})`;
-                  ctx.fillRect(dX, dY, dW, dH);
-                  ctx.globalCompositeOperation = "source-over";
-                }
-              } else {
-                ctx.fillStyle = `rgb(${Math.round(58 * light)}, ${Math.round(36 * light)}, ${Math.round(24 * light)})`;
-                ctx.fillRect(dX, dY, dW, dH);
-                ctx.strokeStyle = `rgb(${Math.round(32 * light)}, ${Math.round(18 * light)}, ${Math.round(10 * light)})`;
-                ctx.lineWidth = Math.max(1, 2.5 * scale);
-                ctx.strokeRect(dX, dY, dW, dH);
-                ctx.beginPath();
-                ctx.moveTo(dX, dY); ctx.lineTo(dX + dW, dY + dH);
-                ctx.stroke();
+            // Animated 3D swinging timber door leaf in perspective
+            const swing = this.doorSwingAngle !== undefined ? this.doorSwingAngle : (this.kudawaDoorOpen ? 1.0 : 0.0);
+            const swingRad = swing * 1.48; // Up to 85° inward swing
+            const leafW = Math.max(8 * scale, dW * Math.cos(swingRad));
+            const tipScale = 1.0 + Math.sin(swingRad) * 0.16;
+            const tipH = dH * tipScale;
+            const tipY = dY - (tipH - dH) * 0.5;
 
-                // Heavy Iron Sliding Bolt Latch
-                ctx.fillStyle = "#1e293b";
-                ctx.fillRect(dX + dW * 0.25, dY + dH * 0.5 - 3 * scale, dW * 0.5, 6 * scale);
-                ctx.fillStyle = "#475569";
-                ctx.beginPath();
-                ctx.arc(dX + dW * 0.65, dY + dH * 0.5, 4 * scale, 0, Math.PI * 2);
-                ctx.fill();
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(dX, dY);
+            ctx.lineTo(dX + leafW, tipY);
+            ctx.lineTo(dX + leafW, tipY + tipH);
+            ctx.lineTo(dX, dY + dH);
+            ctx.closePath();
+            ctx.clip();
+
+            if (this.textures?.kudawa_door) {
+              ctx.drawImage(this.textures.kudawa_door, dX, dY, leafW, dH);
+              if (!p.inTorch || light < 0.90) {
+                ctx.globalCompositeOperation = "source-atop";
+                const darkness = Math.max(0, Math.min(0.78, 1.0 - light));
+                ctx.fillStyle = `rgba(3, 7, 18, ${darkness})`;
+                ctx.fillRect(dX, dY - 10, leafW, dH + 20);
+                ctx.globalCompositeOperation = "source-over";
               }
+            } else {
+              ctx.fillStyle = `rgb(${Math.round(58 * light)}, ${Math.round(36 * light)}, ${Math.round(24 * light)})`;
+              ctx.fillRect(dX, dY - 10, leafW, dH + 20);
+              ctx.strokeStyle = `rgb(${Math.round(32 * light)}, ${Math.round(18 * light)}, ${Math.round(10 * light)})`;
+              ctx.lineWidth = Math.max(1, 2.5 * scale);
+              ctx.stroke();
+            }
+            ctx.restore();
+
+            // Tactical targeting reticle for door
+            if (isAim || (crosshairTarget && crosshairTarget.isDoor)) {
+              ctx.strokeStyle = "rgba(74, 222, 128, 0.85)";
+              ctx.lineWidth = 2;
+              const br = Math.min(14, dW * 0.2);
+              ctx.beginPath();
+              ctx.moveTo(dX, dY + br); ctx.lineTo(dX, dY); ctx.lineTo(dX + br, dY);
+              ctx.moveTo(dX + dW - br, dY); ctx.lineTo(dX + dW, dY); ctx.lineTo(dX + dW, dY + br);
+              ctx.moveTo(dX, dY + dH - br); ctx.lineTo(dX, dY + dH); ctx.lineTo(dX + br, dY + dH);
+              ctx.moveTo(dX + dW - br, dY + dH); ctx.lineTo(dX + dW, dY + dH); ctx.lineTo(dX + dW, dY + dH - br);
+              ctx.stroke();
             }
           } else {
             // Outside the Cabin: Full Elevated Weatherboard Timber Outpost
@@ -8065,18 +8499,20 @@ export class SinharajaEngine {
             ctx.fillStyle = "#1e130c";
             ctx.fillRect(doorX, doorY, doorW, doorH);
 
-            // If door is open, warm light spills out of doorway
-            if (this.kudawaDoorOpen) {
+            const swing = this.doorSwingAngle !== undefined ? this.doorSwingAngle : (this.kudawaDoorOpen ? 1.0 : 0.0);
+            if (swing > 0.03) {
               const doorLight = ctx.createLinearGradient(doorX, doorY, doorX, doorY + doorH + 20 * scale);
-              doorLight.addColorStop(0, "rgba(251, 191, 36, 0.7)");
-              doorLight.addColorStop(0.6, "rgba(245, 158, 11, 0.35)");
+              doorLight.addColorStop(0, `rgba(251, 191, 36, ${0.7 * swing})`);
+              doorLight.addColorStop(0.6, `rgba(245, 158, 11, ${0.35 * swing})`);
               doorLight.addColorStop(1, "rgba(0, 0, 0, 0)");
               ctx.fillStyle = doorLight;
               ctx.fillRect(doorX, doorY, doorW, doorH + 25 * scale);
 
-              // Open door swinging 90 deg inward
+              // Animated door swinging inward
+              const swingRad = swing * 1.48;
+              const openW = Math.max(6 * scale, doorW * Math.cos(swingRad));
               ctx.fillStyle = `rgb(${Math.round(48 * light)}, ${Math.round(30 * light)}, ${Math.round(20 * light)})`;
-              ctx.fillRect(doorX, doorY, 6 * scale, doorH);
+              ctx.fillRect(doorX, doorY, openW, doorH);
             } else {
               // Closed Heavy Timber Door with Z-Brace
               if (this.textures?.kudawa_door) {
@@ -8103,6 +8539,18 @@ export class SinharajaEngine {
                 ctx.arc(doorX + doorW * 0.8, doorY + doorH * 0.5, Math.max(1.5, 3.5 * scale), 0, Math.PI * 2);
                 ctx.fill();
               }
+            }
+
+            if (isAim || (crosshairTarget && crosshairTarget.isDoor)) {
+              ctx.strokeStyle = "rgba(74, 222, 128, 0.85)";
+              ctx.lineWidth = 2;
+              const br = Math.min(12, doorW * 0.2);
+              ctx.beginPath();
+              ctx.moveTo(doorX, doorY + br); ctx.lineTo(doorX, doorY); ctx.lineTo(doorX + br, doorY);
+              ctx.moveTo(doorX + doorW - br, doorY); ctx.lineTo(doorX + doorW, doorY); ctx.lineTo(doorX + doorW, doorY + br);
+              ctx.moveTo(doorX, doorY + doorH - br); ctx.lineTo(doorX, doorY + doorH); ctx.lineTo(doorX + br, doorY + doorH);
+              ctx.moveTo(doorX + doorW - br, doorY + doorH); ctx.lineTo(doorX + doorW, doorY + doorH); ctx.lineTo(doorX + doorW, doorY + doorH - br);
+              ctx.stroke();
             }
 
             // Signboard above Door
@@ -8892,27 +9340,7 @@ export class SinharajaEngine {
         ctx.save();
         ctx.globalAlpha = fog;
 
-        // Check if aimed near crosshair (center of screen) for precise pickup
-        const distToCenter = Math.hypot(Sx - w * 0.5, (Sy - 8 * scale) - h * 0.5);
-        const isItemAim = (distToCenter < 55 && p.fwd < 160);
-        if (distToCenter < minCrosshairDist && p.fwd < 160) {
-          minCrosshairDist = distToCenter;
-          const itemName = it?.type === "salt"
-            ? "ලුණු කුඩු මල්ල (Sea Salt Pouch)"
-            : it?.type === "herb"
-            ? "ඖෂධීය පැළෑටිය (Rainforest Herb)"
-            : it?.type === "feather"
-            ? "නිල් කැහිබෙලි පිහාටුව (Blue Magpie Feather)"
-            : "උණුසුම් ඉඟුරු තේ (Ginger Tea Flask)";
-          crosshairTarget = {
-            isItem: true,
-            item: it,
-            itemIndex: ent.itemIndex,
-            title: itemName,
-            prompt: "[E] අහුලාගන්න (Pick Up)",
-            icon: it?.type === "salt" ? "🧂" : (it?.type === "herb" ? "🌿" : (it?.type === "feather" ? "🪶" : "🫖")),
-          };
-        }
+        const isItemAim = crosshairTarget && crosshairTarget.isItem && (crosshairTarget.itemIndex === ent.itemIndex);
 
         ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
         ctx.beginPath();
@@ -9138,7 +9566,7 @@ export class SinharajaEngine {
     // ── A. Tactical Lower Body (Pants & Jungle Combat Boots - Dynamic Pitch Ground-Look) ──
     const pitch = this.camPitch || 0;
     // Activates as player tilts camera downward towards the floor/ground
-    const legVis = Math.min(1.0, Math.max(0, (pitch - 0.02) / 0.20));
+    const legVis = Math.min(1.0, Math.max(0, (pitch + 0.10) / 0.35));
 
     if (legVis > 0.01) {
       ctx.save();
@@ -9168,7 +9596,7 @@ export class SinharajaEngine {
       }
 
       // Base Y position for feet, smoothly sliding into view as camera pitches downward
-      const bootBaseY = h - (1.0 - legVis) * 190 + (pitch - 0.12) * 120 + bobY * 0.45;
+      const bootBaseY = h - (1.0 - legVis) * 160 + (pitch - 0.05) * 120 + bobY * 0.45;
       const strideSpread = isSprint ? 30 : 18;
 
       const legs = [
@@ -9357,65 +9785,65 @@ export class SinharajaEngine {
     // ── B. Tactical Upper Body (Ranger Vest, Harness Straps & Support Left Arm) ──
     ctx.save();
     // 1. Left Tactical Support Arm & Long-Sleeve Safari Cuff
-    const leftArmX = w * 0.16 + handBobX * 0.6;
-    const leftArmY = h * 0.88 + handBobY * 0.7;
+    const leftArmX = w * 0.22 + handBobX * 0.7;
+    const leftArmY = h * 0.78 + handBobY * 0.8;
 
     ctx.save();
     ctx.translate(leftArmX, leftArmY);
-    ctx.rotate(0.32);
+    ctx.rotate(-0.25);
 
-    // Left Sleeve Forearm
+    // Left Sleeve Forearm (extending down-left offscreen)
     const lArmGrad = ctx.createLinearGradient(-26, 0, 26, 0);
     lArmGrad.addColorStop(0, "#192418");
     lArmGrad.addColorStop(0.4, "#2e3e2c");
     lArmGrad.addColorStop(1, "#182217");
     ctx.fillStyle = lArmGrad;
     ctx.beginPath();
-    ctx.roundRect(-24, 0, 48, 85, 6);
+    ctx.roundRect(-24, 18, 48, 100, 6);
     ctx.fill();
 
-    // Wrist Navigation Survival Compass
+    // Wrist Navigation Survival Compass (Centered and prominently visible)
     ctx.fillStyle = "#0f172a";
     ctx.beginPath();
-    ctx.arc(0, 22, 14, 0, Math.PI * 2);
+    ctx.arc(0, 0, 16, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = "#475569";
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 1.8;
     ctx.stroke();
 
     // Compass Tritium Dial & Glowing Needle
     ctx.fillStyle = "#1e293b";
     ctx.beginPath();
-    ctx.arc(0, 22, 11, 0, Math.PI * 2);
+    ctx.arc(0, 0, 12, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = "#22c55e";
     ctx.beginPath();
-    ctx.arc(0, 22, 1.5, 0, Math.PI * 2);
+    ctx.arc(0, 0, 1.8, 0, Math.PI * 2);
     ctx.fill();
     // Needle pointing North based on player yaw
     const compNeedleAngle = -yaw;
     ctx.strokeStyle = "#4ade80";
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 1.8;
     ctx.beginPath();
-    ctx.moveTo(0, 22);
-    ctx.lineTo(Math.sin(compNeedleAngle) * 9, 22 - Math.cos(compNeedleAngle) * 9);
+    ctx.moveTo(0, 0);
+    ctx.lineTo(Math.sin(compNeedleAngle) * 10, -Math.cos(compNeedleAngle) * 10);
     ctx.stroke();
 
-    // Left Tactical Assault Glove (in steady support position)
+    // Left Tactical Assault Glove (in steady support position angling up-right)
     ctx.fillStyle = "#1e2920";
     ctx.beginPath();
-    ctx.roundRect(-22, 38, 44, 48, 8);
+    ctx.roundRect(-22, -55, 44, 48, 8);
     ctx.fill();
     // Carbon Knuckle Guard
     ctx.fillStyle = "#0a0e0b";
     ctx.beginPath();
-    ctx.roundRect(-18, 44, 36, 14, 4);
+    ctx.roundRect(-18, -48, 36, 14, 4);
     ctx.fill();
 
     ctx.restore();
 
     // 2. Tactical Chest Rig & Shoulder Webbing Harness along bottom viewport border
-    const vestY = h - 28 + bobY * 0.4;
+    const vestY = h - 65 + bobY * 0.5;
     const vestGrad = ctx.createLinearGradient(0, vestY - 35, 0, h);
     vestGrad.addColorStop(0, "rgba(25, 36, 24, 0)");
     vestGrad.addColorStop(0.35, "rgba(35, 50, 33, 0.75)");
@@ -9646,10 +10074,30 @@ export class SinharajaEngine {
 
     // B. Center Crosshair (Reticle) & Interactive Action Banner
     ctx.save();
-    const cx = w * 0.5;
-    const cy = h * 0.5;
     const hasTarget = !!crosshairTarget;
-    this.activeCrosshairTarget = crosshairTarget;
+
+    // Tactical Target Reticle framing the object
+    if (hasTarget && crosshairTarget.box) {
+      const { minX, minY, maxX, maxY } = crosshairTarget.box;
+      const bw = maxX - minX;
+      const bh = maxY - minY;
+      const bLen = Math.min(14, Math.max(6, Math.min(bw, bh) * 0.22));
+      const pulse = 0.8 + Math.sin(time * 0.008) * 0.2;
+      ctx.save();
+      ctx.strokeStyle = `rgba(74, 222, 128, ${pulse})`;
+      ctx.lineWidth = 1.8;
+      // Top-Left
+      ctx.beginPath();
+      ctx.moveTo(minX, minY + bLen); ctx.lineTo(minX, minY); ctx.lineTo(minX + bLen, minY);
+      // Top-Right
+      ctx.moveTo(maxX - bLen, minY); ctx.lineTo(maxX, minY); ctx.lineTo(maxX, minY + bLen);
+      // Bottom-Left
+      ctx.moveTo(minX, maxY - bLen); ctx.lineTo(minX, maxY); ctx.lineTo(minX + bLen, maxY);
+      // Bottom-Right
+      ctx.moveTo(maxX - bLen, maxY); ctx.lineTo(maxX, maxY); ctx.lineTo(maxX, maxY - bLen);
+      ctx.stroke();
+      ctx.restore();
+    }
 
     ctx.strokeStyle = hasTarget ? "#f59e0b" : "rgba(74, 222, 128, 0.75)";
     ctx.lineWidth = 1.5;
@@ -9671,21 +10119,42 @@ export class SinharajaEngine {
       const promptText = crosshairTarget.prompt || "[E] පරීක්ෂා කරන්න";
       const titleText = crosshairTarget.title || "අන්තර්ක්‍රියාකාරී වස්තුව";
 
-      ctx.fillStyle = "rgba(15, 23, 42, 0.88)";
+      ctx.fillStyle = "rgba(15, 23, 42, 0.92)";
       ctx.strokeStyle = "#f59e0b";
       ctx.lineWidth = 1.2;
-      const bW = 240;
-      const bH = 38;
+      const bW = 260;
+      const bH = 40;
       ctx.fillRect(cx - bW * 0.5, cy + 24, bW, bH);
       ctx.strokeRect(cx - bW * 0.5, cy + 24, bW, bH);
 
       ctx.fillStyle = "#f59e0b";
       ctx.font = "bold 12px sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText(promptText, cx, cy + 39);
+      ctx.fillText(promptText, cx, cy + 40);
       ctx.fillStyle = "#94a3b8";
       ctx.font = "10px sans-serif";
-      ctx.fillText(titleText, cx, cy + 54);
+      ctx.fillText(titleText, cx, cy + 55);
+    }
+
+    // Pointer Lock & 360° Controls Notice when unlocked
+    if (!this.pointerLocked) {
+      const nW = 400;
+      const nH = 26;
+      const nX = cx - nW * 0.5;
+      const nY = 46;
+      ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
+      ctx.strokeStyle = "#4ade80";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(nX, nY, nW, nH, 4);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#4ade80";
+      ctx.font = "bold 11px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("🎯 CLICK SCREEN FOR 360° MOUSE LOOK | [ARROWS] LOOK 360°", cx, nY + nH * 0.5);
     }
     ctx.restore();
 
