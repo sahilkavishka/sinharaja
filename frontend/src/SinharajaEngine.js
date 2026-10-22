@@ -350,6 +350,9 @@ export class SinharajaEngine {
     this.initJungleTrees();
     this.godRays = this.generateGodRays();
 
+    // 3D Texture Cache & Preloader (Photorealistic textures)
+    this.initTextures();
+
     // Event Listeners
     this.setupInputs();
 
@@ -358,6 +361,94 @@ export class SinharajaEngine {
     this.lastTime = performance.now();
     this.loop = this.loop.bind(this);
     requestAnimationFrame(this.loop);
+  }
+
+  // ── 0. Photorealistic 3D Texture Preloader & Renderer ──────────────────────
+  initTextures() {
+    this.textures = {};
+    const textureList = [
+      { key: "outpost_radio", src: "/textures/outpost_radio.jpg", darkBg: true },
+      { key: "douglas_reel", src: "/textures/douglas_reel.jpg", darkBg: true },
+      { key: "balm_bottle", src: "/textures/balm_bottle.jpg", darkBg: true },
+      { key: "kudawa_door", src: "/textures/kudawa_door.jpg", darkBg: false },
+      { key: "ranger_gunadasa", src: "/textures/ranger_gunadasa.jpg", darkBg: true },
+      { key: "uv_lens", src: "/textures/uv_lens.jpg", darkBg: true },
+      { key: "flare_gun", src: "/textures/flare_gun.jpg", darkBg: true },
+      { key: "solar_charger", src: "/textures/solar_charger.jpg", darkBg: true },
+      { key: "black_leopard", src: "/textures/black_leopard.jpg", darkBg: true },
+      { key: "rainforest_herb", src: "/textures/rainforest_herb.jpg", darkBg: true },
+      { key: "salt_pouch", src: "/textures/salt_pouch.jpg", darkBg: true },
+    ];
+
+    textureList.forEach(({ key, src, darkBg }) => {
+      const img = new Image();
+      img.src = src;
+      img.onload = () => {
+        if (darkBg) {
+          try {
+            const oc = document.createElement("canvas");
+            oc.width = img.naturalWidth || img.width;
+            oc.height = img.naturalHeight || img.height;
+            const octx = oc.getContext("2d");
+            octx.drawImage(img, 0, 0);
+            const imgData = octx.getImageData(0, 0, oc.width, oc.height);
+            const d = imgData.data;
+            for (let i = 0; i < d.length; i += 4) {
+              const r = d[i], g = d[i + 1], b = d[i + 2];
+              if (r < 28 && g < 28 && b < 28) {
+                d[i + 3] = 0;
+              } else if (r < 48 && g < 48 && b < 48) {
+                d[i + 3] = Math.round(((Math.max(r, g, b) - 28) / 20) * 255);
+              }
+            }
+            octx.putImageData(imgData, 0, 0);
+            this.textures[key] = oc;
+            return;
+          } catch (e) {}
+        }
+        this.textures[key] = img;
+      };
+    });
+  }
+
+  drawTextureProp(ctx, tex, Sx, Sy, baseW, baseH, scale, light, fog, inTorch) {
+    if (!tex) return false;
+    const drawW = Math.max(16, baseW * scale);
+    const drawH = Math.max(16, baseH * scale);
+    const posX = Sx - drawW * 0.5;
+    const posY = Sy - drawH;
+
+    ctx.save();
+    ctx.globalAlpha = fog;
+
+    // 1. Soft 3D Ground Contact Shadow
+    ctx.fillStyle = "rgba(0, 0, 0, 0.52)";
+    ctx.beginPath();
+    ctx.ellipse(Sx, Sy + 2, drawW * 0.44, drawW * 0.16, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Draw the Photorealistic Texture
+    ctx.drawImage(tex, posX, posY, drawW, drawH);
+
+    // 3. Dynamic Night Atmospheric & Flashlight Shading
+    if (!inTorch || light < 0.90) {
+      ctx.globalCompositeOperation = "source-atop";
+      const darkness = Math.max(0, Math.min(0.82, 1.0 - light));
+      ctx.fillStyle = `rgba(3, 7, 18, ${darkness})`;
+      ctx.fillRect(posX, posY, drawW, drawH);
+    }
+
+    if (inTorch) {
+      ctx.globalCompositeOperation = "source-atop";
+      const torchSheen = ctx.createLinearGradient(posX, posY, posX, posY + drawH);
+      torchSheen.addColorStop(0, "rgba(255, 255, 230, 0.22)");
+      torchSheen.addColorStop(1, "rgba(255, 240, 180, 0.04)");
+      ctx.fillStyle = torchSheen;
+      ctx.fillRect(posX, posY, drawW, drawH);
+    }
+
+    ctx.restore();
+    return true;
   }
 
   // ── 1. Web Audio Synthesizer ──────────────────────────────────────────────
@@ -7444,15 +7535,29 @@ export class SinharajaEngine {
 
         // 1. Old Ranger Gunadasa (ගුණදාස මාමා - Realistic Anatomical Model)
         if (id === "gunadasa_npc" || id === "npc") {
-          const gH = Math.max(38, 74 * scale);
-          const gW = Math.max(16, 32 * scale);
-          const breath = Math.sin(time * 0.0022) * (1.2 * scale);
+          const gH = Math.max(50, 110 * scale);
+          const gW = Math.max(26, 56 * scale);
 
-          // Soft Contact Ground Shadow
-          ctx.fillStyle = "rgba(0, 0, 0, 0.46)";
-          ctx.beginPath();
-          ctx.ellipse(Sx, Sy + 2, gW * 0.85, gW * 0.35, 0, 0, Math.PI * 2);
-          ctx.fill();
+          if (this.textures?.ranger_gunadasa && this.drawTextureProp(ctx, this.textures.ranger_gunadasa, Sx, Sy, 56, 110, scale, light, fog, p.inTorch)) {
+            // Dialogue Beacon
+            if (!this.npc.helped) {
+              const bPulse = Math.sin(time * 0.005) * 5 * scale;
+              ctx.fillStyle = "#4ade80";
+              ctx.shadowColor = "#4ade80";
+              ctx.shadowBlur = 12 * scale;
+              ctx.beginPath();
+              ctx.arc(Sx, Sy - 110 * scale - 12 * scale - bPulse, Math.max(3, 5.5 * scale), 0, Math.PI * 2);
+              ctx.fill();
+              ctx.shadowBlur = 0;
+            }
+          } else {
+            const breath = Math.sin(time * 0.0022) * (1.2 * scale);
+
+            // Soft Contact Ground Shadow
+            ctx.fillStyle = "rgba(0, 0, 0, 0.46)";
+            ctx.beginPath();
+            ctx.ellipse(Sx, Sy + 2, gW * 0.85, gW * 0.35, 0, 0, Math.PI * 2);
+            ctx.fill();
 
           // Tall Knotted Bamboo Walking Staff (බට ලී සැරයටිය)
           const staffX = Sx + gW * 0.45;
@@ -7633,6 +7738,7 @@ export class SinharajaEngine {
             ctx.fill();
             ctx.shadowBlur = 0;
           }
+          }
         }
         // 2. Kudawa Outpost Cabin & Doorway (කුඩව ලී මුරපොළ ප්‍රධාන ගොඩනැගිල්ල සහ දොරටුව)
         else if (id === "kudawa_outpost_door" || ent.type === "outpost_cabin") {
@@ -7663,22 +7769,33 @@ export class SinharajaEngine {
               ctx.fillRect(dX - 6 * scale, dY, 10 * scale, dH);
             } else {
               // Closed heavy timber door from inside with diagonal brace and iron slide bolt
-              ctx.fillStyle = `rgb(${Math.round(58 * light)}, ${Math.round(36 * light)}, ${Math.round(24 * light)})`;
-              ctx.fillRect(dX, dY, dW, dH);
-              ctx.strokeStyle = `rgb(${Math.round(32 * light)}, ${Math.round(18 * light)}, ${Math.round(10 * light)})`;
-              ctx.lineWidth = Math.max(1, 2.5 * scale);
-              ctx.strokeRect(dX, dY, dW, dH);
-              ctx.beginPath();
-              ctx.moveTo(dX, dY); ctx.lineTo(dX + dW, dY + dH);
-              ctx.stroke();
+              if (this.textures?.kudawa_door) {
+                ctx.drawImage(this.textures.kudawa_door, dX, dY, dW, dH);
+                if (!p.inTorch || light < 0.90) {
+                  ctx.globalCompositeOperation = "source-atop";
+                  const darkness = Math.max(0, Math.min(0.78, 1.0 - light));
+                  ctx.fillStyle = `rgba(3, 7, 18, ${darkness})`;
+                  ctx.fillRect(dX, dY, dW, dH);
+                  ctx.globalCompositeOperation = "source-over";
+                }
+              } else {
+                ctx.fillStyle = `rgb(${Math.round(58 * light)}, ${Math.round(36 * light)}, ${Math.round(24 * light)})`;
+                ctx.fillRect(dX, dY, dW, dH);
+                ctx.strokeStyle = `rgb(${Math.round(32 * light)}, ${Math.round(18 * light)}, ${Math.round(10 * light)})`;
+                ctx.lineWidth = Math.max(1, 2.5 * scale);
+                ctx.strokeRect(dX, dY, dW, dH);
+                ctx.beginPath();
+                ctx.moveTo(dX, dY); ctx.lineTo(dX + dW, dY + dH);
+                ctx.stroke();
 
-              // Heavy Iron Sliding Bolt Latch
-              ctx.fillStyle = "#1e293b";
-              ctx.fillRect(dX + dW * 0.25, dY + dH * 0.5 - 3 * scale, dW * 0.5, 6 * scale);
-              ctx.fillStyle = "#475569";
-              ctx.beginPath();
-              ctx.arc(dX + dW * 0.65, dY + dH * 0.5, 4 * scale, 0, Math.PI * 2);
-              ctx.fill();
+                // Heavy Iron Sliding Bolt Latch
+                ctx.fillStyle = "#1e293b";
+                ctx.fillRect(dX + dW * 0.25, dY + dH * 0.5 - 3 * scale, dW * 0.5, 6 * scale);
+                ctx.fillStyle = "#475569";
+                ctx.beginPath();
+                ctx.arc(dX + dW * 0.65, dY + dH * 0.5, 4 * scale, 0, Math.PI * 2);
+                ctx.fill();
+              }
             }
           } else {
             // Outside the Cabin: Full Elevated Weatherboard Timber Outpost
@@ -7755,19 +7872,30 @@ export class SinharajaEngine {
               ctx.fillRect(doorX, doorY, 6 * scale, doorH);
             } else {
               // Closed Heavy Timber Door with Z-Brace
-              ctx.fillStyle = `rgb(${Math.round(48 * light)}, ${Math.round(30 * light)}, ${Math.round(20 * light)})`;
-              ctx.fillRect(doorX, doorY, doorW, doorH);
-              ctx.strokeStyle = `rgb(${Math.round(32 * light)}, ${Math.round(18 * light)}, ${Math.round(10 * light)})`;
-              ctx.lineWidth = Math.max(1, 2.5 * scale);
-              ctx.strokeRect(doorX, doorY, doorW, doorH);
-              ctx.beginPath();
-              ctx.moveTo(doorX, doorY); ctx.lineTo(doorX + doorW, doorY + doorH);
-              ctx.stroke();
-              // Iron Ring Handle
-              ctx.fillStyle = "#1e293b";
-              ctx.beginPath();
-              ctx.arc(doorX + doorW * 0.8, doorY + doorH * 0.5, Math.max(1.5, 3.5 * scale), 0, Math.PI * 2);
-              ctx.fill();
+              if (this.textures?.kudawa_door) {
+                ctx.drawImage(this.textures.kudawa_door, doorX, doorY, doorW, doorH);
+                if (!p.inTorch || light < 0.90) {
+                  ctx.globalCompositeOperation = "source-atop";
+                  const darkness = Math.max(0, Math.min(0.78, 1.0 - light));
+                  ctx.fillStyle = `rgba(3, 7, 18, ${darkness})`;
+                  ctx.fillRect(doorX, doorY, doorW, doorH);
+                  ctx.globalCompositeOperation = "source-over";
+                }
+              } else {
+                ctx.fillStyle = `rgb(${Math.round(48 * light)}, ${Math.round(30 * light)}, ${Math.round(20 * light)})`;
+                ctx.fillRect(doorX, doorY, doorW, doorH);
+                ctx.strokeStyle = `rgb(${Math.round(32 * light)}, ${Math.round(18 * light)}, ${Math.round(10 * light)})`;
+                ctx.lineWidth = Math.max(1, 2.5 * scale);
+                ctx.strokeRect(doorX, doorY, doorW, doorH);
+                ctx.beginPath();
+                ctx.moveTo(doorX, doorY); ctx.lineTo(doorX + doorW, doorY + doorH);
+                ctx.stroke();
+                // Iron Ring Handle
+                ctx.fillStyle = "#1e293b";
+                ctx.beginPath();
+                ctx.arc(doorX + doorW * 0.8, doorY + doorH * 0.5, Math.max(1.5, 3.5 * scale), 0, Math.PI * 2);
+                ctx.fill();
+              }
             }
 
             // Signboard above Door
@@ -7848,190 +7976,214 @@ export class SinharajaEngine {
         }
         // 2B. 1987 Military VHF Radio Transceiver (රේඩියෝ උපකරණය)
         else if (id === "outpost_radio" || id.includes("radio")) {
-          const rW = Math.max(16, 32 * scale);
-          const rH = Math.max(12, 24 * scale);
-          ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
-          ctx.beginPath();
-          ctx.ellipse(Sx, Sy + 2, rW * 0.6, rH * 0.28, 0, 0, Math.PI * 2);
-          ctx.fill();
+          if (this.textures?.outpost_radio && this.drawTextureProp(ctx, this.textures.outpost_radio, Sx, Sy, 52, 42, scale, light, fog, p.inTorch)) {
+            // Rendered with photorealistic 1987 military radio texture!
+          } else {
+            const rW = Math.max(16, 32 * scale);
+            const rH = Math.max(12, 24 * scale);
+            ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+            ctx.beginPath();
+            ctx.ellipse(Sx, Sy + 2, rW * 0.6, rH * 0.28, 0, 0, Math.PI * 2);
+            ctx.fill();
 
-          const rGrad = ctx.createLinearGradient(0, Sy - rH, 0, Sy);
-          rGrad.addColorStop(0, `rgb(${Math.round(80 * light)}, ${Math.round(92 * light)}, ${Math.round(78 * light)})`);
-          rGrad.addColorStop(1, `rgb(${Math.round(35 * light)}, ${Math.round(42 * light)}, ${Math.round(34 * light)})`);
-          ctx.fillStyle = rGrad;
-          ctx.fillRect(Sx - rW * 0.5, Sy - rH, rW, rH);
+            const rGrad = ctx.createLinearGradient(0, Sy - rH, 0, Sy);
+            rGrad.addColorStop(0, `rgb(${Math.round(80 * light)}, ${Math.round(92 * light)}, ${Math.round(78 * light)})`);
+            rGrad.addColorStop(1, `rgb(${Math.round(35 * light)}, ${Math.round(42 * light)}, ${Math.round(34 * light)})`);
+            ctx.fillStyle = rGrad;
+            ctx.fillRect(Sx - rW * 0.5, Sy - rH, rW, rH);
 
-          // Speaker grille
-          ctx.fillStyle = "#1e2920";
-          ctx.beginPath();
-          ctx.arc(Sx - rW * 0.2, Sy - rH * 0.5, rH * 0.32, 0, Math.PI * 2);
-          ctx.fill();
+            // Speaker grille
+            ctx.fillStyle = "#1e2920";
+            ctx.beginPath();
+            ctx.arc(Sx - rW * 0.2, Sy - rH * 0.5, rH * 0.32, 0, Math.PI * 2);
+            ctx.fill();
 
-          // Tuning knobs
-          ctx.fillStyle = "#cbd5e1";
-          ctx.beginPath();
-          ctx.arc(Sx + rW * 0.25, Sy - rH * 0.65, 3 * scale, 0, Math.PI * 2);
-          ctx.arc(Sx + rW * 0.25, Sy - rH * 0.35, 3 * scale, 0, Math.PI * 2);
-          ctx.fill();
+            // Tuning knobs
+            ctx.fillStyle = "#cbd5e1";
+            ctx.beginPath();
+            ctx.arc(Sx + rW * 0.25, Sy - rH * 0.65, 3 * scale, 0, Math.PI * 2);
+            ctx.arc(Sx + rW * 0.25, Sy - rH * 0.35, 3 * scale, 0, Math.PI * 2);
+            ctx.fill();
 
-          // Green frequency display LED
-          ctx.fillStyle = "#22c55e";
-          ctx.shadowColor = "#22c55e";
-          ctx.shadowBlur = 6 * scale;
-          ctx.fillRect(Sx + rW * 0.1, Sy - rH * 0.85, rW * 0.32, 3 * scale);
-          ctx.shadowBlur = 0;
+            // Green frequency display LED
+            ctx.fillStyle = "#22c55e";
+            ctx.shadowColor = "#22c55e";
+            ctx.shadowBlur = 6 * scale;
+            ctx.fillRect(Sx + rW * 0.1, Sy - rH * 0.85, rW * 0.32, 3 * scale);
+            ctx.shadowBlur = 0;
 
-          // Antenna
-          ctx.strokeStyle = "#94a3b8";
-          ctx.lineWidth = Math.max(1, 1.5 * scale);
-          ctx.beginPath();
-          ctx.moveTo(Sx - rW * 0.38, Sy - rH);
-          ctx.lineTo(Sx - rW * 0.45, Sy - rH - 28 * scale);
-          ctx.stroke();
+            // Antenna
+            ctx.strokeStyle = "#94a3b8";
+            ctx.lineWidth = Math.max(1, 1.5 * scale);
+            ctx.beginPath();
+            ctx.moveTo(Sx - rW * 0.38, Sy - rH);
+            ctx.lineTo(Sx - rW * 0.45, Sy - rH - 28 * scale);
+            ctx.stroke();
+          }
         }
         // 2C. Reel-to-Reel Tape Machine (ඩග්ලස්ගේ හඬපට යන්ත්‍රය)
         else if (id === "outpost_douglas_reel" || id.includes("reel")) {
-          const tW = Math.max(18, 34 * scale);
-          const tH = Math.max(14, 26 * scale);
+          if (this.textures?.douglas_reel && this.drawTextureProp(ctx, this.textures.douglas_reel, Sx, Sy, 52, 42, scale, light, fog, p.inTorch)) {
+            // Rendered with photorealistic reel-to-reel tape machine texture!
+          } else {
+            const tW = Math.max(18, 34 * scale);
+            const tH = Math.max(14, 26 * scale);
 
-          ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
-          ctx.beginPath();
-          ctx.ellipse(Sx, Sy + 2, tW * 0.6, tH * 0.28, 0, 0, Math.PI * 2);
-          ctx.fill();
-
-          ctx.fillStyle = `rgb(${Math.round(45 * light)}, ${Math.round(52 * light)}, ${Math.round(60 * light)})`;
-          ctx.fillRect(Sx - tW * 0.5, Sy - tH, tW, tH);
-
-          const spoolR = tH * 0.32;
-          [-0.22, 0.22].forEach((off) => {
-            ctx.fillStyle = "#1e293b";
+            ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
             ctx.beginPath();
-            ctx.arc(Sx + tW * off, Sy - tH * 0.55, spoolR, 0, Math.PI * 2);
+            ctx.ellipse(Sx, Sy + 2, tW * 0.6, tH * 0.28, 0, 0, Math.PI * 2);
             ctx.fill();
-            ctx.strokeStyle = "#cbd5e1";
-            ctx.lineWidth = 1;
-            ctx.stroke();
-            ctx.fillStyle = "#ffffff";
-            ctx.beginPath();
-            ctx.arc(Sx + tW * off, Sy - tH * 0.55, 2 * scale, 0, Math.PI * 2);
-            ctx.fill();
-          });
 
-          ctx.fillStyle = "#f59e0b";
-          ctx.fillRect(Sx - 4 * scale, Sy - tH * 0.25, 8 * scale, 4 * scale);
+            ctx.fillStyle = `rgb(${Math.round(45 * light)}, ${Math.round(52 * light)}, ${Math.round(60 * light)})`;
+            ctx.fillRect(Sx - tW * 0.5, Sy - tH, tW, tH);
+
+            const spoolR = tH * 0.32;
+            [-0.22, 0.22].forEach((off) => {
+              ctx.fillStyle = "#1e293b";
+              ctx.beginPath();
+              ctx.arc(Sx + tW * off, Sy - tH * 0.55, spoolR, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.strokeStyle = "#cbd5e1";
+              ctx.lineWidth = 1;
+              ctx.stroke();
+              ctx.fillStyle = "#ffffff";
+              ctx.beginPath();
+              ctx.arc(Sx + tW * off, Sy - tH * 0.55, 2 * scale, 0, Math.PI * 2);
+              ctx.fill();
+            });
+
+            ctx.fillStyle = "#f59e0b";
+            ctx.fillRect(Sx - 4 * scale, Sy - tH * 0.25, 8 * scale, 4 * scale);
+          }
         }
         // 2D. Herbal Balm Medicine Vial (කූඩැලි ආරක්ෂක තෙල් බෝතලය)
         else if (id === "outpost_balm_bottle" || id.includes("balm")) {
-          const bW = Math.max(10, 18 * scale);
-          const bH = Math.max(16, 30 * scale);
+          if (this.textures?.balm_bottle && this.drawTextureProp(ctx, this.textures.balm_bottle, Sx, Sy, 32, 48, scale, light, fog, p.inTorch)) {
+            // Rendered with photorealistic amber glass herbal balm bottle texture!
+          } else {
+            const bW = Math.max(10, 18 * scale);
+            const bH = Math.max(16, 30 * scale);
 
-          ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
-          ctx.beginPath();
-          ctx.ellipse(Sx, Sy + 1, bW * 0.6, bW * 0.25, 0, 0, Math.PI * 2);
-          ctx.fill();
+            ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+            ctx.beginPath();
+            ctx.ellipse(Sx, Sy + 1, bW * 0.6, bW * 0.25, 0, 0, Math.PI * 2);
+            ctx.fill();
 
-          const vialGrad = ctx.createLinearGradient(Sx - bW * 0.5, 0, Sx + bW * 0.5, 0);
-          vialGrad.addColorStop(0, "rgba(180, 83, 9, 0.85)");
-          vialGrad.addColorStop(0.4, "rgba(245, 158, 11, 0.95)");
-          vialGrad.addColorStop(1, "rgba(120, 53, 15, 0.9)");
-          ctx.fillStyle = vialGrad;
-          ctx.beginPath();
-          ctx.roundRect(Sx - bW * 0.5, Sy - bH * 0.75, bW, bH * 0.75, 3 * scale);
-          ctx.fill();
+            const vialGrad = ctx.createLinearGradient(Sx - bW * 0.5, 0, Sx + bW * 0.5, 0);
+            vialGrad.addColorStop(0, "rgba(180, 83, 9, 0.85)");
+            vialGrad.addColorStop(0.4, "rgba(245, 158, 11, 0.95)");
+            vialGrad.addColorStop(1, "rgba(120, 53, 15, 0.9)");
+            ctx.fillStyle = vialGrad;
+            ctx.beginPath();
+            ctx.roundRect(Sx - bW * 0.5, Sy - bH * 0.75, bW, bH * 0.75, 3 * scale);
+            ctx.fill();
 
-          ctx.fillStyle = "#fef3c7";
-          ctx.fillRect(Sx - bW * 0.4, Sy - bH * 0.55, bW * 0.8, bH * 0.35);
-          ctx.fillStyle = "#15803d";
-          ctx.beginPath();
-          ctx.arc(Sx, Sy - bH * 0.38, 2.5 * scale, 0, Math.PI * 2);
-          ctx.fill();
+            ctx.fillStyle = "#fef3c7";
+            ctx.fillRect(Sx - bW * 0.4, Sy - bH * 0.55, bW * 0.8, bH * 0.35);
+            ctx.fillStyle = "#15803d";
+            ctx.beginPath();
+            ctx.arc(Sx, Sy - bH * 0.38, 2.5 * scale, 0, Math.PI * 2);
+            ctx.fill();
 
-          ctx.fillStyle = "#b45309";
-          ctx.fillRect(Sx - bW * 0.25, Sy - bH * 0.90, bW * 0.5, bH * 0.18);
-          ctx.fillStyle = "#d4a373";
-          ctx.fillRect(Sx - bW * 0.22, Sy - bH, bW * 0.44, bH * 0.12);
+            ctx.fillStyle = "#b45309";
+            ctx.fillRect(Sx - bW * 0.25, Sy - bH * 0.90, bW * 0.5, bH * 0.18);
+            ctx.fillStyle = "#d4a373";
+            ctx.fillRect(Sx - bW * 0.22, Sy - bH, bW * 0.44, bH * 0.12);
+          }
         }
         // 2E. UV Blacklight Optical Lens (පාරජම්බුල කාචය)
         else if (id === "outpost_uv_lens" || id.includes("lens")) {
-          const lR = Math.max(10, 18 * scale);
+          if (this.textures?.uv_lens && this.drawTextureProp(ctx, this.textures.uv_lens, Sx, Sy, 36, 36, scale, light, fog, p.inTorch)) {
+            // Rendered with photorealistic optical lens texture!
+          } else {
+            const lR = Math.max(10, 18 * scale);
 
-          ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
-          ctx.beginPath();
-          ctx.ellipse(Sx, Sy + 1, lR * 1.1, lR * 0.4, 0, 0, Math.PI * 2);
-          ctx.fill();
+            ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+            ctx.beginPath();
+            ctx.ellipse(Sx, Sy + 1, lR * 1.1, lR * 0.4, 0, 0, Math.PI * 2);
+            ctx.fill();
 
-          ctx.fillStyle = "#b45309";
-          ctx.beginPath();
-          ctx.arc(Sx, Sy - lR, lR, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.strokeStyle = "#d4af37";
-          ctx.lineWidth = Math.max(1.5, 2.5 * scale);
-          ctx.stroke();
+            ctx.fillStyle = "#b45309";
+            ctx.beginPath();
+            ctx.arc(Sx, Sy - lR, lR, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = "#d4af37";
+            ctx.lineWidth = Math.max(1.5, 2.5 * scale);
+            ctx.stroke();
 
-          ctx.fillStyle = "#3b0764";
-          ctx.beginPath();
-          ctx.arc(Sx, Sy - lR, lR * 0.75, 0, Math.PI * 2);
-          ctx.fill();
+            ctx.fillStyle = "#3b0764";
+            ctx.beginPath();
+            ctx.arc(Sx, Sy - lR, lR * 0.75, 0, Math.PI * 2);
+            ctx.fill();
 
-          ctx.shadowColor = "#a855f7";
-          ctx.shadowBlur = 12 * scale;
-          ctx.strokeStyle = "rgba(168, 85, 247, 0.85)";
-          ctx.lineWidth = Math.max(1, 2 * scale);
-          ctx.beginPath();
-          ctx.arc(Sx - lR * 0.2, Sy - lR - lR * 0.2, lR * 0.35, 0, Math.PI * 2);
-          ctx.stroke();
-          ctx.shadowBlur = 0;
+            ctx.shadowColor = "#a855f7";
+            ctx.shadowBlur = 12 * scale;
+            ctx.strokeStyle = "rgba(168, 85, 247, 0.85)";
+            ctx.lineWidth = Math.max(1, 2 * scale);
+            ctx.beginPath();
+            ctx.arc(Sx - lR * 0.2, Sy - lR - lR * 0.2, lR * 0.35, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+          }
         }
         // 2F. Tactical Emergency Flare Launcher (සංඥා පිස්තෝලය)
         else if (id === "outpost_flaregun" || id.includes("flaregun")) {
-          const fW = Math.max(16, 32 * scale);
-          const fH = Math.max(12, 22 * scale);
+          if (this.textures?.flare_gun && this.drawTextureProp(ctx, this.textures.flare_gun, Sx, Sy, 46, 36, scale, light, fog, p.inTorch)) {
+            // Rendered with photorealistic orange flare launcher texture!
+          } else {
+            const fW = Math.max(16, 32 * scale);
+            const fH = Math.max(12, 22 * scale);
 
-          ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
-          ctx.beginPath();
-          ctx.ellipse(Sx, Sy + 1, fW * 0.6, fH * 0.3, 0, 0, Math.PI * 2);
-          ctx.fill();
+            ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+            ctx.beginPath();
+            ctx.ellipse(Sx, Sy + 1, fW * 0.6, fH * 0.3, 0, 0, Math.PI * 2);
+            ctx.fill();
 
-          ctx.fillStyle = "#ea580c";
-          ctx.beginPath();
-          ctx.fillRect(Sx - fW * 0.4, Sy - fH * 0.85, fW * 0.8, fH * 0.42);
-          ctx.fillRect(Sx - fW * 0.35, Sy - fH * 0.45, fW * 0.35, fH * 0.55);
-          ctx.fill();
+            ctx.fillStyle = "#ea580c";
+            ctx.beginPath();
+            ctx.fillRect(Sx - fW * 0.4, Sy - fH * 0.85, fW * 0.8, fH * 0.42);
+            ctx.fillRect(Sx - fW * 0.35, Sy - fH * 0.45, fW * 0.35, fH * 0.55);
+            ctx.fill();
 
-          ctx.fillStyle = "#1e293b";
-          ctx.fillRect(Sx - fW * 0.45, Sy - fH * 0.9, 4 * scale, 6 * scale);
-          ctx.fillRect(Sx + fW * 0.35, Sy - fH * 0.85, 3 * scale, fH * 0.42);
+            ctx.fillStyle = "#1e293b";
+            ctx.fillRect(Sx - fW * 0.45, Sy - fH * 0.9, 4 * scale, 6 * scale);
+            ctx.fillRect(Sx + fW * 0.35, Sy - fH * 0.85, 3 * scale, fH * 0.42);
+          }
         }
         // 2G. Solar Charger & Battery Station (සූර්ය කෝෂ ආරෝපකය)
         else if (id === "outpost_solar_charger" || id.includes("solar")) {
-          const sW = Math.max(22, 44 * scale);
-          const sH = Math.max(18, 36 * scale);
+          if (this.textures?.solar_charger && this.drawTextureProp(ctx, this.textures.solar_charger, Sx, Sy, 54, 44, scale, light, fog, p.inTorch)) {
+            // Rendered with photorealistic solar station texture!
+          } else {
+            const sW = Math.max(22, 44 * scale);
+            const sH = Math.max(18, 36 * scale);
 
-          ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-          ctx.beginPath();
-          ctx.ellipse(Sx, Sy + 2, sW * 0.65, sH * 0.28, 0, 0, Math.PI * 2);
-          ctx.fill();
+            ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+            ctx.beginPath();
+            ctx.ellipse(Sx, Sy + 2, sW * 0.65, sH * 0.28, 0, 0, Math.PI * 2);
+            ctx.fill();
 
-          ctx.fillStyle = `rgb(${Math.round(30 * light)}, ${Math.round(41 * light)}, ${Math.round(59 * light)})`;
-          ctx.fillRect(Sx - sW * 0.5, Sy - sH, sW, sH);
+            ctx.fillStyle = `rgb(${Math.round(30 * light)}, ${Math.round(41 * light)}, ${Math.round(59 * light)})`;
+            ctx.fillRect(Sx - sW * 0.5, Sy - sH, sW, sH);
 
-          ctx.fillStyle = "#1e3a8a";
-          ctx.fillRect(Sx - sW * 0.44, Sy - sH * 0.92, sW * 0.88, sH * 0.55);
+            ctx.fillStyle = "#1e3a8a";
+            ctx.fillRect(Sx - sW * 0.44, Sy - sH * 0.92, sW * 0.88, sH * 0.55);
 
-          ctx.strokeStyle = "#94a3b8";
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(Sx, Sy - sH * 0.92); ctx.lineTo(Sx, Sy - sH * 0.37);
-          ctx.moveTo(Sx - sW * 0.44, Sy - sH * 0.65); ctx.lineTo(Sx + sW * 0.44, Sy - sH * 0.65);
-          ctx.stroke();
+            ctx.strokeStyle = "#94a3b8";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(Sx, Sy - sH * 0.92); ctx.lineTo(Sx, Sy - sH * 0.37);
+            ctx.moveTo(Sx - sW * 0.44, Sy - sH * 0.65); ctx.lineTo(Sx + sW * 0.44, Sy - sH * 0.65);
+            ctx.stroke();
 
-          ctx.fillStyle = "#10b981";
-          ctx.shadowColor = "#10b981";
-          ctx.shadowBlur = 8 * scale;
-          for (let b = 0; b < 3; b++) {
-            ctx.fillRect(Sx - sW * 0.3 + b * (7 * scale), Sy - sH * 0.25, 4 * scale, 5 * scale);
+            ctx.fillStyle = "#10b981";
+            ctx.shadowColor = "#10b981";
+            ctx.shadowBlur = 8 * scale;
+            for (let b = 0; b < 3; b++) {
+              ctx.fillRect(Sx - sW * 0.3 + b * (7 * scale), Sy - sH * 0.25, 4 * scale, 5 * scale);
+            }
+            ctx.shadowBlur = 0;
           }
-          ctx.shadowBlur = 0;
         }
         // 3. Military / Field Research Canvas Tent
         else if (id.includes("tent")) {
@@ -8544,29 +8696,37 @@ export class SinharajaEngine {
         ctx.fill();
 
         if (it?.type === "salt") {
-          // Sea Salt Pouch with Spilled Glittering White Crystals
-          ctx.fillStyle = "#e2e8f0";
-          ctx.beginPath();
-          ctx.arc(Sx, Sy - iR * 0.7, iR * 0.85, 0, Math.PI * 2);
-          ctx.fill();
-          // Salt shimmer crystals
-          ctx.fillStyle = "#ffffff";
-          [-0.3, 0.1, 0.4].forEach((cx, idx) => {
-            ctx.fillRect(Sx + iR * cx, Sy - 2 + (idx % 2) * 2, 2 * scale, 2 * scale);
-          });
+          if (this.textures?.salt_pouch && this.drawTextureProp(ctx, this.textures.salt_pouch, Sx, Sy, 28, 28, scale, light, fog, p.inTorch)) {
+            // Rendered with photorealistic salt pouch texture!
+          } else {
+            // Sea Salt Pouch with Spilled Glittering White Crystals
+            ctx.fillStyle = "#e2e8f0";
+            ctx.beginPath();
+            ctx.arc(Sx, Sy - iR * 0.7, iR * 0.85, 0, Math.PI * 2);
+            ctx.fill();
+            // Salt shimmer crystals
+            ctx.fillStyle = "#ffffff";
+            [-0.3, 0.1, 0.4].forEach((cx, idx) => {
+              ctx.fillRect(Sx + iR * cx, Sy - 2 + (idx % 2) * 2, 2 * scale, 2 * scale);
+            });
+          }
         } else if (it?.type === "herb") {
-          // Bushy Endemic Rainforest Herb with Serrated Leaves
-          ctx.fillStyle = "#22c55e";
-          ctx.beginPath();
-          ctx.ellipse(Sx - iR * 0.35, Sy - iR * 0.7, iR * 0.55, iR * 0.3, 0.4, 0, Math.PI * 2);
-          ctx.ellipse(Sx + iR * 0.35, Sy - iR * 0.7, iR * 0.55, iR * 0.3, -0.4, 0, Math.PI * 2);
-          ctx.ellipse(Sx, Sy - iR * 1.1, iR * 0.3, iR * 0.55, 0, 0, Math.PI * 2);
-          ctx.fill();
-          // Small wild yellow flower
-          ctx.fillStyle = "#fde047";
-          ctx.beginPath();
-          ctx.arc(Sx, Sy - iR * 0.9, 2.5 * scale, 0, Math.PI * 2);
-          ctx.fill();
+          if (this.textures?.rainforest_herb && this.drawTextureProp(ctx, this.textures.rainforest_herb, Sx, Sy, 30, 30, scale, light, fog, p.inTorch)) {
+            // Rendered with photorealistic rainforest herb texture!
+          } else {
+            // Bushy Endemic Rainforest Herb with Serrated Leaves
+            ctx.fillStyle = "#22c55e";
+            ctx.beginPath();
+            ctx.ellipse(Sx - iR * 0.35, Sy - iR * 0.7, iR * 0.55, iR * 0.3, 0.4, 0, Math.PI * 2);
+            ctx.ellipse(Sx + iR * 0.35, Sy - iR * 0.7, iR * 0.55, iR * 0.3, -0.4, 0, Math.PI * 2);
+            ctx.ellipse(Sx, Sy - iR * 1.1, iR * 0.3, iR * 0.55, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // Small wild yellow flower
+            ctx.fillStyle = "#fde047";
+            ctx.beginPath();
+            ctx.arc(Sx, Sy - iR * 0.9, 2.5 * scale, 0, Math.PI * 2);
+            ctx.fill();
+          }
         } else {
           // Tech / Equipment Capsule
           ctx.fillStyle = "#38bdf8";
@@ -8580,64 +8740,69 @@ export class SinharajaEngine {
       // ── Shadow Stalker Leopard (3D Tactical Predator in the Mist) ──
       else if (ent.type === "stalker") {
         const stalker = ent.stalker;
-        const catH = Math.max(18, 42 * scale);
-        const catW = Math.max(26, 62 * scale);
-        ctx.save();
-        ctx.globalAlpha = fog;
+        const catH = Math.max(26, 68 * scale);
+        const catW = Math.max(38, 98 * scale);
 
-        // Ground Contact Shadow
-        ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
-        ctx.beginPath();
-        ctx.ellipse(Sx, Sy + 2, catW * 0.75, catH * 0.3, 0, 0, Math.PI * 2);
-        ctx.fill();
+        if (this.textures?.black_leopard && this.drawTextureProp(ctx, this.textures.black_leopard, Sx, Sy, 98, 68, scale, light, fog, p.inTorch)) {
+          // Rendered with photorealistic black leopard stalker texture!
+        } else {
+          ctx.save();
+          ctx.globalAlpha = fog;
 
-        // Sleek Melanistic Black Leopard Body (low prowling muscular silhouette)
-        ctx.fillStyle = `rgb(${Math.round(20 * light)}, ${Math.round(18 * light)}, ${Math.round(16 * light)})`;
-        ctx.beginPath();
-        ctx.ellipse(Sx, Sy - catH * 0.45, catW * 0.45, catH * 0.32, 0, 0, Math.PI * 2);
-        ctx.fill();
+          // Ground Contact Shadow
+          ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+          ctx.beginPath();
+          ctx.ellipse(Sx, Sy + 2, catW * 0.75, catH * 0.3, 0, 0, Math.PI * 2);
+          ctx.fill();
 
-        // Muscular Shoulders & Stalking Paws
-        ctx.fillRect(Sx - catW * 0.35, Sy - catH * 0.35, 6 * scale, catH * 0.4);
-        ctx.fillRect(Sx + catW * 0.22, Sy - catH * 0.35, 6 * scale, catH * 0.4);
+          // Sleek Melanistic Black Leopard Body (low prowling muscular silhouette)
+          ctx.fillStyle = `rgb(${Math.round(20 * light)}, ${Math.round(18 * light)}, ${Math.round(16 * light)})`;
+          ctx.beginPath();
+          ctx.ellipse(Sx, Sy - catH * 0.45, catW * 0.45, catH * 0.32, 0, 0, Math.PI * 2);
+          ctx.fill();
 
-        // Curving Sinuous Tail with Animated Twitching Tip
-        const tailTwitch = Math.sin(time * 0.005) * (8 * scale);
-        ctx.strokeStyle = `rgb(${Math.round(20 * light)}, ${Math.round(18 * light)}, ${Math.round(16 * light)})`;
-        ctx.lineWidth = Math.max(2, 3.5 * scale);
-        ctx.beginPath();
-        ctx.moveTo(Sx - catW * 0.42, Sy - catH * 0.48);
-        ctx.quadraticCurveTo(Sx - catW * 0.75, Sy - catH * 0.75, Sx - catW * 0.78 + tailTwitch, Sy - catH * 0.95);
-        ctx.stroke();
+          // Muscular Shoulders & Stalking Paws
+          ctx.fillRect(Sx - catW * 0.35, Sy - catH * 0.35, 6 * scale, catH * 0.4);
+          ctx.fillRect(Sx + catW * 0.22, Sy - catH * 0.35, 6 * scale, catH * 0.4);
 
-        // Low Predatory Feline Head & Ears
-        const catHeadX = Sx + catW * 0.38;
-        const catHeadY = Sy - catH * 0.55;
-        ctx.beginPath();
-        ctx.ellipse(catHeadX, catHeadY, catH * 0.32, catH * 0.26, 0.15, 0, Math.PI * 2);
-        ctx.fill();
-        // Pointed ears
-        ctx.beginPath();
-        ctx.moveTo(catHeadX - 4 * scale, catHeadY - catH * 0.22);
-        ctx.lineTo(catHeadX - 7 * scale, catHeadY - catH * 0.45);
-        ctx.lineTo(catHeadX - 1 * scale, catHeadY - catH * 0.3);
-        ctx.moveTo(catHeadX + 2 * scale, catHeadY - catH * 0.25);
-        ctx.lineTo(catHeadX + 6 * scale, catHeadY - catH * 0.45);
-        ctx.lineTo(catHeadX + 6 * scale, catHeadY - catH * 0.2);
-        ctx.fill();
+          // Curving Sinuous Tail with Animated Twitching Tip
+          const tailTwitch = Math.sin(time * 0.005) * (8 * scale);
+          ctx.strokeStyle = `rgb(${Math.round(20 * light)}, ${Math.round(18 * light)}, ${Math.round(16 * light)})`;
+          ctx.lineWidth = Math.max(2, 3.5 * scale);
+          ctx.beginPath();
+          ctx.moveTo(Sx - catW * 0.42, Sy - catH * 0.48);
+          ctx.quadraticCurveTo(Sx - catW * 0.75, Sy - catH * 0.75, Sx - catW * 0.78 + tailTwitch, Sy - catH * 0.95);
+          ctx.stroke();
 
-        // Eerie Glowing Amber Eyes (Tapetum Lucidum Flares when Flashlight Hits)
-        const eyeGlow = p.inTorch ? 1.0 : (stalker.eyesAlpha || 0.4);
-        ctx.fillStyle = `rgba(251, 191, 36, ${eyeGlow})`;
-        ctx.shadowColor = "#fbbf24";
-        ctx.shadowBlur = (p.inTorch ? 18 : 8) * scale;
-        ctx.beginPath();
-        ctx.arc(catHeadX - 2 * scale, catHeadY - 2 * scale, Math.max(1.5, 2.8 * scale), 0, Math.PI * 2);
-        ctx.arc(catHeadX + 5 * scale, catHeadY - 2 * scale, Math.max(1.5, 2.8 * scale), 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
+          // Low Predatory Feline Head & Ears
+          const catHeadX = Sx + catW * 0.38;
+          const catHeadY = Sy - catH * 0.55;
+          ctx.beginPath();
+          ctx.ellipse(catHeadX, catHeadY, catH * 0.32, catH * 0.26, 0.15, 0, Math.PI * 2);
+          ctx.fill();
+          // Pointed ears
+          ctx.beginPath();
+          ctx.moveTo(catHeadX - 4 * scale, catHeadY - catH * 0.22);
+          ctx.lineTo(catHeadX - 7 * scale, catHeadY - catH * 0.45);
+          ctx.lineTo(catHeadX - 1 * scale, catHeadY - catH * 0.3);
+          ctx.moveTo(catHeadX + 2 * scale, catHeadY - catH * 0.25);
+          ctx.lineTo(catHeadX + 6 * scale, catHeadY - catH * 0.45);
+          ctx.lineTo(catHeadX + 6 * scale, catHeadY - catH * 0.2);
+          ctx.fill();
 
-        ctx.restore();
+          // Eerie Glowing Amber Eyes (Tapetum Lucidum Flares when Flashlight Hits)
+          const eyeGlow = p.inTorch ? 1.0 : (stalker.eyesAlpha || 0.4);
+          ctx.fillStyle = `rgba(251, 191, 36, ${eyeGlow})`;
+          ctx.shadowColor = "#fbbf24";
+          ctx.shadowBlur = (p.inTorch ? 18 : 8) * scale;
+          ctx.beginPath();
+          ctx.arc(catHeadX - 2 * scale, catHeadY - 2 * scale, Math.max(1.5, 2.8 * scale), 0, Math.PI * 2);
+          ctx.arc(catHeadX + 5 * scale, catHeadY - 2 * scale, Math.max(1.5, 2.8 * scale), 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+
+          ctx.restore();
+        }
       }
 
       // ── Rainforest Leech (Haemadipsa zeylanica) ──
