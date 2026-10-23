@@ -66,6 +66,18 @@ export class Sinharaja3DEngine {
     this.kudawaDoorOpen = false;
     this.doorSwingAngle = 0;
 
+    // Cave Gate and Extraction State
+    this.caveGateUnlocked = false;
+    this.caveGateOpening = false;
+    this.caveGateSlide = 0;
+    this.caveGateLeft = null;
+    this.caveGateRight = null;
+    this.caveGateCollider = null;
+    this.leechHazardTimer = 0;
+    this.signalRocketActive = false;
+    this.signalRocketY = 0;
+    this.signalRocketMesh = null;
+
     // Player Physics & First-Person Controller State
     // Coordinates: x (East-West), y (Altitude/Up), z (North-South)
     // Kudawa cabin center is at x: 520, z: 720
@@ -315,6 +327,54 @@ export class Sinharaja3DEngine {
       gain.connect(this.audioCtx.destination);
       osc.start(t);
       osc.stop(t + 0.03);
+    } else if (type === "hurt") {
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(180, t);
+      osc.frequency.exponentialRampToValueAtTime(45, t + 0.22);
+      gain.gain.setValueAtTime(0.25, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+      osc.connect(gain);
+      gain.connect(this.audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + 0.22);
+    } else if (type === "flare") {
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(250, t);
+      osc.frequency.exponentialRampToValueAtTime(1400, t + 0.6);
+      gain.gain.setValueAtTime(0.28, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.65);
+      osc.connect(gain);
+      gain.connect(this.audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + 0.65);
+    } else if (type === "squelch") {
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(120, t);
+      osc.frequency.linearRampToValueAtTime(40, t + 0.14);
+      gain.gain.setValueAtTime(0.2, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+      osc.connect(gain);
+      gain.connect(this.audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + 0.14);
+    } else if (type === "stone_rumble") {
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(48, t);
+      osc.frequency.linearRampToValueAtTime(32, t + 1.2);
+      gain.gain.setValueAtTime(0.3, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
+      osc.connect(gain);
+      gain.connect(this.audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + 1.2);
     }
   }
 
@@ -716,6 +776,142 @@ export class Sinharaja3DEngine {
     this.scene.add(balmMesh);
     this.interactableMeshes.push(balmMesh);
 
+    // 4. Evidence 1: Douglas Field Notebook / Diary (ලෙයින් පෙඟුණු දිනපොත)
+    const diaryGeo = new THREE.BoxGeometry(0.38, 0.08, 0.52);
+    const diaryMat = new THREE.MeshStandardMaterial({
+      color: 0x5c2c16,
+      roughness: 0.65,
+      metalness: 0.2,
+    });
+    const diaryMesh = new THREE.Mesh(diaryGeo, diaryMat);
+    diaryMesh.position.set(tableX + 1.6, tableH + 0.1, tableZ - 0.2);
+    diaryMesh.rotation.y = 0.25;
+    diaryMesh.castShadow = true;
+    diaryMesh.userData = {
+      id: "ranger_diary",
+      title: "මහාචාර්ය ඩග්ලස්ගේ ක්ෂේත්‍ර දිනපොත (Douglas Field Journal - Evidence 01)",
+      prompt: "[E] කියවන්න / සාක්ෂිය ලබාගන්න",
+      action: (obj) => {
+        if (!obj.userData.picked) {
+          obj.userData.picked = true;
+          this.tasks.diaryFound = true;
+          this.playSfx("pickup");
+          this.scene.remove(diaryMesh);
+          const idx = this.interactableMeshes.indexOf(diaryMesh);
+          if (idx >= 0) this.interactableMeshes.splice(idx, 1);
+          if (this.cb.onRadioTransmission) {
+            this.cb.onRadioTransmission({
+              id: "hq_diary_dispatch",
+              speaker: "HQ DISPATCH",
+              text: "දිනපොතේ හෝඩුවාව ලැබුණා! ඩග්ලස්ගේ කණ්ඩායම ලෙන දෙසට ගොස් ඇත. ගංගා ඉවුරේ සඟවා ඇති පිත්තල යතුර සොයාගන්න. කූඩැලි රැළිවලින් ප්‍රවේශම් වන්න!",
+            });
+          }
+          this.cb.onTriggerStory({
+            title: "දිනපොතේ අභිරහස (සාක්ෂි අංක 01)",
+            text: "'1987 නොවැම්බර් 14: ඔවුන් ගල් ලෙන තුළට ගියා. ලෙන් දොරටුවේ රහස් සංකේත තුන: [සූර්යයා, ගංගාව, සිංහයා]. දොර විවෘත කිරීමට ගංගා ඉවුරේ සැඟවූ පිත්තල යතුර අවශ්‍යයි!'",
+            item: "ලෙයින් පෙඟුණු දිනපොත (Evidence 1)",
+            lore: {
+              title: "සිංහරාජයේ රහස් දිනපොත",
+              desc: "අතුරුදහන් වූ කණ්ඩායමේ ගමන් මාර්ගය හෙළි කරන වැදගත් සාක්ෂියකි.",
+            },
+          });
+          this.cb.onNotify("📖 මහාචාර්ය ඩග්ලස්ගේ දිනපොත ලබාගත්තා! (සාක්ෂි 01/03)");
+          if (this.cb.onAutosave) this.cb.onAutosave();
+        }
+      },
+    };
+    this.scene.add(diaryMesh);
+    this.interactableMeshes.push(diaryMesh);
+
+    // 5. Optical UV Night Filter Lens (UV කාචය)
+    const uvGeo = new THREE.CylinderGeometry(0.12, 0.14, 0.06, 16);
+    const uvMat = new THREE.MeshStandardMaterial({
+      color: 0x9333ea,
+      roughness: 0.15,
+      metalness: 0.85,
+    });
+    const uvMesh = new THREE.Mesh(uvGeo, uvMat);
+    uvMesh.position.set(tableX - 1.7, tableH + 0.08, tableZ + 0.35);
+    uvMesh.castShadow = true;
+    uvMesh.userData = {
+      id: "uv_lens_item",
+      title: "අධෝරක්ත/UV රාත්‍රී පෙරහන (Tactical UV Lens)",
+      prompt: "[E] අහුලාගන්න (Pick Up)",
+      action: (obj) => {
+        if (!obj.userData.picked) {
+          obj.userData.picked = true;
+          this.uvUnlocked = true;
+          this.playSfx("pickup");
+          this.scene.remove(uvMesh);
+          const idx = this.interactableMeshes.indexOf(uvMesh);
+          if (idx >= 0) this.interactableMeshes.splice(idx, 1);
+          this.cb.onNotify("🟣 UV පෙරහන ලබාගත්තා! [U] මඟින් UV Blacklight සක්‍රිය කළ හැක.");
+          if (this.cb.onAutosave) this.cb.onAutosave();
+        }
+      },
+    };
+    this.scene.add(uvMesh);
+    this.interactableMeshes.push(uvMesh);
+
+    // 6. Hot Ceylon Ginger Tea Mug (උණුසුම් ඉඟුරු තේ කෝප්පය)
+    const teaGeo = new THREE.CylinderGeometry(0.1, 0.08, 0.22, 12);
+    const teaMat = new THREE.MeshStandardMaterial({
+      color: 0x78350f,
+      roughness: 0.7,
+    });
+    const teaMesh = new THREE.Mesh(teaGeo, teaMat);
+    teaMesh.position.set(tableX - 0.5, tableH + 0.14, tableZ + 0.35);
+    teaMesh.castShadow = true;
+    teaMesh.userData = {
+      id: "ginger_tea_mug",
+      title: "උණුසුම් ඉඟුරු තේ (Hot Ceylon Ginger Tea)",
+      prompt: "[E] පානය කරන්න (Drink)",
+      action: (obj) => {
+        if (!obj.userData.drank) {
+          obj.userData.drank = true;
+          this.sanity = Math.min(100, this.sanity + 30);
+          this.player.stamina = 100;
+          this.teaBuffTimer = 120;
+          this.playSfx("heal");
+          this.scene.remove(teaMesh);
+          const idx = this.interactableMeshes.indexOf(teaMesh);
+          if (idx >= 0) this.interactableMeshes.splice(idx, 1);
+          this.cb.onNotify("☕ උණුසුම් ඉඟුරු තේ පානය කළා! Sanity +30 & සීතල දුරු විය.");
+        }
+      },
+    };
+    this.scene.add(teaMesh);
+    this.interactableMeshes.push(teaMesh);
+
+    // 7. Emergency Salt Pouch on Bench (ලුණු කුඩු පැකට්ටුව)
+    const saltGeo = new THREE.DodecahedronGeometry(0.18, 0);
+    const saltMat = new THREE.MeshStandardMaterial({
+      color: 0xe2e8f0,
+      roughness: 0.9,
+    });
+    const saltMesh = new THREE.Mesh(saltGeo, saltMat);
+    saltMesh.position.set(cabinOriginX + 4.2, 0.4, cabinOriginZ - 3.5);
+    saltMesh.castShadow = true;
+    saltMesh.userData = {
+      id: "salt_pouch_outpost",
+      title: "ලුණු කුඩු පැකට්ටුව (Salt Pouch for Leeches)",
+      prompt: "[E] අහුලාගන්න (Pick Up)",
+      action: (obj) => {
+        if (!obj.userData.picked) {
+          obj.userData.picked = true;
+          this.saltCount += 4;
+          this.playSfx("pickup");
+          this.scene.remove(saltMesh);
+          const idx = this.interactableMeshes.indexOf(saltMesh);
+          if (idx >= 0) this.interactableMeshes.splice(idx, 1);
+          this.cb.onNotify("🧂 ලුණු කුඩු ලබාගත්තා! (+4 ලුණු) [1] මඟින් කූඩැල්ලන් ඉවත් කරන්න.");
+          if (this.cb.onAutosave) this.cb.onAutosave();
+        }
+      },
+    };
+    this.scene.add(saltMesh);
+    this.interactableMeshes.push(saltMesh);
+
     // ── F. 3D Ranger Gunadasa NPC (Standing on porch under overhang) ──
     const npcX = 527.5;
     const npcZ = 730.0;
@@ -939,6 +1135,413 @@ export class Sinharaja3DEngine {
     });
     this.rainParticles = new THREE.Points(rainGeo, rainMat);
     this.scene.add(this.rainParticles);
+
+    // ── L. Evidence 2: Antique Brass Key on River Boulder [512, 735] ──
+    const keyGroup = new THREE.Group();
+    const keyStem = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.025, 0.025, 0.45, 8),
+      new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.95, roughness: 0.2 })
+    );
+    keyStem.rotation.x = Math.PI / 2;
+    keyGroup.add(keyStem);
+
+    const keyRing = new THREE.Mesh(
+      new THREE.TorusGeometry(0.08, 0.025, 8, 16),
+      new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.95, roughness: 0.2 })
+    );
+    keyRing.position.z = -0.22;
+    keyGroup.add(keyRing);
+
+    const keyBit = new THREE.Mesh(
+      new THREE.BoxGeometry(0.08, 0.12, 0.03),
+      new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.95, roughness: 0.2 })
+    );
+    keyBit.position.set(0.04, 0.05, 0.18);
+    keyGroup.add(keyBit);
+
+    const keyBouldY = this.getTerrainHeight(512, 735) + 1.2 * 0.8 + 0.35;
+    keyGroup.position.set(512, keyBouldY, 735);
+    keyGroup.castShadow = true;
+
+    const keyLight = new THREE.PointLight(0xf59e0b, 1.2, 4.0);
+    keyLight.position.set(512, keyBouldY + 0.3, 735);
+    this.scene.add(keyLight);
+
+    keyStem.userData = {
+      id: "glowing_brass_key",
+      title: "දිදුලන පිත්තල යතුර (Antique Brass Key - Evidence 02)",
+      prompt: "[E] අහුලාගන්න (Pick Up)",
+      action: () => {
+        if (!this.tasks.keyFound) {
+          this.hasKey = true;
+          this.tasks.keyFound = true;
+          this.stormActive = true;
+          this.playSfx("pickup");
+          this.playSfx("thunder");
+          this.scene.remove(keyGroup);
+          this.scene.remove(keyLight);
+          const idx = this.interactableMeshes.indexOf(keyStem);
+          if (idx >= 0) this.interactableMeshes.splice(idx, 1);
+          if (this.cb.onRadioTransmission) {
+            this.cb.onRadioTransmission({
+              id: "storm_emergency_dispatch",
+              speaker: "HQ EMERGENCY",
+              text: "හදිසි කාලගුණ අනතුරු ඇඟවීමක්! ගංගා නිම්නය පිටාර ගලමින් පවතී. වතුරට නොබැස යෝධ ගස් කොටන් පාලම (Log Bridge) ඔස්සේ එතෙර වී ලෙන් දොරටුව විවෘත කරන්න!",
+            });
+          }
+          this.cb.onTriggerStory({
+            title: "පුරාණ පිත්තල යතුර (සාක්ෂි අංක 02)",
+            text: "ඔබට ගල් ලෙනේ දොරටුව විවෘත කළ හැකි පුරාණ පිත්තල යතුර හමුවිය! ඒ සමඟම ගංගා නිම්නයට මහ කුණාටුවක් කඩා වැටුණි. මඩ වගුර මඟහැර යෝධ ගස් කොටන් පාලම (Log Bridge) ඔස්සේ ආරක්ෂිතව එතෙර වන්න!",
+            item: "පුරාණ පිත්තල යතුර (Evidence 2)",
+          });
+          this.cb.onNotify("🔑 පුරාණ පිත්තල යතුර ලබාගත්තා! (සාක්ෂි 02/03)");
+          if (this.cb.onAutosave) this.cb.onAutosave();
+        }
+      },
+    };
+    this.scene.add(keyGroup);
+    this.interactableMeshes.push(keyStem);
+
+    // ── M. Ancient Monolith Cave Portal at [495, 840] ──
+    const caveX = 495;
+    const caveZ = 840;
+    const caveY = this.getTerrainHeight(caveX, caveZ);
+
+    const archMat = new THREE.MeshStandardMaterial({
+      color: 0x334155,
+      roughness: 0.88,
+      metalness: 0.12,
+    });
+    // Left Pillar
+    const pillarL = new THREE.Mesh(new THREE.BoxGeometry(2.0, 7.5, 2.5), archMat);
+    pillarL.position.set(caveX - 3.2, caveY + 3.75, caveZ);
+    pillarL.castShadow = true;
+    this.scene.add(pillarL);
+    this.colliders.push({ type: "box", minX: caveX - 4.5, maxX: caveX - 2.0, minZ: caveZ - 1.5, maxZ: caveZ + 1.5 });
+
+    // Right Pillar
+    const pillarR = new THREE.Mesh(new THREE.BoxGeometry(2.0, 7.5, 2.5), archMat);
+    pillarR.position.set(caveX + 3.2, caveY + 3.75, caveZ);
+    pillarR.castShadow = true;
+    this.scene.add(pillarR);
+    this.colliders.push({ type: "box", minX: caveX + 2.0, maxX: caveX + 4.5, minZ: caveZ - 1.5, maxZ: caveZ + 1.5 });
+
+    // Top Arch Lintel
+    const archTop = new THREE.Mesh(new THREE.BoxGeometry(8.4, 2.0, 2.6), archMat);
+    archTop.position.set(caveX, caveY + 7.5, caveZ);
+    archTop.castShadow = true;
+    this.scene.add(archTop);
+
+    // Stone Gate Left Slab
+    const doorMat = new THREE.MeshStandardMaterial({
+      color: 0x1e293b,
+      roughness: 0.75,
+      metalness: 0.25,
+    });
+    const gateLeftMesh = new THREE.Mesh(new THREE.BoxGeometry(2.2, 5.5, 0.45), doorMat);
+    gateLeftMesh.position.set(caveX - 1.1, caveY + 2.75, caveZ);
+    gateLeftMesh.castShadow = true;
+    this.scene.add(gateLeftMesh);
+    this.caveGateLeft = gateLeftMesh;
+
+    // Stone Gate Right Slab
+    const gateRightMesh = new THREE.Mesh(new THREE.BoxGeometry(2.2, 5.5, 0.45), doorMat);
+    gateRightMesh.position.set(caveX + 1.1, caveY + 2.75, caveZ);
+    gateRightMesh.castShadow = true;
+    this.scene.add(gateRightMesh);
+    this.caveGateRight = gateRightMesh;
+
+    // Gate Barrier Collider
+    this.caveGateCollider = {
+      isGateBarrier: true,
+      type: "box",
+      minX: caveX - 2.3,
+      maxX: caveX + 2.3,
+      minZ: caveZ - 0.75,
+      maxZ: caveZ + 0.75,
+    };
+    this.colliders.push(this.caveGateCollider);
+
+    // Gate interaction trigger
+    gateLeftMesh.userData = {
+      id: "cave_gate",
+      title: "පුරාණ භූගත ලෙන් දොරටුව (Ancient Monolith Cave Portal)",
+      prompt: "[E] අගුළු හරින්න / විවෘත කරන්න",
+      action: () => {
+        if (this.caveGateUnlocked) {
+          this.cb.onNotify("⛩️ ලෙන් දොරටුව දැනටමත් විවෘතව පවතී.");
+          return;
+        }
+        if (!this.hasKey) {
+          this.playSfx("hurt");
+          this.cb.onNotify("⚠️ දොරටුව අගුළු දමා ඇත! ගංගා ඉවුරේ ගල් පර්වතය මත ඇති පිත්තල යතුර සොයාගන්න.");
+          return;
+        }
+
+        if (this.cb.onOpenRunePuzzle) {
+          this.cb.onOpenRunePuzzle(() => {
+            this.caveGateUnlocked = true;
+            this.caveGateOpening = true;
+            this.playSfx("stone_rumble");
+            this.playSfx("thunder");
+            if (this.cb.onRadioTransmission) {
+              this.cb.onRadioTransmission({
+                id: "cave_gate_unlocked_radio",
+                speaker: "SINHA-BASE // 01",
+                text: "ලෙන් දොරටුව විවෘතයි! අභ්‍යන්තරයේ නිල් ආලෝකය විහිදෙන දිලීර සාම්පලය (Research Sample) සොයාගන්න!",
+              });
+            }
+            this.cb.onTriggerStory({
+              title: "ලෙන් දොරටුව විවෘත විය!",
+              text: "රහස් සංකේත ගැලපීමෙන් පසු පැරණි ගල් දොර සෙලවෙමින් දෙපසට විවෘත විය. ඇතුළතින් නිල් පැහැති විද්‍යාගාර ආලෝකයක් දිස්වේ!",
+            });
+            if (this.cb.onAutosave) this.cb.onAutosave();
+          });
+        }
+      },
+    };
+    this.interactableMeshes.push(gateLeftMesh);
+
+    // ── N. Evidence 3: Bioluminescent Flora/Research Sample in Cave [495, 860] ──
+    const sampleX = 495;
+    const sampleZ = 860;
+    const sampleY = this.getTerrainHeight(sampleX, sampleZ);
+
+    const pedMesh = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.45, 0.6, 1.1, 12),
+      new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.85 })
+    );
+    pedMesh.position.set(sampleX, sampleY + 0.55, sampleZ);
+    pedMesh.castShadow = true;
+    this.scene.add(pedMesh);
+
+    const sampleVial = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.12, 0.12, 0.42, 16),
+      new THREE.MeshStandardMaterial({
+        color: 0x06b6d4,
+        roughness: 0.1,
+        metalness: 0.9,
+        emissive: 0x0891b2,
+        emissiveIntensity: 0.8,
+      })
+    );
+    sampleVial.position.set(sampleX, sampleY + 1.32, sampleZ);
+    sampleVial.castShadow = true;
+
+    const sampleLight = new THREE.PointLight(0x06b6d4, 2.2, 7.5);
+    sampleLight.position.set(sampleX, sampleY + 1.6, sampleZ);
+    this.scene.add(sampleLight);
+
+    sampleVial.userData = {
+      id: "cave_samples",
+      title: "අතුරුදහන් වූ පර්යේෂණ සාම්පල (Lost Research Sample - Evidence 03)",
+      prompt: "[E] අහුලාගන්න (Pick Up)",
+      action: () => {
+        if (!this.tasks.sampleFound) {
+          this.hasSample = true;
+          this.tasks.sampleFound = true;
+          this.playSfx("pickup");
+          this.scene.remove(sampleVial);
+          this.scene.remove(sampleLight);
+          const idx = this.interactableMeshes.indexOf(sampleVial);
+          if (idx >= 0) this.interactableMeshes.splice(idx, 1);
+          if (this.cb.onRadioTransmission) {
+            this.cb.onRadioTransmission({
+              id: "all_evidence_collected_dispatch",
+              speaker: "HQ DISPATCH",
+              text: "සාක්ෂි 3ම සම්පූර්ණයි! දැන් වහාම කඳු මුදුනේ හෙලිපෑඩ් (Helipad) වෙත යන්න. Chopper-01 ගලවා ගැනීමේ යානය සීරුවෙන් තබා ඇත!",
+            });
+          }
+          this.cb.onTriggerStory({
+            title: "අභිරහස හෙළි විය! (සාක්ෂි අංක 03)",
+            text: "වසර 30ක් අතුරුදහන් වූ ගවේෂකයන්ගේ පර්යේෂණ සාම්පල බඳුන ඔබට හමුවිය! දැන් කඳු මුදුනේ ඇති හෙලිපෑඩ් වෙත ගොස් සංඥා කරන්න!",
+            item: "පර්යේෂණ සාම්පල (Evidence 3)",
+            lore: {
+              title: "සිංහරාජයේ දුර්ලභ ශාක සාම්පලය",
+              desc: "මහාචාර්ය ඩග්ලස් විසින් රැස් කළ අතිශය දුර්ලභ ජෛව සාම්පලයකි.",
+            },
+          });
+          this.cb.onNotify("🧪 පර්යේෂණ සාම්පලය ලබාගත්තා! (සාක්ෂි 03/03 - සියල්ල සම්පූර්ණයි!)");
+          if (this.cb.onAutosave) this.cb.onAutosave();
+        }
+      },
+    };
+    this.scene.add(sampleVial);
+    this.interactableMeshes.push(sampleVial);
+
+    // ── O. Extraction Helipad & Signal Flare Point at [545, 855] ──
+    const heliX = 545;
+    const heliZ = 855;
+    const heliY = this.getTerrainHeight(heliX, heliZ);
+
+    const padMesh = new THREE.Mesh(
+      new THREE.CylinderGeometry(8.5, 9.0, 0.35, 32),
+      new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8, metalness: 0.2 })
+    );
+    padMesh.position.set(heliX, heliY + 0.18, heliZ);
+    padMesh.receiveShadow = true;
+    this.scene.add(padMesh);
+
+    const hBarMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
+    const hBar1 = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.02, 5.0), hBarMat);
+    hBar1.position.set(heliX - 1.8, heliY + 0.38, heliZ);
+    this.scene.add(hBar1);
+    const hBar2 = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.02, 5.0), hBarMat);
+    hBar2.position.set(heliX + 1.8, heliY + 0.38, heliZ);
+    this.scene.add(hBar2);
+    const hBarCross = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.02, 0.65), hBarMat);
+    hBarCross.position.set(heliX, heliY + 0.38, heliZ);
+    this.scene.add(hBarCross);
+
+    const mastMesh = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.08, 0.12, 6.5, 8),
+      new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.9, roughness: 0.2 })
+    );
+    mastMesh.position.set(heliX + 7.0, heliY + 3.25, heliZ - 2.0);
+    mastMesh.castShadow = true;
+    this.scene.add(mastMesh);
+
+    const beaconLight = new THREE.PointLight(0xef4444, 1.8, 20.0);
+    beaconLight.position.set(heliX + 7.0, heliY + 6.6, heliZ - 2.0);
+    this.scene.add(beaconLight);
+
+    const crateMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(1.2, 0.85, 0.85),
+      new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.6 })
+    );
+    crateMesh.position.set(heliX + 2.5, heliY + 0.6, heliZ + 2.5);
+    crateMesh.castShadow = true;
+    crateMesh.userData = {
+      id: "kudawa_helipad_flare",
+      title: "ගලවා ගැනීමේ හෙලිපෑඩ් සංඥා පද්ධතිය (Extraction Flare Crate)",
+      prompt: "[E] පරීක්ෂා කරන්න / සංඥා දල්වන්න",
+      action: () => {
+        const hasAllEvidence = Boolean(
+          this.tasks.diaryFound && this.tasks.keyFound && this.tasks.sampleFound
+        );
+        if (!hasAllEvidence) {
+          this.cb.onNotify("⚠️ මෙහෙයුම අවසන් කිරීමට සාක්ෂි 3ම (දිනපොත, යතුර, සාම්පලය) ලබාගෙන තිබිය යුතුය!");
+          return;
+        }
+
+        if (!this.flareFired) {
+          this.flareFired = true;
+          this.tasks.helipadReached = true;
+          this.playSfx("flare");
+          this.playSfx("thunder");
+
+          const flareSphere = new THREE.Mesh(
+            new THREE.SphereGeometry(0.25, 12, 12),
+            new THREE.MeshBasicMaterial({ color: 0xff0000 })
+          );
+          flareSphere.position.set(heliX + 2.5, heliY + 1.2, heliZ + 2.5);
+          this.scene.add(flareSphere);
+          this.signalRocketMesh = flareSphere;
+          this.signalRocketActive = true;
+          this.signalRocketY = heliY + 1.2;
+
+          this.cb.onNotify("🚀 සංඥා රොකට්ටුව අහසට මුදා හැරියා! Chopper-01 ගලවා ගැනීමේ හෙලිකොප්ටරය පැමිණේ!");
+
+          if (this.cb.onRadioTransmission) {
+            this.cb.onRadioTransmission({
+              id: "chopper_incoming",
+              speaker: "CHOPPER-01 PILOT",
+              text: "රතු සංඥාව දුටුවා! කුණාටුව මැදින් අපි ගොඩබසිනවා... මහාචාර්ය ඩග්ලස්ගේ සියලු සාක්ෂි සුරක්ෂිතයි! විශිෂ්ට මෙහෙයුමක්!",
+            });
+          }
+
+          setTimeout(() => {
+            if (this.cb.onGameWon) {
+              this.cb.onGameWon("hero");
+            }
+          }, 3600);
+        }
+      },
+    };
+    this.scene.add(crateMesh);
+    this.interactableMeshes.push(crateMesh);
+
+    // ── P. Green Pit Viper Hazard on Branch near [480, 750] ──
+    const viperBranch = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.18, 0.22, 5.0, 8),
+      new THREE.MeshStandardMaterial({ color: 0x3d2817, roughness: 0.9 })
+    );
+    const vbY = this.getTerrainHeight(480, 750) + 1.1;
+    viperBranch.position.set(480, vbY, 750);
+    viperBranch.rotation.z = 0.3;
+    this.scene.add(viperBranch);
+
+    const viperMesh = new THREE.Mesh(
+      new THREE.TorusGeometry(0.22, 0.06, 8, 20),
+      new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.35, metalness: 0.15 })
+    );
+    viperMesh.position.set(480, vbY + 0.25, 750);
+    viperMesh.userData = {
+      id: "viper_encounter",
+      title: "පළා පොළඟා (Green Pit Viper)",
+      prompt: "[E] පරීක්ෂා කරන්න",
+      action: () => {
+        if (this.torchOn) {
+          this.playSfx("pickup");
+          this.cb.onTriggerStory({
+            title: "පළා පොළඟා පසුබැසීම",
+            text: "ඔබේ විදුලි පන්දමේ දීප්තිමත් ආලෝකයට බිය වූ පළා පොළඟා ගස් අතු අතරින් පසුබැස ගියා! මාවත දැන් ආරක්ෂිතයි.",
+            lore: {
+              title: "පළා පොළඟා (Trimeresurus trigonocephalus)",
+              desc: "ශ්‍රී ලංකාවට ආවේණික තුරුලතා ආශ්‍රිත වෙසෙන විෂ සහිත අලංකාර සර්පයෙකි.",
+            },
+          });
+          if (this.cb.onAchievementUnlocked) {
+            this.cb.onAchievementUnlocked("viper_repelled", "පළා පොළඟාගේ පසුබැසීම (Snake Charmer)", "🐍");
+          }
+          this.scene.remove(viperMesh);
+          const idx = this.interactableMeshes.indexOf(viperMesh);
+          if (idx >= 0) this.interactableMeshes.splice(idx, 1);
+        } else {
+          this.health = Math.max(0, this.health - 25);
+          this.sanity = Math.max(0, this.sanity - 20);
+          this.bleeding = true;
+          this.playSfx("hurt");
+          this.cb.onNotify("🐍 අඳුරේ සිටි පළා පොළඟා දෂ්ට කළා! (Health -25). විදුලි පන්දම දල්වන්න!");
+        }
+      },
+    };
+    this.scene.add(viperMesh);
+    this.interactableMeshes.push(viperMesh);
+
+    // ── Q. Ceylon Blue Magpie Feather at [515, 780] ──
+    const featherMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.18, 0.45),
+      new THREE.MeshStandardMaterial({
+        color: 0x2563eb,
+        emissive: 0x1d4ed8,
+        emissiveIntensity: 0.4,
+        side: THREE.DoubleSide,
+      })
+    );
+    const fY = this.getTerrainHeight(515, 780) + 0.35;
+    featherMesh.position.set(515, fY, 780);
+    featherMesh.rotation.x = Math.PI / 3;
+    featherMesh.userData = {
+      id: "magpie_feather",
+      title: "කහබිලියා පිහාටුව (Ceylon Blue Magpie Feather)",
+      prompt: "[E] අහුලාගන්න (Pick Up)",
+      action: () => {
+        this.feathersCollected++;
+        this.magpieCharmActive = true;
+        this.player.speed = 6.2;
+        this.playSfx("pickup");
+        this.scene.remove(featherMesh);
+        const idx = this.interactableMeshes.indexOf(featherMesh);
+        if (idx >= 0) this.interactableMeshes.splice(idx, 1);
+        this.cb.onNotify("🪶 දුර්ලභ කහබිලියා පිහාටුව ලබාගත්තා! වේගය වැඩි විය (+25%).");
+        if (this.cb.onAchievementUnlocked) {
+          this.cb.onAchievementUnlocked("feather_collector", "වන පක්ෂියාගේ ආශිර්වාදය", "🪶");
+        }
+      },
+    };
+    this.scene.add(featherMesh);
+    this.interactableMeshes.push(featherMesh);
   }
 
   // ── Input & 360° First-Person Pointer Lock Controls ───────────────────────
@@ -1200,6 +1803,7 @@ export class Sinharaja3DEngine {
 
     if (this.crankCooldown > 0) this.crankCooldown -= dt;
     if (this.repellentTimer > 0) this.repellentTimer -= dt;
+    if (this.teaBuffTimer > 0) this.teaBuffTimer -= dt;
 
     // Smooth Binoculars Zoom
     this.zoom += (this.targetZoom - this.zoom) * Math.min(1.0, dt * 10);
@@ -1220,6 +1824,49 @@ export class Sinharaja3DEngine {
     this.doorSwingAngle += (targetSwing - this.doorSwingAngle) * Math.min(1.0, dt * 7.5);
     if (this.doorPivot) {
       this.doorPivot.rotation.y = this.doorSwingAngle;
+    }
+
+    // Cave Gate sliding doors animation when unlocked
+    if (this.caveGateOpening && this.caveGateLeft && this.caveGateRight) {
+      this.caveGateSlide = Math.min(2.4, this.caveGateSlide + dt * 1.8);
+      this.caveGateLeft.position.x = 495 - 1.1 - this.caveGateSlide;
+      this.caveGateRight.position.x = 495 + 1.1 + this.caveGateSlide;
+      if (this.caveGateSlide >= 2.3 && this.caveGateCollider) {
+        const cIdx = this.colliders.indexOf(this.caveGateCollider);
+        if (cIdx >= 0) this.colliders.splice(cIdx, 1);
+        this.caveGateCollider = null;
+        this.caveGateOpening = false;
+      }
+    }
+
+    // Signal Rocket rising animation
+    if (this.signalRocketActive && this.signalRocketMesh) {
+      this.signalRocketY += dt * 38;
+      this.signalRocketMesh.position.y = this.signalRocketY;
+      if (this.signalRocketY > 90) {
+        this.scene.remove(this.signalRocketMesh);
+        this.signalRocketMesh = null;
+        this.signalRocketActive = false;
+      }
+    }
+
+    // Mud Leech hazard system
+    if (!this.player.inShelter && this.repellentTimer <= 0) {
+      this.leechHazardTimer += dt;
+      if (this.leechHazardTimer >= 22) {
+        this.leechHazardTimer = 0;
+        if (this.player.z > 735 && Math.random() < 0.65) {
+          this.attachedLeeches = Math.min(3, this.attachedLeeches + 1);
+          this.bleeding = true;
+          this.playSfx("squelch");
+          this.cb.onNotify("🩸 කූඩැල්ලෙකු එල්ලුණා! [1] මඟින් ලුණු ඉසින්න හෝ [B] මඟින් තෙල් ගාන්න.");
+        }
+      }
+    }
+
+    // Leech damage drain
+    if (this.attachedLeeches > 0) {
+      this.health = Math.max(10, this.health - dt * 0.8 * this.attachedLeeches);
     }
 
     // Smooth Jitter-Free Mouse Look Interpolation
