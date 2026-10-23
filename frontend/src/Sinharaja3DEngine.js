@@ -404,11 +404,10 @@ export class Sinharaja3DEngine {
 
   // ── Build Kudawa Outpost 3D World (Chapter 1) ─────────────────────────────
   build3DWorld() {
-    // ── A. Terrain (Sinharaja Wet Forest Floor) ──
-    const terrainGeo = new THREE.PlaneGeometry(600, 600, 64, 64);
+    // ── A. Multi-Layer PBR Sinharaja Terrain ──
+    const terrainGeo = new THREE.PlaneGeometry(600, 600, 96, 96);
     terrainGeo.rotateX(-Math.PI / 2);
 
-    // Match exact height calculation
     const posAttr = terrainGeo.attributes.position;
     for (let i = 0; i < posAttr.count; i++) {
       const vx = posAttr.getX(i);
@@ -418,16 +417,63 @@ export class Sinharaja3DEngine {
     terrainGeo.computeVertexNormals();
 
     const terrainMat = new THREE.MeshStandardMaterial({
-      color: 0x142b15,
-      roughness: 0.92,
-      metalness: 0.08,
+      color: 0x122414,
+      roughness: 0.88,
+      metalness: 0.12,
     });
     this.terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
-    this.terrainMesh.position.set(0, 0, 0); // World origin
+    this.terrainMesh.position.set(0, 0, 0);
     this.terrainMesh.receiveShadow = true;
     this.scene.add(this.terrainMesh);
 
-    // ── B. Kudawa Outpost 3D Cabin Architecture ──
+    // ── B. Muddy Rainforest Trail (Leading from Kudawa Outpost toward River & Cave) ──
+    // Trail Path points from Cabin Entrance (520, 727) -> East toward River (640, 790)
+    const trailCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(520, 0.03, 726),
+      new THREE.Vector3(518, 0.03, 735),
+      new THREE.Vector3(512, 0.03, 750),
+      new THREE.Vector3(505, 0.03, 768),
+      new THREE.Vector3(500, 0.03, 790),
+      new THREE.Vector3(492, 0.03, 815),
+      new THREE.Vector3(480, 0.03, 840),
+    ]);
+    const trailGeo = new THREE.TubeGeometry(trailCurve, 40, 1.4, 8, false);
+    trailGeo.scale(1, 0.02, 1); // Flatten into a sunken muddy path
+    const trailMat = new THREE.MeshStandardMaterial({
+      color: 0x22150c, // Rich damp rainforest mud
+      roughness: 0.35,  // High wetness reflection
+      metalness: 0.25,
+    });
+    const trailMesh = new THREE.Mesh(trailGeo, trailMat);
+    trailMesh.receiveShadow = true;
+    this.scene.add(trailMesh);
+
+    // ── C. Reflective Rain Puddles along the Muddy Trail ──
+    const puddleGeo = new THREE.CircleGeometry(1.6, 24);
+    puddleGeo.rotateX(-Math.PI / 2);
+    const puddleMat = new THREE.MeshStandardMaterial({
+      color: 0x07151a,
+      roughness: 0.08, // Mirror-like water surface reflecting moonlight
+      metalness: 0.85,
+      transparent: true,
+      opacity: 0.88,
+    });
+    const puddlePositions = [
+      [517, 738, 1.4, 1.1],
+      [507, 762, 2.1, 1.5],
+      [498, 795, 1.8, 1.2],
+      [483, 835, 2.3, 1.6],
+      [532, 736, 1.2, 0.9],
+    ];
+    puddlePositions.forEach(([px, pz, sx, sz]) => {
+      const puddle = new THREE.Mesh(puddleGeo, puddleMat);
+      puddle.position.set(px, this.getTerrainHeight(px, pz) + 0.04, pz);
+      puddle.scale.set(sx, 1, sz);
+      puddle.receiveShadow = true;
+      this.scene.add(puddle);
+    });
+
+    // ── D. Kudawa Outpost 3D Cabin Architecture ──
     const cabinOriginX = 520;
     const cabinOriginZ = 720;
     const cabinW = 18;
@@ -515,7 +561,7 @@ export class Sinharaja3DEngine {
 
     // 4. Operable 3D Kudawa Cabin Door Leaf (Hinged at left jamb)
     const doorLeafGeo = new THREE.BoxGeometry(doorGapW, cabinH - lintelH, 0.12);
-    doorLeafGeo.translate(doorGapW / 2, (cabinH - lintelH) / 2, 0); // Shift pivot to door hinge
+    doorLeafGeo.translate(doorGapW / 2, (cabinH - lintelH) / 2, 0);
     const doorLeafMat = new THREE.MeshStandardMaterial({
       color: 0x4a2e1b,
       roughness: 0.65,
@@ -528,7 +574,6 @@ export class Sinharaja3DEngine {
     this.doorPivot.add(doorMesh);
     this.scene.add(this.doorPivot);
 
-    // Register Door for 3D Raycasting
     doorMesh.userData = {
       isDoor: true,
       title: "කුඩව මුරපොළ දොරටුව (Outpost Door)",
@@ -537,7 +582,6 @@ export class Sinharaja3DEngine {
     };
     this.interactableMeshes.push(doorMesh);
 
-    // Doorway Barrier Collider when door is closed
     this.doorCollider = {
       type: "box",
       isDoorBarrier: true,
@@ -578,7 +622,6 @@ export class Sinharaja3DEngine {
     this.scene.add(tableTop);
     this.colliders.push({ type: "box", minX: tableX - tableW / 2, maxX: tableX + tableW / 2, minZ: tableZ - tableD / 2, maxZ: tableZ + tableD / 2 });
 
-    // Table Legs
     const legGeo = new THREE.BoxGeometry(0.12, tableH, 0.12);
     const legMat = new THREE.MeshStandardMaterial({ color: 0x27160c, roughness: 0.8 });
     [
@@ -593,7 +636,7 @@ export class Sinharaja3DEngine {
       this.scene.add(leg);
     });
 
-    // ── C. Interactive 3D Props on Table ──
+    // ── E. Interactive 3D Props on Table ──
     // 1. Outpost Radio Dispatch
     const radioMesh = new THREE.Mesh(
       new THREE.BoxGeometry(0.65, 0.42, 0.35),
@@ -618,7 +661,7 @@ export class Sinharaja3DEngine {
     this.scene.add(radioMesh);
     this.interactableMeshes.push(radioMesh);
 
-    // 2. Douglas Voice Reel (Chapter 1 Clue)
+    // 2. Douglas Voice Reel
     const reelMesh = new THREE.Mesh(
       new THREE.CylinderGeometry(0.24, 0.24, 0.1, 16),
       new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8, roughness: 0.25 })
@@ -673,38 +716,212 @@ export class Sinharaja3DEngine {
     this.scene.add(balmMesh);
     this.interactableMeshes.push(balmMesh);
 
-    // ── D. 3D Rainforest Trees & Foliage Surrounding Outpost ──
-    const treeTrunkGeo = new THREE.CylinderGeometry(0.45, 0.75, 14, 8);
-    const treeTrunkMat = new THREE.MeshStandardMaterial({ color: 0x2e1d13, roughness: 0.9 });
-    const canopyGeo = new THREE.DodecahedronGeometry(4.5, 1);
-    const canopyMat = new THREE.MeshStandardMaterial({ color: 0x0e2e13, roughness: 0.8 });
+    // ── F. 3D Ranger Gunadasa NPC (Standing on porch under overhang) ──
+    const npcX = 527.5;
+    const npcZ = 730.0;
+    const npcY = this.getTerrainHeight(npcX, npcZ);
 
-    // Ring of towering Dipterocarp trees around the outpost
+    const npcGroup = new THREE.Group();
+    // Body (Safari Field Jacket)
+    const npcBody = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.28, 0.32, 1.1, 10),
+      new THREE.MeshStandardMaterial({ color: 0x3d4a36, roughness: 0.85 })
+    );
+    npcBody.position.y = 0.95;
+    npcBody.castShadow = true;
+    npcGroup.add(npcBody);
+
+    // Head
+    const npcHead = new THREE.Mesh(
+      new THREE.SphereGeometry(0.18, 12, 12),
+      new THREE.MeshStandardMaterial({ color: 0x8d5b38, roughness: 0.7 })
+    );
+    npcHead.position.y = 1.65;
+    npcHead.castShadow = true;
+    npcGroup.add(npcHead);
+
+    // Ranger Brimmed Bush Hat (කාකි තලප්පාව / හැට්ටය)
+    const hatBrim = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.38, 0.40, 0.05, 12),
+      new THREE.MeshStandardMaterial({ color: 0x4a4328, roughness: 0.9 })
+    );
+    hatBrim.position.y = 1.76;
+    npcGroup.add(hatBrim);
+
+    // Bamboo Walking Staff (උණ බට සැරයටිය)
+    const staff = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.025, 0.035, 1.7, 8),
+      new THREE.MeshStandardMaterial({ color: 0xb5944d, roughness: 0.6 })
+    );
+    staff.position.set(0.42, 0.85, 0.2);
+    staff.castShadow = true;
+    npcGroup.add(staff);
+
+    npcGroup.position.set(npcX, npcY, npcZ);
+    this.scene.add(npcGroup);
+    this.colliders.push({ type: "circle", x: npcX, z: npcZ, radius: 0.75 });
+
+    // Make Gunadasa interactable
+    npcBody.userData = {
+      id: "gunadasa_npc",
+      title: "ගුණදාස මාමා (Old Ranger Gunadasa)",
+      prompt: "[E] කතා කරන්න (Talk)",
+      action: () => {
+        if (!this.npc.helped) {
+          this.npc.helped = true;
+          this.saltCount += 3;
+          this.herbCount += 2;
+          this.balmCount += 1;
+          this.playSfx("pickup");
+          this.cb.onTriggerStory({
+            title: "ප්‍රවීණ වන නිලධාරී ගුණදාස මාමා",
+            text: "'ආයුබෝවන් මහත්තයා! මම මේ අවුරුදු 40ක් තිස්සේ සිංහරාජයේ රස්සාව කරපු ගුණදාස. 1987 මහා වැස්සේ මහාචාර්ය ඩග්ලස් මේ කැබින් එකෙන් පිටත් වුණේ ලෙන් දොරටුව දෙසට. මම ලුණු කුඩුයි, බෙහෙත් තෙලුයි, ඖෂධ පැළෑටියි දුන්නා. කූඩැල්ලන්ගෙන් පරිස්සම් වෙන්න!'",
+            speaker: "OLD RANGER GUNADASA",
+            avatar: "ranger",
+          });
+        } else {
+          this.cb.onNotify("🧙‍♂️ ගුණදාස මාමා: 'මහත්තයා, මහාචාර්යවරයාගේ හඬ පටය මේසේ උඩ තියෙනවා. ඒක පරීක්ෂා කරලා කැලේට බහින්න!'");
+        }
+      },
+    };
+    this.interactableMeshes.push(npcBody);
+
+    // ── G. Towering Sinharaja Dipterocarp Canopy Trees with Flanged Buttress Roots ──
+    const treeTrunkGeo = new THREE.CylinderGeometry(0.55, 1.1, 18, 9);
+    const treeTrunkMat = new THREE.MeshStandardMaterial({ color: 0x22160d, roughness: 0.92 });
+    const canopyGeo1 = new THREE.DodecahedronGeometry(5.2, 1);
+    const canopyGeo2 = new THREE.DodecahedronGeometry(4.2, 1);
+    const canopyMat = new THREE.MeshStandardMaterial({ color: 0x0a240e, roughness: 0.82 });
+    const rootGeo = new THREE.ConeGeometry(0.65, 3.2, 5);
+    const rootMat = new THREE.MeshStandardMaterial({ color: 0x2e1a0f, roughness: 0.95 });
+
     const treePositions = [
-      [500, 680], [540, 685], [490, 750], [550, 760],
-      [470, 710], [570, 715], [460, 660], [580, 660],
-      [510, 800], [535, 800], [450, 780], [590, 780],
+      [502, 680], [542, 685], [488, 745], [552, 755],
+      [468, 705], [572, 712], [455, 655], [585, 655],
+      [508, 805], [538, 805], [445, 775], [595, 775],
+      [475, 830], [520, 850], [565, 835], [435, 710],
+      [605, 710], [512, 650], [470, 760], [568, 770],
     ];
 
     treePositions.forEach(([tx, tz]) => {
       const treeGroup = new THREE.Group();
+
+      // Main towering trunk
       const trunk = new THREE.Mesh(treeTrunkGeo, treeTrunkMat);
-      trunk.position.y = 7;
+      trunk.position.y = 9;
       trunk.castShadow = true;
       treeGroup.add(trunk);
 
-      const canopy = new THREE.Mesh(canopyGeo, canopyMat);
-      canopy.position.y = 14;
-      canopy.castShadow = true;
-      treeGroup.add(canopy);
+      // Flanged Buttress Roots at base
+      for (let r = 0; r < 4; r++) {
+        const root = new THREE.Mesh(rootGeo, rootMat);
+        const rAngle = (r / 4) * Math.PI * 2;
+        root.position.set(Math.cos(rAngle) * 0.95, 1.4, Math.sin(rAngle) * 0.95);
+        root.rotation.z = Math.cos(rAngle) * 0.45;
+        root.rotation.x = Math.sin(rAngle) * 0.45;
+        root.castShadow = true;
+        treeGroup.add(root);
+      }
+
+      // Layered Canopy
+      const canopy1 = new THREE.Mesh(canopyGeo1, canopyMat);
+      canopy1.position.y = 18;
+      canopy1.castShadow = true;
+      treeGroup.add(canopy1);
+
+      const canopy2 = new THREE.Mesh(canopyGeo2, canopyMat);
+      canopy2.position.set(0.6, 21.5, 0.4);
+      canopy2.castShadow = true;
+      treeGroup.add(canopy2);
 
       const ty = this.getTerrainHeight(tx, tz);
       treeGroup.position.set(tx, ty, tz);
       this.scene.add(treeGroup);
-      this.colliders.push({ type: "circle", x: tx, z: tz, radius: 0.9 });
+      this.colliders.push({ type: "circle", x: tx, z: tz, radius: 1.15 });
     });
 
-    // ── E. Dynamic Storm Raindrop Particles ──
+    // ── H. Fallen Giant Tree Log Bridges & Mud Obstacles ──
+    const fallenLogGeo = new THREE.CylinderGeometry(0.7, 0.85, 12, 8);
+    fallenLogGeo.rotateZ(Math.PI / 2);
+    const fallenLogMat = new THREE.MeshStandardMaterial({
+      color: 0x271910,
+      roughness: 0.94,
+    });
+    const log1 = new THREE.Mesh(fallenLogGeo, fallenLogMat);
+    const log1Y = this.getTerrainHeight(495, 785);
+    log1.position.set(495, log1Y + 0.65, 785);
+    log1.rotation.y = 0.42;
+    log1.castShadow = true;
+    log1.receiveShadow = true;
+    this.scene.add(log1);
+    this.colliders.push({ type: "box", minX: 490, maxX: 500, minZ: 780, maxZ: 790 });
+
+    // ── I. Wet River Granite Boulders with Moss ──
+    const boulderGeo = new THREE.DodecahedronGeometry(1.4, 1);
+    const boulderMat = new THREE.MeshStandardMaterial({
+      color: 0x3d473d,
+      roughness: 0.72,
+      metalness: 0.18,
+    });
+    const boulderCoords = [
+      [512, 735, 1.2],
+      [502, 765, 1.6],
+      [528, 770, 1.4],
+      [486, 810, 2.0],
+      [475, 735, 1.5],
+      [548, 742, 1.3],
+    ];
+    boulderCoords.forEach(([bx, bz, bScale]) => {
+      const bMesh = new THREE.Mesh(boulderGeo, boulderMat);
+      const by = this.getTerrainHeight(bx, bz) + bScale * 0.8;
+      bMesh.position.set(bx, by, bz);
+      bMesh.scale.set(bScale, bScale * 0.85, bScale * 1.1);
+      bMesh.castShadow = true;
+      bMesh.receiveShadow = true;
+      this.scene.add(bMesh);
+      this.colliders.push({ type: "circle", x: bx, z: bz, radius: bScale * 1.05 });
+    });
+
+    // ── J. Instanced Undergrowth Foliage (Broadleaf Rainforest Ferns & Shrubs) ──
+    const fernLeafGeo = new THREE.PlaneGeometry(0.75, 1.8);
+    fernLeafGeo.translate(0, 0.9, 0); // Pivot at base
+    const fernMat = new THREE.MeshStandardMaterial({
+      color: 0x1a451e,
+      roughness: 0.6,
+      metalness: 0.1,
+      side: THREE.DoubleSide,
+    });
+
+    const fernInstances = 180;
+    this.fernMesh = new THREE.InstancedMesh(fernLeafGeo, fernMat, fernInstances);
+    const dummy = new THREE.Object3D();
+
+    let fIdx = 0;
+    for (let f = 0; f < 30; f++) {
+      // Clustered fern clumps around trees and trail edges
+      const clumpX = 520 + (Math.random() - 0.5) * 85;
+      const clumpZ = 720 + (Math.random() - 0.5) * 85;
+
+      // Keep cabin interior clear of ferns
+      if (Math.abs(clumpX - 520) < 9 && Math.abs(clumpZ - 720) < 7) continue;
+
+      const clumpY = this.getTerrainHeight(clumpX, clumpZ);
+      const frondsPerClump = 6;
+      for (let fr = 0; fr < frondsPerClump; fr++) {
+        if (fIdx >= fernInstances) break;
+        const angle = (fr / frondsPerClump) * Math.PI * 2 + Math.random() * 0.3;
+        dummy.position.set(clumpX, clumpY, clumpZ);
+        dummy.rotation.set(0.45 + Math.random() * 0.2, angle, 0);
+        dummy.scale.set(1.0, 1.0 + Math.random() * 0.4, 1.0);
+        dummy.updateMatrix();
+        this.fernMesh.setMatrixAt(fIdx++, dummy.matrix);
+      }
+    }
+    this.fernMesh.instanceMatrix.needsUpdate = true;
+    this.fernMesh.castShadow = true;
+    this.scene.add(this.fernMesh);
+
+    // ── K. Dynamic Storm Raindrop Particles ──
     const rainCount = 1400;
     const rainGeo = new THREE.BufferGeometry();
     const rainPos = new Float32Array(rainCount * 3);
