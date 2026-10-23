@@ -699,7 +699,9 @@ export default function App() {
   const [dialogue, setDialogue] = useState(null);
   const [toastMsg, setToastMsg] = useState("");
   const [achievementToast, setAchievementToast] = useState(null);
-  const [showOnboardingTip, setShowOnboardingTip] = useState(true);
+  const [showOnboardingTip, setShowOnboardingTip] = useState(false);
+  const [isPointerLocked, setIsPointerLocked] = useState(false);
+  const [controlsEngaged, setControlsEngaged] = useState(false);
   const [isImmersiveHud, setIsImmersiveHud] = useState(false);
   const [sanityWhisper, setSanityWhisper] = useState("");
   const whisperTimerRef = useRef(0);
@@ -847,10 +849,20 @@ export default function App() {
     setActiveChapter(chapId);
     setGameOver(null);
     setIsPaused(false);
-    setShowOnboardingTip(true);
+    setControlsEngaged(false);
+    setShowOnboardingTip(false);
     setCurrentView("playing");
 
-    if (chapId === 2) {
+    if (chapId === 1) {
+      setDialogue(null);
+      setRadioTransmission({
+        id: "chap1_start",
+        speaker: "EXPEDITION HQ",
+        callsign: "HQ DISPATCH",
+        text: "කුඩව මුරපොළ: මහාචාර්ය ඩග්ලස්ගේ කඳවුරෙන් සාක්ෂි 3ම (දිනපොත, පිත්තල යතුර, සාම්පලය) සොයාගෙන කඳු මුදුනේ ලෙන වෙත යන්න!",
+        textEn: "Kudawa Outpost: Investigate Douglas's camp, recover all 3 field evidence clues, and advance toward the cave portal!",
+      });
+    } else if (chapId === 2) {
       setDialogue({
         title: "CHAPTER 02: නිහඬ දියඇලි නිම්නය",
         speaker: "EXPEDITION HQ",
@@ -897,6 +909,21 @@ export default function App() {
     });
   }, []);
 
+  // Engage Controls & Pointer Lock
+  const handleEngageControls = useCallback(() => {
+    setControlsEngaged(true);
+    if (engineRef.current) {
+      engineRef.current.requestPointerLock();
+    } else if (canvasRef.current) {
+      try {
+        const res = canvasRef.current.requestPointerLock();
+        if (res && typeof res.catch === "function") {
+          res.catch(() => {});
+        }
+      } catch (e) {}
+    }
+  }, []);
+
   // Initialize Canvas when playing starts
   useEffect(() => {
     if (currentView !== "playing" || gameOver) return;
@@ -911,10 +938,21 @@ export default function App() {
     handleResize();
     window.addEventListener("resize", handleResize);
 
+    const handlePointerLockChange = () => {
+      const locked = document.pointerLockElement === canvas;
+      setIsPointerLocked(locked);
+      if (locked) setControlsEngaged(true);
+    };
+    document.addEventListener("pointerlockchange", handlePointerLockChange);
+
     // Instantiate genuine 3D WebGL renderer for true First-Person I.G.I. exploration
     const engine = new Sinharaja3DEngine(canvas, {
       chapter: activeChapter,
       lang,
+      onPointerLockChange: (locked) => {
+        setIsPointerLocked(locked);
+        if (locked) setControlsEngaged(true);
+      },
       onStatsUpdate: (newStats) => {
         setStats(newStats);
         if (activeChapter === 1) {
@@ -1096,6 +1134,9 @@ export default function App() {
 
     return () => {
       window.removeEventListener("resize", handleResize);
+      document.removeEventListener("pointerlockchange", handlePointerLockChange);
+      setIsPointerLocked(false);
+      setControlsEngaged(false);
       engine.destroy();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2166,6 +2207,84 @@ export default function App() {
       }`}
     >
       <canvas ref={canvasRef} className="game-canvas" />
+
+      {/* ── First-Person Tactical Center Reticle & Interaction Tooltip ── */}
+      <div
+        className={`tactical-center-crosshair ${
+          stats.nearInteractable ? "focused-interactive" : ""
+        }`}
+      >
+        <div className="crosshair-dot" />
+        <div className="crosshair-tick tick-top" />
+        <div className="crosshair-tick tick-bottom" />
+        <div className="crosshair-tick tick-left" />
+        <div className="crosshair-tick tick-right" />
+        {stats.nearInteractable && (
+          <div className="crosshair-interact-hint">
+            <span className="crosshair-key-tag">[E]</span>
+            <span className="crosshair-title-tag">{stats.nearInteractable.title}</span>
+          </div>
+        )}
+      </div>
+
+      {/* ── Pointer Lock / Click To Play Overlay ── */}
+      {!controlsEngaged && !isPaused && !gameOver && (
+        <div
+          className="tactical-pointerlock-overlay"
+          onClick={handleEngageControls}
+        >
+          <div className="pointerlock-modal-card">
+            <div className="pointerlock-badge">
+              <span className="live-indicator-dot" />
+              {lang === "en" ? "TACTICAL 3D RECON ACTIVE" : "ක්‍රියාකාරී ත්‍රිමාණ ගවේෂණය"}
+            </div>
+            <h2 className="pointerlock-title">
+              {lang === "en" ? "CLICK ANYWHERE TO ENGAGE CONTROLS" : "ක්‍රීඩාව ආරම්භ කිරීමට මෙතැන ක්ලික් කරන්න"}
+            </h2>
+            <p className="pointerlock-desc">
+              {lang === "en"
+                ? "First-person mouse look enabled. Click anywhere on the screen to lock cursor and freely explore the Sinharaja rainforest."
+                : "පළමු පුද්ගල (First-Person) දර්ශනය හැරවීමට මවුසය භාවිතා වේ. මෙතැන ක්ලික් කර සිංහරාජ වැසි වනාන්තරයේ ගවේෂණය අරඹන්න."}
+            </p>
+
+            <div className="pointerlock-keybinds-grid">
+              <div className="keybind-pill">
+                <span className="key-cap">W A S D</span>
+                <span className="key-name">{lang === "en" ? "Move" : "ඇවිදීම"}</span>
+              </div>
+              <div className="keybind-pill">
+                <span className="key-cap">MOUSE</span>
+                <span className="key-name">{lang === "en" ? "Look Around" : "දර්ශනය"}</span>
+              </div>
+              <div className="keybind-pill highlight-key">
+                <span className="key-cap">[E] / CLICK</span>
+                <span className="key-name">{lang === "en" ? "Interact / Take" : "අයිතම ලබාගැනීම"}</span>
+              </div>
+              <div className="keybind-pill">
+                <span className="key-cap">[F]</span>
+                <span className="key-name">{lang === "en" ? "Flashlight" : "විදුලි පන්දම"}</span>
+              </div>
+              <div className="keybind-pill">
+                <span className="key-cap">SHIFT</span>
+                <span className="key-name">{lang === "en" ? "Sprint" : "දිවීම"}</span>
+              </div>
+              <div className="keybind-pill">
+                <span className="key-cap">SPACE</span>
+                <span className="key-name">{lang === "en" ? "Jump" : "පැනීම"}</span>
+              </div>
+              <div className="keybind-pill">
+                <span className="key-cap">[ESC]</span>
+                <span className="key-name">{lang === "en" ? "Pause" : "මෙනුව"}</span>
+              </div>
+            </div>
+
+            <button className="pointerlock-cta-btn">
+              <Icons.Target className="tactical-svg-icon" />
+              <span>{lang === "en" ? "CLICK TO PLAY" : "ක්‍රීඩා කරන්න (CLICK TO PLAY)"}</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Screen Effects - Scanline removed for clean 3D rendering */}
 

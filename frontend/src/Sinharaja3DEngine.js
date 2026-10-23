@@ -65,8 +65,8 @@ export class Sinharaja3DEngine {
       helped: false,
     };
 
-    this.kudawaDoorOpen = false;
-    this.doorSwingAngle = 0;
+    this.kudawaDoorOpen = true;
+    this.doorSwingAngle = 1.45;
 
     // Cave Gate and Extraction State
     this.caveGateUnlocked = false;
@@ -111,6 +111,7 @@ export class Sinharaja3DEngine {
 
     this.keys = {};
     this.pointerLocked = false;
+    this.controlsEngaged = false;
     this.activeCrosshairTarget = null;
     this.statsUpdateTimer = 0;
     this.lightningTimer = 0;
@@ -1414,6 +1415,7 @@ export class Sinharaja3DEngine {
     doorMesh.castShadow = true;
     doorMesh.receiveShadow = true;
     this.doorPivot.add(doorMesh);
+    this.doorPivot.rotation.y = this.doorSwingAngle;
     this.scene.add(this.doorPivot);
 
     doorMesh.userData = {
@@ -2648,25 +2650,46 @@ export class Sinharaja3DEngine {
     }
 
     if (document.pointerLockElement !== this.canvas) {
-      try {
-        this.canvas.requestPointerLock();
-      } catch (err) {}
+      this.requestPointerLock();
     } else {
-      // Clicking while locked interacts with focused crosshair object
-      this.interactTarget();
+      // Clicking while locked interacts with focused crosshair object or nearest item
+      if (!this.interactTarget()) {
+        this.interactNearest();
+      }
+    }
+  }
+
+  requestPointerLock() {
+    this.controlsEngaged = true;
+    if (this.canvas && this.canvas.requestPointerLock) {
+      try {
+        const res = this.canvas.requestPointerLock();
+        if (res && typeof res.catch === "function") {
+          res.catch(() => {});
+        }
+      } catch (err) {}
     }
   }
 
   _onPointerLockChange() {
     this.pointerLocked = document.pointerLockElement === this.canvas;
+    if (this.pointerLocked) {
+      this.controlsEngaged = true;
+    }
+    if (this.cb && this.cb.onPointerLockChange) {
+      this.cb.onPointerLockChange(this.pointerLocked);
+    }
   }
 
   _onPointerLockError() {
     this.pointerLocked = false;
+    if (this.cb && this.cb.onPointerLockChange) {
+      this.cb.onPointerLockChange(false);
+    }
   }
 
   _onMouseMove(e) {
-    if (this.pointerLocked && !this.paused) {
+    if ((this.pointerLocked || this.controlsEngaged) && !this.paused) {
       const sens = 0.0022;
       this.player.targetYaw -= (e.movementX || 0) * sens;
       this.player.targetPitch -= (e.movementY || 0) * sens;
