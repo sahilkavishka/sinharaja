@@ -152,6 +152,11 @@ export const Icons = {
       <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
     </svg>
   ),
+  Settings: (props) => (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" {...props}>
+      <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+    </svg>
+  ),
   Target: (props) => (
     <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" {...props}>
       <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
@@ -1213,6 +1218,11 @@ export default function App() {
     }
     if (action === "hud") {
       setIsImmersiveHud((prev) => !prev);
+    }
+    if (action === "quality") {
+      if (engineRef.current && engineRef.current.cycleQuality) {
+        engineRef.current.cycleQuality();
+      }
     }
     if (action === "viewMode") {
       engineRef.current.toggleViewMode();
@@ -2478,6 +2488,13 @@ export default function App() {
                 title="ශබ්ද පාලනය"
               >
                 {isMuted ? <Icons.AudioMute className="tactical-svg-icon" /> : <Icons.AudioOn className="tactical-svg-icon" />}
+              </button>
+              <button
+                className="tactical-hud-btn tactical-quality-btn"
+                onClick={() => handleVirtualAction("quality")}
+                title="ග්‍රැෆික් මට්ටම / Graphics Quality [O] (High / Medium / Low)"
+              >
+                <Icons.Settings className="tactical-svg-icon" /> {(stats.quality || "HIGH").toUpperCase()}
               </button>
               <button
                 className="tactical-lang-btn"

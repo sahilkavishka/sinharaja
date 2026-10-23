@@ -115,6 +115,42 @@ export class Sinharaja3DEngine {
     this.footstepDist = 0;
     this.headBob = 0;
 
+    // Graphics Quality & Hand-Held Torch Sway State
+    this.quality = "high"; // "high" | "medium" | "low"
+    this.torchLag = {
+      yaw: Math.PI,
+      pitch: 0,
+    };
+    this.torchGroup = null;
+    this.volumetricBeam = null;
+    this.volumetricUniforms = null;
+
+    // Continuous Procedural Ambience & 3D Audio State
+    this.ambientStarted = false;
+    this.ambientMasterGain = null;
+    this.rainNoise = null;
+    this.rainLowpass = null;
+    this.rainHighpass = null;
+    this.rainGainNode = null;
+    this.cicadaCarrier = null;
+    this.cicadaLfo = null;
+    this.cicadaGainNode = null;
+    this.radioNoise = null;
+    this.radioGainNode = null;
+    this.radioPanner = null;
+    this.riverNoise = null;
+    this.riverGainNode = null;
+    this.riverPanner = null;
+    this.caveDroneOsc = null;
+    this.caveDroneGain = null;
+    this.caveDronePanner = null;
+    this.frogTimer = 0;
+    this.nextFrogTime = 4.5;
+    this.lightningActive = false;
+    this.lightningFlashTimer = 0;
+    this.nextLightningTime = 22.0;
+    this.fernBaseMatrices = [];
+
     // Bind event handlers for clean disposal
     this._onKeyDown = this._onKeyDown.bind(this);
     this._onKeyUp = this._onKeyUp.bind(this);
@@ -378,6 +414,366 @@ export class Sinharaja3DEngine {
     }
   }
 
+  // ── Procedural Continuous Ambience & 3D Spatial Audio Engine ──────────────
+  startContinuousAmbience() {
+    if (!this.audioCtx || this.ambientStarted) return;
+    if (this.audioCtx.state === "suspended") {
+      this.audioCtx.resume();
+    }
+    this.ambientStarted = true;
+    const t = this.audioCtx.currentTime;
+
+    try {
+      // 1. Master Ambient Gain
+      this.ambientMasterGain = this.audioCtx.createGain();
+      this.ambientMasterGain.gain.setValueAtTime(this.muted ? 0 : 0.42, t);
+      this.ambientMasterGain.connect(this.audioCtx.destination);
+
+      // 2. Continuous Rainforest Rain Generator (Dual-Band Filtered Noise Loop)
+      const bufLen = Math.floor(this.audioCtx.sampleRate * 2.5);
+      const rainBuf = this.audioCtx.createBuffer(1, bufLen, this.audioCtx.sampleRate);
+      const rainData = rainBuf.getChannelData(0);
+      for (let i = 0; i < bufLen; i++) {
+        rainData[i] = Math.random() * 2 - 1;
+      }
+      this.rainNoise = this.audioCtx.createBufferSource();
+      this.rainNoise.buffer = rainBuf;
+      this.rainNoise.loop = true;
+
+      this.rainHighpass = this.audioCtx.createBiquadFilter();
+      this.rainHighpass.type = "highpass";
+      this.rainHighpass.frequency.setValueAtTime(260, t);
+
+      this.rainLowpass = this.audioCtx.createBiquadFilter();
+      this.rainLowpass.type = "lowpass";
+      this.rainLowpass.frequency.setValueAtTime(1150, t);
+
+      this.rainGainNode = this.audioCtx.createGain();
+      this.rainGainNode.gain.setValueAtTime(0.12, t);
+
+      this.rainNoise.connect(this.rainHighpass);
+      this.rainHighpass.connect(this.rainLowpass);
+      this.rainLowpass.connect(this.rainGainNode);
+      this.rainGainNode.connect(this.ambientMasterGain);
+      this.rainNoise.start(t);
+
+      // 3. Sinharaja Night Cicadas & Canopy Insects (Rhythmic high-frequency carrier + LFO)
+      this.cicadaCarrier = this.audioCtx.createOscillator();
+      this.cicadaCarrier.type = "triangle";
+      this.cicadaCarrier.frequency.setValueAtTime(4750, t);
+
+      this.cicadaLfo = this.audioCtx.createOscillator();
+      this.cicadaLfo.type = "sine";
+      this.cicadaLfo.frequency.setValueAtTime(14, t);
+
+      const cicadaLfoGain = this.audioCtx.createGain();
+      cicadaLfoGain.gain.setValueAtTime(160, t);
+      this.cicadaLfo.connect(cicadaLfoGain);
+      cicadaLfoGain.connect(this.cicadaCarrier.frequency);
+
+      const cicadaBandpass = this.audioCtx.createBiquadFilter();
+      cicadaBandpass.type = "bandpass";
+      cicadaBandpass.frequency.setValueAtTime(4750, t);
+      cicadaBandpass.Q.setValueAtTime(3.8, t);
+
+      this.cicadaGainNode = this.audioCtx.createGain();
+      this.cicadaGainNode.gain.setValueAtTime(0.022, t);
+
+      this.cicadaCarrier.connect(cicadaBandpass);
+      cicadaBandpass.connect(this.cicadaGainNode);
+      this.cicadaGainNode.connect(this.ambientMasterGain);
+
+      this.cicadaCarrier.start(t);
+      this.cicadaLfo.start(t);
+
+      // 4. Positional 3D Audio: Kudawa Outpost Radio Static
+      const radioBufLen = Math.floor(this.audioCtx.sampleRate * 1.5);
+      const radioBuf = this.audioCtx.createBuffer(1, radioBufLen, this.audioCtx.sampleRate);
+      const radioData = radioBuf.getChannelData(0);
+      for (let i = 0; i < radioBufLen; i++) {
+        radioData[i] = (Math.random() * 2 - 1) * 0.65;
+      }
+      this.radioNoise = this.audioCtx.createBufferSource();
+      this.radioNoise.buffer = radioBuf;
+      this.radioNoise.loop = true;
+
+      const radioFilter = this.audioCtx.createBiquadFilter();
+      radioFilter.type = "bandpass";
+      radioFilter.frequency.setValueAtTime(1650, t);
+      radioFilter.Q.setValueAtTime(2.2, t);
+
+      this.radioGainNode = this.audioCtx.createGain();
+      this.radioGainNode.gain.setValueAtTime(0.035, t);
+
+      this.radioPanner = this.audioCtx.createStereoPanner ? this.audioCtx.createStereoPanner() : null;
+
+      this.radioNoise.connect(radioFilter);
+      radioFilter.connect(this.radioGainNode);
+      if (this.radioPanner) {
+        this.radioGainNode.connect(this.radioPanner);
+        this.radioPanner.connect(this.ambientMasterGain);
+      } else {
+        this.radioGainNode.connect(this.ambientMasterGain);
+      }
+      this.radioNoise.start(t);
+
+      // 5. Positional 3D Audio: River Rapids / Stream Flow
+      const riverBufLen = Math.floor(this.audioCtx.sampleRate * 2.0);
+      const riverBuf = this.audioCtx.createBuffer(1, riverBufLen, this.audioCtx.sampleRate);
+      const riverData = riverBuf.getChannelData(0);
+      for (let i = 0; i < riverBufLen; i++) {
+        riverData[i] = Math.random() * 2 - 1;
+      }
+      this.riverNoise = this.audioCtx.createBufferSource();
+      this.riverNoise.buffer = riverBuf;
+      this.riverNoise.loop = true;
+
+      const riverFilter = this.audioCtx.createBiquadFilter();
+      riverFilter.type = "lowpass";
+      riverFilter.frequency.setValueAtTime(420, t);
+
+      this.riverGainNode = this.audioCtx.createGain();
+      this.riverGainNode.gain.setValueAtTime(0, t);
+
+      this.riverPanner = this.audioCtx.createStereoPanner ? this.audioCtx.createStereoPanner() : null;
+
+      this.riverNoise.connect(riverFilter);
+      riverFilter.connect(this.riverGainNode);
+      if (this.riverPanner) {
+        this.riverGainNode.connect(this.riverPanner);
+        this.riverPanner.connect(this.ambientMasterGain);
+      } else {
+        this.riverGainNode.connect(this.ambientMasterGain);
+      }
+      this.riverNoise.start(t);
+
+      // 6. Positional 3D Audio: Ancient Cave Monolith Drone
+      this.caveDroneOsc = this.audioCtx.createOscillator();
+      this.caveDroneOsc.type = "triangle";
+      this.caveDroneOsc.frequency.setValueAtTime(65, t);
+
+      this.caveDroneGain = this.audioCtx.createGain();
+      this.caveDroneGain.gain.setValueAtTime(0, t);
+
+      this.caveDronePanner = this.audioCtx.createStereoPanner ? this.audioCtx.createStereoPanner() : null;
+
+      this.caveDroneOsc.connect(this.caveDroneGain);
+      if (this.caveDronePanner) {
+        this.caveDroneGain.connect(this.caveDronePanner);
+        this.caveDronePanner.connect(this.ambientMasterGain);
+      } else {
+        this.caveDroneGain.connect(this.ambientMasterGain);
+      }
+      this.caveDroneOsc.start(t);
+    } catch (err) {}
+  }
+
+  updateAmbience(dt) {
+    if (!this.audioCtx || !this.ambientStarted || this.muted) return;
+    const t = this.audioCtx.currentTime;
+
+    // 1. Rain filtering: Muffled inside cabin roof vs Open downpour
+    if (this.rainLowpass && this.rainGainNode) {
+      if (this.player.inShelter) {
+        this.rainLowpass.frequency.setTargetAtTime(620, t, 0.3);
+        this.rainGainNode.gain.setTargetAtTime(0.045, t, 0.3);
+      } else {
+        this.rainLowpass.frequency.setTargetAtTime(1400, t, 0.3);
+        const stormBoost = this.stormActive ? 0.22 : 0.13;
+        this.rainGainNode.gain.setTargetAtTime(stormBoost, t, 0.3);
+      }
+    }
+
+    // 2. Insects/Cicadas: Quiet indoors, lively outdoors
+    if (this.cicadaGainNode) {
+      const insectGoal = this.player.inShelter ? 0.006 : 0.026;
+      this.cicadaGainNode.gain.setTargetAtTime(insectGoal, t, 0.4);
+    }
+
+    // 3. Positional Radio (Table at [515.5, 714.8])
+    if (this.radioGainNode) {
+      const rDist = Math.hypot(this.player.x - 515.5, this.player.z - 714.8);
+      const rVol = Math.max(0, 1 - rDist / 20) * 0.055;
+      this.radioGainNode.gain.setTargetAtTime(rVol, t, 0.15);
+      if (this.radioPanner) {
+        const angle = Math.atan2(515.5 - this.player.x, 714.8 - this.player.z) - this.player.yaw;
+        const pan = Math.sin(angle);
+        this.radioPanner.pan.setTargetAtTime(Math.max(-1, Math.min(1, pan)), t, 0.15);
+      }
+    }
+
+    // 4. Positional River Rapids (Near boulders at [505, 770])
+    if (this.riverGainNode) {
+      const rvDist = Math.hypot(this.player.x - 505, this.player.z - 770);
+      const rvBase = this.player.inShelter ? 0.02 : 0.14;
+      const rvVol = Math.max(0, 1 - rvDist / 42) * rvBase;
+      this.riverGainNode.gain.setTargetAtTime(rvVol, t, 0.15);
+      if (this.riverPanner) {
+        const angle = Math.atan2(505 - this.player.x, 770 - this.player.z) - this.player.yaw;
+        const pan = Math.sin(angle);
+        this.riverPanner.pan.setTargetAtTime(Math.max(-1, Math.min(1, pan)), t, 0.15);
+      }
+    }
+
+    // 5. Positional Cave Monolith Drone (Near portal at [495, 840])
+    if (this.caveDroneGain) {
+      const cDist = Math.hypot(this.player.x - 495, this.player.z - 840);
+      const cVol = Math.max(0, 1 - cDist / 35) * 0.12;
+      this.caveDroneGain.gain.setTargetAtTime(cVol, t, 0.15);
+      if (this.caveDronePanner) {
+        const angle = Math.atan2(495 - this.player.x, 840 - this.player.z) - this.player.yaw;
+        const pan = Math.sin(angle);
+        this.caveDronePanner.pan.setTargetAtTime(Math.max(-1, Math.min(1, pan)), t, 0.15);
+      }
+    }
+  }
+
+  playEndemicFrogCroak() {
+    if (this.muted || !this.audioCtx) return;
+    if (this.audioCtx.state === "suspended") this.audioCtx.resume();
+    const t = this.audioCtx.currentTime;
+
+    const panVal = (Math.random() - 0.5) * 1.6;
+    const panner = this.audioCtx.createStereoPanner ? this.audioCtx.createStereoPanner() : null;
+    if (panner) panner.pan.setValueAtTime(Math.max(-1, Math.min(1, panVal)), t);
+
+    [0, 0.14].forEach((delay, idx) => {
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+      osc.type = "sine";
+      const startFreq = idx === 0 ? 285 : 330;
+      osc.frequency.setValueAtTime(startFreq, t + delay);
+      osc.frequency.exponentialRampToValueAtTime(145, t + delay + 0.08);
+
+      gain.gain.setValueAtTime(0.05, t + delay);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + delay + 0.08);
+
+      osc.connect(gain);
+      if (panner) {
+        gain.connect(panner);
+      } else {
+        gain.connect(this.audioCtx.destination);
+      }
+      osc.start(t + delay);
+      osc.stop(t + delay + 0.08);
+    });
+
+    if (panner) panner.connect(this.audioCtx.destination);
+  }
+
+  triggerLightningStrike() {
+    this.lightningActive = true;
+    this.lightningFlashTimer = 0;
+
+    const thunderDelay = 600 + Math.random() * 800;
+    setTimeout(() => {
+      if (this.running) {
+        this.playProceduralThunder();
+      }
+    }, thunderDelay);
+  }
+
+  playProceduralThunder() {
+    if (this.muted || !this.audioCtx) return;
+    if (this.audioCtx.state === "suspended") this.audioCtx.resume();
+    const t = this.audioCtx.currentTime;
+
+    const osc = this.audioCtx.createOscillator();
+    const oscGain = this.audioCtx.createGain();
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(58, t);
+    osc.frequency.exponentialRampToValueAtTime(20, t + 3.0);
+    oscGain.gain.setValueAtTime(0.32, t);
+    oscGain.gain.exponentialRampToValueAtTime(0.001, t + 3.0);
+
+    const bufLen = Math.floor(this.audioCtx.sampleRate * 3.2);
+    const buf = this.audioCtx.createBuffer(1, bufLen, this.audioCtx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
+    const noise = this.audioCtx.createBufferSource();
+    noise.buffer = buf;
+
+    const filter = this.audioCtx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(120, t);
+    filter.frequency.exponentialRampToValueAtTime(36, t + 3.2);
+    filter.Q.setValueAtTime(2.2, t);
+
+    const noiseGain = this.audioCtx.createGain();
+    noiseGain.gain.setValueAtTime(0.38, t);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 3.2);
+
+    const panner = this.audioCtx.createStereoPanner ? this.audioCtx.createStereoPanner() : null;
+    const panVal = (Math.random() - 0.5) * 1.5;
+    if (panner) panner.pan.setValueAtTime(Math.max(-1, Math.min(1, panVal)), t);
+
+    osc.connect(oscGain);
+    noise.connect(filter);
+    filter.connect(noiseGain);
+
+    if (panner) {
+      oscGain.connect(panner);
+      noiseGain.connect(panner);
+      panner.connect(this.audioCtx.destination);
+    } else {
+      oscGain.connect(this.audioCtx.destination);
+      noiseGain.connect(this.audioCtx.destination);
+    }
+
+    osc.start(t);
+    noise.start(t);
+    osc.stop(t + 3.0);
+    noise.stop(t + 3.2);
+  }
+
+  // ── Graphics Quality Preset Settings ──────────────────────────────────────
+  cycleQuality() {
+    const modes = ["high", "medium", "low"];
+    const curIdx = modes.indexOf(this.quality);
+    const nextMode = modes[(curIdx + 1) % modes.length];
+    this.setQuality(nextMode);
+  }
+
+  setQuality(mode) {
+    this.quality = mode;
+    if (mode === "high") {
+      this.renderer.shadowMap.enabled = true;
+      this.renderer.shadowMap.type = THREE.PCFShadowMap;
+      if (this.flashlight) {
+        this.flashlight.castShadow = true;
+        this.flashlight.shadow.mapSize.set(1024, 1024);
+      }
+      if (this.volumetricBeam) {
+        this.volumetricBeam.visible = this.torchOn && this.battery > 0;
+      }
+      this.cb.onNotify("⚙️ ග්‍රැෆික් මට්ටම: HIGH (Full Shadows, Volumetric Beam & Dynamic Foliage)");
+    } else if (mode === "medium") {
+      this.renderer.shadowMap.enabled = true;
+      this.renderer.shadowMap.type = THREE.PCFShadowMap;
+      if (this.flashlight) {
+        this.flashlight.castShadow = true;
+        this.flashlight.shadow.mapSize.set(512, 512);
+      }
+      if (this.volumetricBeam) {
+        this.volumetricBeam.visible = this.torchOn && this.battery > 0;
+      }
+      this.cb.onNotify("⚙️ ග්‍රැෆික් මට්ටම: MEDIUM (Optimized Shadows & Mist)");
+    } else {
+      this.renderer.shadowMap.enabled = false;
+      if (this.flashlight) {
+        this.flashlight.castShadow = false;
+      }
+      if (this.volumetricBeam) {
+        this.volumetricBeam.visible = false;
+      }
+      this.cb.onNotify("⚙️ ග්‍රැෆික් මට්ටම: LOW (Max Performance, Shadows Disabled)");
+    }
+
+    if (this.renderer.shadowMap.needsUpdate !== undefined) {
+      this.renderer.shadowMap.needsUpdate = true;
+    }
+  }
+
   // ── Terrain Heightmap Sampling Function ───────────────────────────────────
   getTerrainHeight(x, z) {
     // Cabin interior & immediate perimeter is kept flat at y = 0
@@ -411,19 +807,20 @@ export class Sinharaja3DEngine {
     this.renderer.setSize(width, height, false);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.05;
 
     // 2. 3D Scene & Sinharaja Nocturnal Atmospheric Fog
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color("#020704");
-    this.scene.fog = new THREE.FogExp2("#030c06", 0.018);
+    this.scene.background = new THREE.Color("#030a06");
+    this.scene.fog = new THREE.FogExp2("#05120a", 0.016);
 
     // 3. True Perspective Camera
     this.camera = new THREE.PerspectiveCamera(74, width / height, 0.1, 800);
     this.camera.position.set(this.player.x, this.player.y, this.player.z);
     this.camera.rotation.order = "YXZ";
+    this.scene.add(this.camera);
 
     // 4. Raycaster for Precise Crosshair Targeting from Center Screen (0, 0)
     this.raycaster = new THREE.Raycaster();
@@ -431,31 +828,100 @@ export class Sinharaja3DEngine {
     this.centerScreen = new THREE.Vector2(0, 0);
 
     // 5. Environmental Lighting (Nocturnal Rain Forest)
-    this.ambientLight = new THREE.AmbientLight(0x0a1f12, 0.55);
+    // Deep nocturnal ambient green-blue to maintain accessibility and visibility
+    this.ambientLight = new THREE.AmbientLight(0x092617, 0.44);
     this.scene.add(this.ambientLight);
 
-    // Moon directional rim light piercing through canopy
-    this.moonLight = new THREE.DirectionalLight(0x38bdf8, 0.65);
+    // Moonlight rim directional light piercing through canopy
+    this.moonLight = new THREE.DirectionalLight(0x38bdf8, 0.48);
     this.moonLight.position.set(400, 250, 500);
     this.scene.add(this.moonLight);
 
-    // 6. Tactical Maglite Flashlight (SpotLight attached to Player Camera)
-    // Three intensity levels: Low (1.8), Medium (4.5), High (8.0)
-    this.flashlight = new THREE.SpotLight(0xfff8db, 4.5, 42, Math.PI / 6, 0.42, 1.2);
-    this.flashlight.position.set(0.25, -0.22, -0.15); // Tactical weapon/torch viewmodel offset
+    // Outpost porch kerosene lantern (warm welcoming amber light)
+    const porchLantern = new THREE.PointLight(0xf59e0b, 1.8, 14, 1.8);
+    porchLantern.position.set(527.5, 2.7, 728.5);
+    this.scene.add(porchLantern);
+
+    // 6. Tactical Flashlight & Volumetric Light Beam Cone (with hand-held lag)
+    this.torchGroup = new THREE.Object3D();
+
+    this.flashlight = new THREE.SpotLight(0xfff8db, 5.0, 48, Math.PI / 5.2, 0.45, 1.35);
+    this.flashlight.position.set(0, 0, 0);
     this.flashlight.castShadow = true;
     this.flashlight.shadow.mapSize.width = 1024;
     this.flashlight.shadow.mapSize.height = 1024;
     this.flashlight.shadow.camera.near = 0.2;
-    this.flashlight.shadow.camera.far = 45;
-    this.flashlight.shadow.bias = -0.001;
+    this.flashlight.shadow.camera.far = 48;
+    this.flashlight.shadow.bias = -0.0006;
+    this.flashlight.shadow.normalBias = 0.04;
 
     this.flashlightTarget = new THREE.Object3D();
-    this.flashlightTarget.position.set(0, 0, -5);
-    this.camera.add(this.flashlightTarget);
-    this.camera.add(this.flashlight);
+    this.flashlightTarget.position.set(0, 0, -20);
+    this.torchGroup.add(this.flashlightTarget);
     this.flashlight.target = this.flashlightTarget;
-    this.scene.add(this.camera);
+    this.torchGroup.add(this.flashlight);
+
+    // Volumetric Light Cone Geometry (tapered cone along -Z)
+    const coneGeo = new THREE.CylinderGeometry(0.06, 3.4, 40, 24, 1, true);
+    coneGeo.rotateX(Math.PI / 2);
+    coneGeo.translate(0, 0, -20);
+
+    const beamVertexShader = `
+      varying vec3 vViewPos;
+      varying vec2 vUv;
+      varying float vZ;
+      void main() {
+        vUv = uv;
+        vZ = -position.z;
+        vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
+        vViewPos = -mvPos.xyz;
+        gl_Position = projectionMatrix * mvPos;
+      }
+    `;
+
+    const beamFragmentShader = `
+      uniform vec3 uColor;
+      uniform float uIntensity;
+      uniform float uTime;
+      varying vec3 vViewPos;
+      varying vec2 vUv;
+      varying float vZ;
+
+      void main() {
+        float distFactor = clamp(1.0 - (vZ / 40.0), 0.0, 1.0);
+        distFactor = pow(distFactor, 1.7);
+
+        vec3 viewDir = normalize(vViewPos);
+        float radial = abs(dot(viewDir, vec3(0.0, 0.0, -1.0)));
+        radial = clamp(radial * 1.5, 0.0, 1.0);
+
+        float mist = 0.85 + 0.15 * sin(vZ * 0.45 - uTime * 2.2 + vUv.x * 6.28);
+        float alpha = distFactor * radial * 0.18 * uIntensity * mist;
+        if (alpha < 0.002) discard;
+
+        gl_FragColor = vec4(uColor, alpha);
+      }
+    `;
+
+    this.volumetricUniforms = {
+      uColor: { value: new THREE.Color(0xfff8db) },
+      uIntensity: { value: 1.0 },
+      uTime: { value: 0.0 },
+    };
+
+    const beamMat = new THREE.ShaderMaterial({
+      vertexShader: beamVertexShader,
+      fragmentShader: beamFragmentShader,
+      uniforms: this.volumetricUniforms,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide,
+    });
+
+    this.volumetricBeam = new THREE.Mesh(coneGeo, beamMat);
+    this.torchGroup.add(this.volumetricBeam);
+    this.scene.add(this.torchGroup);
 
     // 7. Interactive 3D Meshes Collection & Obstacle Colliders
     this.interactableMeshes = [];
@@ -1110,6 +1576,7 @@ export class Sinharaja3DEngine {
         dummy.rotation.set(0.45 + Math.random() * 0.2, angle, 0);
         dummy.scale.set(1.0, 1.0 + Math.random() * 0.4, 1.0);
         dummy.updateMatrix();
+        this.fernBaseMatrices.push(dummy.matrix.clone());
         this.fernMesh.setMatrixAt(fIdx++, dummy.matrix);
       }
     }
@@ -1563,6 +2030,11 @@ export class Sinharaja3DEngine {
     const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
     if (tag === "input" || tag === "textarea") return;
 
+    // Start continuous procedural ambience on first player interaction
+    if (!this.ambientStarted) {
+      this.startContinuousAmbience();
+    }
+
     this.keys[e.key.toLowerCase()] = true;
 
     // Space -> Jump (when grounded) / Leech removal
@@ -1619,6 +2091,10 @@ export class Sinharaja3DEngine {
     if (e.key.toLowerCase() === "z") {
       this.targetZoom = this.targetZoom === 1.0 ? 0.75 : 1.0;
     }
+    // O -> Graphics Quality Preset Toggle (High -> Medium -> Low)
+    if (e.key.toLowerCase() === "o") {
+      this.cycleQuality();
+    }
     // Escape -> Pause
     if (e.key === "Escape" && this.cb.onTogglePause) {
       this.cb.onTogglePause();
@@ -1633,6 +2109,11 @@ export class Sinharaja3DEngine {
     // Check if click was on modal or UI element above canvas
     if (this.paused) return;
     if (e.target !== this.canvas) return;
+
+    // Start continuous procedural ambience on first player interaction
+    if (!this.ambientStarted) {
+      this.startContinuousAmbience();
+    }
 
     if (document.pointerLockElement !== this.canvas) {
       try {
@@ -1711,12 +2192,19 @@ export class Sinharaja3DEngine {
   updateFlashlight() {
     if (!this.torchOn || this.battery <= 0) {
       this.flashlight.visible = false;
+      if (this.volumetricBeam) this.volumetricBeam.visible = false;
       return;
     }
     this.flashlight.visible = true;
-    const baseIntensity = this.uvMode ? 3.0 : 4.5;
+    const baseIntensity = this.uvMode ? 3.0 : 5.0;
     this.flashlight.intensity = baseIntensity * this.torchIntensity;
-    this.flashlight.distance = this.uvMode ? 28 : (38 * Math.sqrt(this.torchIntensity));
+    this.flashlight.distance = this.uvMode ? 28 : (45 * Math.sqrt(this.torchIntensity));
+
+    if (this.volumetricBeam && this.volumetricUniforms) {
+      this.volumetricBeam.visible = (this.quality !== "low");
+      this.volumetricUniforms.uIntensity.value = this.torchIntensity;
+      this.volumetricUniforms.uColor.value.set(this.uvMode ? 0xa855f7 : 0xfff8db);
+    }
   }
 
   interactTarget() {
@@ -2004,6 +2492,97 @@ export class Sinharaja3DEngine {
     this.camera.rotation.y = this.player.yaw;
     this.camera.rotation.x = this.player.pitch;
 
+    // ── Update Volumetric Flashlight Beam & Hand-Held Torch Sway ──
+    if (this.volumetricBeam && this.volumetricUniforms) {
+      this.volumetricUniforms.uTime.value = this.elapsedTime;
+      this.volumetricUniforms.uIntensity.value = (this.torchOn && this.battery > 0) ? this.torchIntensity : 0;
+      this.volumetricUniforms.uColor.value.set(this.uvMode ? 0xa855f7 : 0xfff8db);
+      this.volumetricBeam.visible = this.torchOn && this.battery > 0 && this.quality !== "low";
+    }
+
+    if (this.torchGroup) {
+      this.torchLag.yaw += (this.player.yaw - this.torchLag.yaw) * Math.min(1.0, dt * 16);
+      this.torchLag.pitch += (this.player.pitch - this.torchLag.pitch) * Math.min(1.0, dt * 16);
+
+      const sinY = Math.sin(this.player.yaw);
+      const cosY = Math.cos(this.player.yaw);
+      const bobX = Math.cos(this.headBob * 0.5) * 0.02;
+      const offX = 0.28 + bobX;
+      const offY = -0.22;
+      const offZ = -0.15;
+
+      const worldTorchX = this.player.x + (offX * cosY - offZ * sinY);
+      const worldTorchY = this.player.y + bobOffset + offY;
+      const worldTorchZ = this.player.z + (offX * sinY + offZ * cosY);
+
+      this.torchGroup.position.set(worldTorchX, worldTorchY, worldTorchZ);
+      this.torchGroup.rotation.order = "YXZ";
+      this.torchGroup.rotation.y = this.torchLag.yaw;
+      this.torchGroup.rotation.x = this.torchLag.pitch;
+    }
+
+    // ── Dynamic Foliage Wind Movement ──
+    if (this.fernMesh && this.quality !== "low" && this.fernBaseMatrices && this.fernBaseMatrices.length > 0) {
+      const windSpeed = this.stormActive ? 3.4 : 1.8;
+      const tempMatrix = new THREE.Matrix4();
+      const tempPos = new THREE.Vector3();
+      const tempRot = new THREE.Quaternion();
+      const tempScale = new THREE.Vector3();
+      const tempEuler = new THREE.Euler();
+
+      const maxFerns = Math.min(this.fernMesh.count, 60);
+      for (let i = 0; i < maxFerns; i++) {
+        tempMatrix.copy(this.fernBaseMatrices[i]);
+        tempMatrix.decompose(tempPos, tempRot, tempScale);
+        tempEuler.setFromQuaternion(tempRot, "YXZ");
+        const sway = Math.sin(this.elapsedTime * windSpeed + tempPos.x * 0.15 + tempPos.z * 0.15) * 0.06;
+        tempEuler.x += sway;
+        tempRot.setFromEuler(tempEuler);
+        tempMatrix.compose(tempPos, tempRot, tempScale);
+        this.fernMesh.setMatrixAt(i, tempMatrix);
+      }
+      this.fernMesh.instanceMatrix.needsUpdate = true;
+    }
+
+    // ── Continuous Web Audio Spatial Ambience ──
+    this.updateAmbience(dt);
+
+    // ── Sinharaja Endemic Tree Frogs Periodic Croaks ──
+    if (!this.player.inShelter && this.quality !== "low") {
+      this.frogTimer += dt;
+      if (this.frogTimer >= this.nextFrogTime) {
+        this.frogTimer = 0;
+        this.nextFrogTime = 4.5 + Math.random() * 5.0;
+        this.playEndemicFrogCroak();
+      }
+    }
+
+    // ── Dynamic Thunderstorm & Sheet Lightning Cycle ──
+    this.lightningTimer += dt;
+    if (this.lightningTimer >= this.nextLightningTime) {
+      this.lightningTimer = 0;
+      this.nextLightningTime = this.stormActive ? (16 + Math.random() * 12) : (26 + Math.random() * 18);
+      this.triggerLightningStrike();
+    }
+
+    if (this.lightningActive) {
+      this.lightningFlashTimer += dt;
+      if (this.lightningFlashTimer < 0.07) {
+        this.moonLight.intensity = 3.6;
+        this.ambientLight.intensity = 1.6;
+      } else if (this.lightningFlashTimer < 0.12) {
+        this.moonLight.intensity = 0.45;
+        this.ambientLight.intensity = 0.44;
+      } else if (this.lightningFlashTimer < 0.24) {
+        this.moonLight.intensity = 4.2;
+        this.ambientLight.intensity = 2.0;
+      } else {
+        this.lightningActive = false;
+        this.moonLight.intensity = 0.48;
+        this.ambientLight.intensity = 0.44;
+      }
+    }
+
     // Update Rain Particles
     if (this.rainParticles) {
       const pos = this.rainParticles.geometry.attributes.position.array;
@@ -2068,6 +2647,7 @@ export class Sinharaja3DEngine {
         temperature: 100,
         gingerTeaCount: this.gingerTeaCount,
         tasks: { ...this.tasks },
+        quality: this.quality,
       });
     }
   }
@@ -2099,6 +2679,15 @@ export class Sinharaja3DEngine {
     document.removeEventListener("pointerlockerror", this._onPointerLockError);
     window.removeEventListener("mousemove", this._onMouseMove);
     this.canvas.removeEventListener("wheel", this._onWheel);
+
+    try {
+      if (this.rainNoise) { this.rainNoise.stop(); this.rainNoise.disconnect(); }
+      if (this.cicadaCarrier) { this.cicadaCarrier.stop(); this.cicadaCarrier.disconnect(); }
+      if (this.cicadaLfo) { this.cicadaLfo.stop(); this.cicadaLfo.disconnect(); }
+      if (this.radioNoise) { this.radioNoise.stop(); this.radioNoise.disconnect(); }
+      if (this.riverNoise) { this.riverNoise.stop(); this.riverNoise.disconnect(); }
+      if (this.caveDroneOsc) { this.caveDroneOsc.stop(); this.caveDroneOsc.disconnect(); }
+    } catch (e) {}
 
     if (this.audioCtx && this.audioCtx.state !== "closed") {
       try {
