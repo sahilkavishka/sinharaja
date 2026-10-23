@@ -470,6 +470,11 @@ const CHAPTERS = [
   {
     id: 1,
     title: "CHAPTER 01",
+    sector: "SECTOR 01: KUDAWA VALLEY BASE",
+    sectorShort: "KUDAWA",
+    coords: "06°24′33″N 80°29′42″E // ELEV 420m",
+    hazard: "SEVERE LEECHES // FLASH MONSOON // VIPER HAZARD",
+    satFreq: "142.85 MHz [SAT-1 LINK OK]",
     nameSinhala: "කුඩව අඳුරු මාවත",
     nameEnglish: "The Kudawa Trailhead",
     tagline: "අතුරුදහන් වූ ගවේෂකයන්ගේ ආරම්භක හෝඩුවාවන් සෙවීම",
@@ -485,6 +490,11 @@ const CHAPTERS = [
   {
     id: 2,
     title: "CHAPTER 02",
+    sector: "SECTOR 02: CASCADE GORGE RAPIDS",
+    sectorShort: "MIST GORGE",
+    coords: "06°25′12″N 80°31′05″E // ELEV 650m",
+    hazard: "CRYOGENIC CHILL // HYPOTHERMIA // RAPIDS DROWN RISK",
+    satFreq: "142.90 MHz [INTERMITTENT]",
     nameSinhala: "මීදුම් නිම්නය සහ මහා දියඇලි",
     nameEnglish: "The Mist Gorge & Cascades",
     tagline: "අධික ශීතල, ඝන මීදුම සහ කැඩුණු කේබල් කරත්තයේ අභිරහස",
@@ -501,6 +511,11 @@ const CHAPTERS = [
   {
     id: 3,
     title: "CHAPTER 03",
+    sector: "SECTOR 03: YAKSHA GIRI DEPTHS",
+    sectorShort: "CAVERNS",
+    coords: "06°23′45″N 80°30′22″E // DEPTH -140m",
+    hazard: "SUBTERRANEAN DARKNESS // AIR HAZARD // CAVE LEECHES",
+    satFreq: "143.15 MHz [OFFLINE / UNDERGROUND]",
     nameSinhala: "යක්ෂ ගිරි භූගත අගාධය",
     nameEnglish: "The Subterranean Caverns",
     tagline: "පොළොව යට සැඟවුණු ප්‍රාග් ඓතිහාසික ලෙන් සංකීර්ණය",
@@ -517,6 +532,11 @@ const CHAPTERS = [
   {
     id: 4,
     title: "CHAPTER 04",
+    sector: "SECTOR 04: COMPLEX 87 RESEARCH VAULT",
+    sectorShort: "COMPLEX 87",
+    coords: "06°22′18″N 80°32′44″E // ELEV 580m",
+    hazard: "HIGH VOLTAGE GRID // MUTATED FLORA // BIO-SPECIMENS",
+    satFreq: "143.40 MHz [ENCRYPTED SIGNAL DETECTED]",
     nameSinhala: "නටබුන් වූ රහස් පර්යේෂණාගාරය",
     nameEnglish: "The Forgotten Facility",
     tagline: "අතහැර දැමූ 1987 රසායනාගාරය සහ අමුතු සංඥා",
@@ -533,6 +553,11 @@ const CHAPTERS = [
   {
     id: 5,
     title: "CHAPTER 05",
+    sector: "SECTOR 05: SACRED CANOPY SUMMIT",
+    sectorShort: "CANOPY",
+    coords: "06°21′05″N 80°34′19″E // ALT +150m CANOPY",
+    hazard: "EXTREME HEIGHTS // CANOPY SQUALLS // EMP SURGES",
+    satFreq: "144.00 MHz [GLOBAL ORBITAL UPLINK]",
     nameSinhala: "මහා නාවෘක්ෂය සහ අවසාන සත්‍යය",
     nameEnglish: "The Colossus Canopy & Final Truth",
     tagline: "වලාකුළු මට්ටමේ මහා ගස් වියන සහ අවසාන හෙළිදරව්ව",
@@ -547,6 +572,100 @@ const CHAPTERS = [
     ],
   },
 ];
+
+// ── Topographical Mission Theater Vector Background ───────────────────────
+const TopographicalTheaterSvg = () => (
+  <svg className="topographical-theater-svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <linearGradient id="topoGreenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#22c55e" stopOpacity="0.12" />
+        <stop offset="50%" stopColor="#15803d" stopOpacity="0.06" />
+        <stop offset="100%" stopColor="#052e16" stopOpacity="0.02" />
+      </linearGradient>
+      <pattern id="militaryGrid" width="80" height="80" patternUnits="userSpaceOnUse">
+        <path d="M 80 0 L 0 0 0 80" fill="none" stroke="rgba(34, 197, 94, 0.05)" strokeWidth="1" />
+        <circle cx="0" cy="0" r="1.5" fill="rgba(34, 197, 94, 0.15)" />
+      </pattern>
+    </defs>
+
+    {/* Background Grid */}
+    <rect width="100%" height="100%" fill="url(#militaryGrid)" />
+
+    {/* Topographic Contour Elevation Rings */}
+    <g stroke="rgba(74, 222, 128, 0.09)" fill="none" strokeWidth="1.2">
+      <path d="M -50 250 C 200 180, 450 320, 750 220 C 1050 120, 1300 280, 1650 180" />
+      <path d="M -50 320 C 220 260, 480 390, 780 300 C 1080 210, 1320 360, 1650 260" />
+      <path d="M -50 400 C 250 340, 520 460, 820 380 C 1120 300, 1350 440, 1650 340" />
+      <path d="M -50 500 C 300 450, 580 540, 880 480 C 1180 420, 1400 520, 1650 460" />
+      <path d="M -50 620 C 350 580, 650 640, 950 600 C 1250 560, 1450 620, 1650 580" />
+      
+      {/* Mountain Ridge Concentric Loops */}
+      <ellipse cx="420" cy="480" rx="260" ry="140" stroke="rgba(251, 191, 36, 0.08)" strokeDasharray="4 6" />
+      <ellipse cx="420" cy="480" rx="190" ry="100" />
+      <ellipse cx="420" cy="480" rx="120" ry="60" />
+      <ellipse cx="420" cy="480" rx="50" ry="25" fill="rgba(251, 191, 36, 0.04)" />
+      <text x="420" y="484" fill="rgba(251, 191, 36, 0.4)" fontSize="10" fontFamily="monospace" textAnchor="middle">▲ ELEV 1170m (HINIDUMA PEAK)</text>
+
+      <ellipse cx="1180" cy="380" rx="280" ry="150" stroke="rgba(34, 197, 94, 0.08)" />
+      <ellipse cx="1180" cy="380" rx="200" ry="110" />
+      <ellipse cx="1180" cy="380" rx="130" ry="70" />
+      <ellipse cx="1180" cy="380" rx="60" ry="30" fill="rgba(34, 197, 94, 0.04)" />
+      <text x="1180" y="384" fill="rgba(74, 222, 128, 0.4)" fontSize="10" fontFamily="monospace" textAnchor="middle">▲ ELEV 850m (SINHAGALA)</text>
+    </g>
+
+    {/* Sinharaja Gin Ganga River Waterway */}
+    <g stroke="rgba(56, 189, 248, 0.2)" fill="none" strokeLinecap="round">
+      <path d="M 120 920 C 280 750, 360 620, 520 540 C 680 460, 840 480, 1000 360 C 1160 240, 1380 210, 1620 120" strokeWidth="4" />
+      <path d="M 520 540 Q 600 660 740 780" strokeWidth="2.5" strokeDasharray="6 3" />
+      <text x="720" y="490" fill="rgba(56, 189, 248, 0.5)" fontSize="10" fontFamily="monospace" letterSpacing="2">GIN GANGA RIVER BASIN [WATERSHED]</text>
+    </g>
+
+    {/* Sector Coordinate Tactical Pins and Flight Vectors */}
+    <g>
+      <path d="M 320 640 L 640 480 L 860 620 L 1120 440 L 1380 320" 
+            stroke="rgba(251, 191, 36, 0.4)" strokeWidth="1.5" strokeDasharray="6 6" fill="none" />
+
+      {/* Sector 1: Kudawa Outpost */}
+      <circle cx="320" cy="640" r="16" fill="rgba(34, 197, 94, 0.15)" stroke="#4ade80" strokeWidth="1.5" />
+      <circle cx="320" cy="640" r="4" fill="#4ade80" />
+      <text x="320" y="675" fill="#4ade80" fontSize="11" fontFamily="monospace" fontWeight="bold" textAnchor="middle">SEC-01 KUDAWA (06°24′N 80°29′E)</text>
+
+      {/* Sector 2: Mist Gorge */}
+      <circle cx="640" cy="480" r="14" fill="rgba(251, 191, 36, 0.15)" stroke="#fbbf24" strokeWidth="1.2" />
+      <circle cx="640" cy="480" r="3.5" fill="#fbbf24" />
+      <text x="640" y="512" fill="#fbbf24" fontSize="11" fontFamily="monospace" textAnchor="middle">SEC-02 WATERFALL RAPIDS</text>
+
+      {/* Sector 3: Caverns */}
+      <circle cx="860" cy="620" r="14" fill="rgba(168, 85, 247, 0.15)" stroke="#c084fc" strokeWidth="1.2" />
+      <circle cx="860" cy="620" r="3.5" fill="#c084fc" />
+      <text x="860" y="652" fill="#c084fc" fontSize="11" fontFamily="monospace" textAnchor="middle">SEC-03 YAKSHA GIRI DEPTHS</text>
+
+      {/* Sector 4: Facility 87 */}
+      <circle cx="1120" cy="440" r="14" fill="rgba(239, 68, 68, 0.15)" stroke="#f87171" strokeWidth="1.2" />
+      <circle cx="1120" cy="440" r="3.5" fill="#f87171" />
+      <text x="1120" y="472" fill="#f87171" fontSize="11" fontFamily="monospace" textAnchor="middle">SEC-04 COMPLEX 87</text>
+
+      {/* Sector 5: Colossus Canopy */}
+      <circle cx="1380" cy="320" r="18" fill="rgba(251, 191, 36, 0.2)" stroke="#f59e0b" strokeWidth="2" />
+      <circle cx="1380" cy="320" r="5" fill="#f59e0b" />
+      <text x="1380" y="355" fill="#fbbf24" fontSize="11" fontFamily="monospace" fontWeight="bold" textAnchor="middle">SEC-05 SACRED CANOPY SUMMIT</text>
+    </g>
+
+    {/* Military Compass Rose (Top Right) */}
+    <g transform="translate(1480, 110)">
+      <circle cx="0" cy="0" r="45" fill="none" stroke="rgba(74, 222, 128, 0.15)" strokeWidth="1.2" />
+      <circle cx="0" cy="0" r="38" fill="none" stroke="rgba(74, 222, 128, 0.25)" strokeDasharray="3 3" />
+      <line x1="0" y1="-45" x2="0" y2="45" stroke="rgba(74, 222, 128, 0.3)" strokeWidth="1" />
+      <line x1="-45" y1="0" x2="45" y2="0" stroke="rgba(74, 222, 128, 0.3)" strokeWidth="1" />
+      <polygon points="0,-42 5,-15 -5,-15" fill="#4ade80" />
+      <polygon points="0,42 5,15 -5,15" fill="rgba(74, 222, 128, 0.3)" />
+      <text x="0" y="-48" fill="#4ade80" fontSize="11" fontFamily="monospace" fontWeight="bold" textAnchor="middle">N</text>
+      <text x="0" y="58" fill="rgba(74, 222, 128, 0.6)" fontSize="10" fontFamily="monospace" textAnchor="middle">S</text>
+      <text x="54" y="4" fill="rgba(74, 222, 128, 0.6)" fontSize="10" fontFamily="monospace" textAnchor="middle">E</text>
+      <text x="-54" y="4" fill="rgba(74, 222, 128, 0.6)" fontSize="10" fontFamily="monospace" textAnchor="middle">W</text>
+    </g>
+  </svg>
+);
 
 const CHAPTER_LOCATIONS = {
   1: { label: "KUDAWA TRAIL // MIDNIGHT PROTOCOL", coords: "LAT 6.40°N | LON 80.45°E | RAIN" },
@@ -2781,18 +2900,48 @@ export default function App() {
   const cardinalStr = cardinalDirections[cardinalIndex];
 
   // ══════════════════════════════════════════════════════════════════════════
-  // VIEW 1: CHAPTER SELECT SCREEN (FLASHCARDS & MISSION DOSSIER)
+  // VIEW 1: CHAPTER SELECT SCREEN (TACTICAL MISSION DOSSIER THEATER)
   // ══════════════════════════════════════════════════════════════════════════
   if (currentView === "chapters") {
     return (
       <div className="chapter-select-screen">
+        <TopographicalTheaterSvg />
         <div className="fog-overlay" />
+
+        {/* Top Department Agency Banner */}
+        <div className="dossier-department-banner">
+          <span className="agency-code">SRI LANKA SPECIAL EXPEDITION FORCES // SINHARAJA BIOSPHERE SECTOR // REF #1987-EXP</span>
+          <span className="clearance-tag">TOP SECRET // CLASSIFIED INTEL ARCHIVE</span>
+        </div>
 
         <div className="select-header">
           <div className="header-titles">
-            <span className="sub-badge">{I18N[lang].expedition_dossier}</span>
-            <h1 className="main-title">{I18N[lang].select_chapter}</h1>
+            <h1 className="main-title">
+              <span className="title-sinhala">සිංහරාජ: අතුරුදහන් වූ ගවේෂණය</span>
+              <span className="title-english-sub">SINHARAJA BIOSPHERE // OPERATION: THE LOST EXPEDITION</span>
+            </h1>
             <p className="main-subtitle">{I18N[lang].tagline_main}</p>
+
+            {/* Telemetry Strip */}
+            <div className="dossier-telemetry-bar">
+              <div className="telemetry-item">
+                <span className="telem-dot pulse-emerald" />
+                <span className="telem-label">SAT-LINK:</span>
+                <strong className="telem-val">INMARSAT-4C [142.85 MHz]</strong>
+              </div>
+              <div className="telemetry-item">
+                <span className="telem-label">METEOROLOGY:</span>
+                <strong className="telem-val">MONSOON RAIN (94% HUMIDITY // 22°C // 994 hPa)</strong>
+              </div>
+              <div className="telemetry-item">
+                <span className="telem-label">{lang === "en" ? "GLOBAL EVIDENCE:" : "සාක්ෂි ප්‍රගතිය:"}</span>
+                <strong className="telem-val telem-gold">{totalEvidenceCount} / 15 ({Math.round((totalEvidenceCount / 15) * 100)}%)</strong>
+              </div>
+              <div className="telemetry-item">
+                <span className="telem-label">{lang === "en" ? "AWARDS:" : "සම්මාන:"}</span>
+                <strong className="telem-val telem-blue">{unlockedAchievements.length} / {MASTER_ACHIEVEMENTS.length}</strong>
+              </div>
+            </div>
           </div>
 
           <div className="top-action-bar">
@@ -2831,19 +2980,53 @@ export default function App() {
           </div>
         </div>
 
-        {/* Continue Saved Expedition Banner */}
+        {/* Continue Saved Expedition Quick-Deploy Banner */}
         {completedChapters.length > 0 && (
           <div className="continue-expedition-banner">
-            <span><Icons.Disk className="tactical-svg-icon" /> මෙහෙයුම් ප්‍රගතිය සුරක්ෂිතයි // DOSSIER ACTIVE ({completedChapters.length} / 5 COMPLETED)</span>
+            <div className="continue-banner-left">
+              <span className="continue-tag"><Icons.Disk className="tactical-svg-icon" /> DOSSIER ACTIVE</span>
+              <strong className="continue-msg">
+                {lang === "en"
+                  ? `PREVIOUS EXPEDITION SAVED // ${completedChapters.length} OF 5 SECTORS SECURED`
+                  : `මෙහෙයුම් ප්‍රගතිය සුරක්ෂිතයි // කලාප 5 න් ${completedChapters.length} ක් සම්පූර්ණයි`}
+              </strong>
+            </div>
             <button
               className="continue-btn"
               onClick={() => launchChapter([1, 2, 3, 4, 5].find((c) => !completedChapters.includes(c)) || 1)}
             >
-              ඉදිරියට යන්න (CONTINUE EXPEDITION) ▶
+              {lang === "en" ? "RESUME EXPEDITION OPERATION ▶" : "මෙහෙයුම ඉදිරියට ගෙන යන්න ▶"}
             </button>
           </div>
         )}
 
+        {/* Sector Quick Jump Navigation Strip */}
+        <div className="sector-nav-strip">
+          <span className="sector-strip-label"><Icons.Crosshair className="tactical-svg-icon" /> {lang === "en" ? "SECTOR SELECTION:" : "කලාප තේරීම:"}</span>
+          <div className="sector-nav-pills">
+            {CHAPTERS.map((chap) => {
+              const isUnlocked = unlockedChapters.includes(chap.id);
+              const isDone = completedChapters.includes(chap.id);
+              return (
+                <button
+                  key={chap.id}
+                  className={`sector-pill-btn ${isDone ? "pill-done" : isUnlocked ? "pill-ready" : "pill-locked"}`}
+                  onClick={() => {
+                    if (isUnlocked) launchChapter(chap.id);
+                    else showToast(`[LOCKED] ${chap.title} අගුළු වැටී ඇත!`);
+                  }}
+                >
+                  <span className="pill-dot" />
+                  <strong>SEC 0{chap.id}</strong>
+                  <span>{chap.sectorShort || chap.title}</span>
+                  <small>{isDone ? "✓" : isUnlocked ? "READY" : "LOCK"}</small>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Classified Mission Dossier Cards Grid */}
         <div className="chapters-grid">
           {CHAPTERS.map((chap) => {
             const isUnlocked = unlockedChapters.includes(chap.id);
@@ -2851,20 +3034,31 @@ export default function App() {
             return (
               <div
                 key={chap.id}
-                className={`chapter-flashcard ${isUnlocked ? "unlocked" : "locked"} ${
+                className={`chapter-flashcard mission-dossier-card ${isUnlocked ? "unlocked" : "locked"} ${
                   isDone ? "completed-card" : ""
                 }`}
                 onClick={() => isUnlocked && launchChapter(chap.id)}
               >
+                {/* Dossier Card Header Tab */}
+                <div className="dossier-card-top-tab">
+                  <span className="dossier-file-code">DOSSIER // FILE EXP-0{chap.id}</span>
+                  <span className={`status-badge ${isDone ? "completed" : isUnlocked ? "active" : "locked"}`}>
+                    {isDone ? "✓ ARCHIVE COMPLETED" : isUnlocked ? "CLEARED FOR DEPLOYMENT" : "TOP SECRET // CLASSIFIED"}
+                  </span>
+                </div>
+
                 <div
                   className="flashcard-image"
                   style={{ backgroundImage: `url(${chap.image})` }}
                 >
+                  <div className="recon-crosshair-overlay">
+                    <div className="recon-reticle" />
+                    <span className="recon-coords-label">{chap.coords}</span>
+                  </div>
+
                   <div className="card-badge-row">
                     <span className="chap-num-badge">{chap.title}</span>
-                    <span className={`status-badge ${isDone ? "completed" : isUnlocked ? "active" : "locked"}`}>
-                      {isDone ? "✓ COMPLETED" : isUnlocked ? "READY" : "CLASSIFIED"}
-                    </span>
+                    <span className="chap-sector-badge">{chap.sector || `SECTOR 0${chap.id}`}</span>
                   </div>
                   {chap.climate && (
                     <span className="card-climate-badge">{chap.climate}</span>
@@ -2878,9 +3072,19 @@ export default function App() {
                   <p className="chap-tagline">“{chap.tagline}”</p>
                   <p className="chap-desc">{chap.desc}</p>
 
+                  {/* Hazard Assessment Callout */}
+                  {chap.hazard && (
+                    <div className="dossier-hazard-strip">
+                      <span className="hazard-title">⚠️ THREAT INTEL:</span>
+                      <span className="hazard-desc">{chap.hazard}</span>
+                    </div>
+                  )}
+
                   {chap.evidenceList && (
                     <div className="card-evidence-box">
-                      <span className="evidence-box-title"><Icons.Target className="tactical-svg-icon" /> මෙහෙයුම් ඉලක්ක හා සාක්ෂි:</span>
+                      <span className="evidence-box-title">
+                        <Icons.Target className="tactical-svg-icon" /> {lang === "en" ? "MISSION INTEL & CLUES:" : "මෙහෙයුම් ඉලක්ක හා සාක්ෂි:"}
+                      </span>
                       <div className="evidence-tags">
                         {chap.evidenceList.map((ev) => {
                           const isFound = evidence[ev.id];
@@ -2914,7 +3118,7 @@ export default function App() {
                       }
                     }}
                   >
-                    {isUnlocked ? (isDone ? `REPLAY ${chap.title} ▶` : `DEPLOY ${chap.title} ▶`) : `🔒 LOCKED (COMPLETE CH 0${chap.id - 1})`}
+                    {isUnlocked ? (isDone ? `REPLAY ${chap.title} ▶` : `DEPLOY OPERATION 0${chap.id} ▶`) : `🔒 LOCKED (COMPLETE CH 0${chap.id - 1})`}
                   </button>
                 </div>
               </div>
