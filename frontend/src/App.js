@@ -1191,7 +1191,16 @@ export default function App() {
       showToast(engineRef.current.targetZoom < 1.0 ? "[ZOOM] දුරදක්නය: පුළුල් දර්ශනය (0.75x)" : "[ZOOM] සාමාන්‍ය දර්ශනය (1.0x)");
     }
     if (action === "torch") {
-      engineRef.current.torchOn = !engineRef.current.torchOn;
+      if (engineRef.current.toggleTorch) {
+        engineRef.current.toggleTorch();
+      } else {
+        engineRef.current.torchOn = !engineRef.current.torchOn;
+      }
+    }
+    if (action === "torchIntensity") {
+      if (engineRef.current.cycleTorchIntensity) {
+        engineRef.current.cycleTorchIntensity();
+      }
     }
     if (action === "uv") {
       engineRef.current.toggleUv();

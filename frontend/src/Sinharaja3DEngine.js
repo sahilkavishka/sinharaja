@@ -17,6 +17,7 @@ export class Sinharaja3DEngine {
     this.sanity = 100;
     this.battery = 100;
     this.torchOn = true;
+    this.torchIntensity = 1.0; // 0.5 (low), 1.0 (medium), 1.6 (high)
     this.uvUnlocked = false;
     this.uvMode = false;
     this.stormActive = false;
@@ -65,21 +66,30 @@ export class Sinharaja3DEngine {
     this.kudawaDoorOpen = false;
     this.doorSwingAngle = 0;
 
-    // Player position and movement vectors
-    // 3D coordinates: x (East-West), y (Altitude / Up), z (North-South)
-    // Starting in Kudawa Outpost cabin: x: 520, z: 720 (mapping 2D world coords to 3D)
+    // Player Physics & First-Person Controller State
+    // Coordinates: x (East-West), y (Altitude/Up), z (North-South)
+    // Kudawa cabin center is at x: 520, z: 720
     this.player = {
       x: 520,
-      y: 1.7, // eye height above floor
+      y: 1.7, // Standing eye height above ground
       z: 720,
-      radius: 0.8,
+      vy: 0,  // Vertical velocity for gravity and jump
+      radius: 0.75,
       speed: 4.8,
-      sprintMultiplier: 1.6,
+      sprintMultiplier: 1.65,
+      crouchMultiplier: 0.5,
       stamina: 100,
       isSprinting: false,
+      isCrouching: false,
+      isGrounded: true,
       isMoving: false,
       yaw: Math.PI, // Facing South toward doorway
       pitch: 0,
+      targetYaw: Math.PI,
+      targetPitch: 0,
+      standHeight: 1.7,
+      crouchHeight: 1.05,
+      curEyeHeight: 1.7,
       inShelter: true,
       inCave: false,
       inMud: false,
@@ -92,6 +102,15 @@ export class Sinharaja3DEngine {
     this.lightningTimer = 0;
     this.footstepDist = 0;
     this.headBob = 0;
+
+    // Bind event handlers for clean disposal
+    this._onKeyDown = this._onKeyDown.bind(this);
+    this._onKeyUp = this._onKeyUp.bind(this);
+    this._onPointerLockChange = this._onPointerLockChange.bind(this);
+    this._onPointerLockError = this._onPointerLockError.bind(this);
+    this._onMouseMove = this._onMouseMove.bind(this);
+    this._onCanvasClick = this._onCanvasClick.bind(this);
+    this._onWheel = this._onWheel.bind(this);
 
     // Initialize Subsystems
     this.initAudio();
@@ -147,6 +166,30 @@ export class Sinharaja3DEngine {
       gain.connect(this.audioCtx.destination);
       osc.start(t);
       osc.stop(t + 0.12);
+    } else if (type === "jump") {
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(140, t);
+      osc.frequency.exponentialRampToValueAtTime(260, t + 0.15);
+      gain.gain.setValueAtTime(0.12, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+      osc.connect(gain);
+      gain.connect(this.audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + 0.15);
+    } else if (type === "land") {
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(90, t);
+      osc.frequency.exponentialRampToValueAtTime(25, t + 0.18);
+      gain.gain.setValueAtTime(0.18, t);
+      gain.gain.linearRampToValueAtTime(0.001, t + 0.18);
+      osc.connect(gain);
+      gain.connect(this.audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + 0.18);
     } else if (type === "pickup") {
       [440, 554, 659, 880].forEach((freq, i) => {
         const osc = this.audioCtx.createOscillator();
@@ -260,7 +303,38 @@ export class Sinharaja3DEngine {
       gain.connect(this.audioCtx.destination);
       osc.start(t);
       osc.stop(t + 0.12);
+    } else if (type === "click") {
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+      osc.type = "square";
+      osc.frequency.setValueAtTime(1200, t);
+      osc.frequency.exponentialRampToValueAtTime(300, t + 0.03);
+      gain.gain.setValueAtTime(0.08, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.03);
+      osc.connect(gain);
+      gain.connect(this.audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + 0.03);
     }
+  }
+
+  // ── Terrain Heightmap Sampling Function ───────────────────────────────────
+  getTerrainHeight(x, z) {
+    // Cabin interior & immediate perimeter is kept flat at y = 0
+    const inCabin = (x >= 520 - 12 && x <= 520 + 12 && z >= 720 - 10 && z <= 720 + 10);
+    if (inCabin) return 0.0;
+
+    const dist = Math.hypot(x - 520, z - 720);
+    if (dist <= 18) {
+      // Smooth blend transition out of cabin entrance
+      const factor = Math.max(0, (dist - 12) / 6);
+      const rawElevation = Math.sin(x * 0.05) * 0.8 + Math.cos(z * 0.04) * 0.7;
+      return Math.max(-0.2, rawElevation) * factor;
+    }
+
+    // Rainforest rolling terrain
+    const elevation = Math.sin(x * 0.05) * 0.8 + Math.cos(z * 0.04) * 0.7;
+    return Math.max(-0.2, elevation);
   }
 
   // ── Three.js WebGL Scene Setup ────────────────────────────────────────────
@@ -305,14 +379,15 @@ export class Sinharaja3DEngine {
     this.moonLight.position.set(400, 250, 500);
     this.scene.add(this.moonLight);
 
-    // 6. Flashlight (Tactical Maglite SpotLight attached to Player Camera)
-    this.flashlight = new THREE.SpotLight(0xfff8db, 4.5, 38, Math.PI / 6, 0.42, 1.2);
-    this.flashlight.position.set(0.25, -0.22, -0.15); // Weapon/Torch viewmodel offset
+    // 6. Tactical Maglite Flashlight (SpotLight attached to Player Camera)
+    // Three intensity levels: Low (1.8), Medium (4.5), High (8.0)
+    this.flashlight = new THREE.SpotLight(0xfff8db, 4.5, 42, Math.PI / 6, 0.42, 1.2);
+    this.flashlight.position.set(0.25, -0.22, -0.15); // Tactical weapon/torch viewmodel offset
     this.flashlight.castShadow = true;
     this.flashlight.shadow.mapSize.width = 1024;
     this.flashlight.shadow.mapSize.height = 1024;
     this.flashlight.shadow.camera.near = 0.2;
-    this.flashlight.shadow.camera.far = 40;
+    this.flashlight.shadow.camera.far = 45;
     this.flashlight.shadow.bias = -0.001;
 
     this.flashlightTarget = new THREE.Object3D();
@@ -322,7 +397,7 @@ export class Sinharaja3DEngine {
     this.flashlight.target = this.flashlightTarget;
     this.scene.add(this.camera);
 
-    // 7. Interactive 3D Meshes Collection
+    // 7. Interactive 3D Meshes Collection & Obstacle Colliders
     this.interactableMeshes = [];
     this.colliders = [];
   }
@@ -333,20 +408,12 @@ export class Sinharaja3DEngine {
     const terrainGeo = new THREE.PlaneGeometry(600, 600, 64, 64);
     terrainGeo.rotateX(-Math.PI / 2);
 
-    // Subtle natural elevation displacement
+    // Match exact height calculation
     const posAttr = terrainGeo.attributes.position;
     for (let i = 0; i < posAttr.count; i++) {
       const vx = posAttr.getX(i);
       const vz = posAttr.getZ(i);
-      // Gentle slope rising toward mountain ridge (South-East)
-      const dist = Math.hypot(vx - 520, vz - 720);
-      if (dist > 30) {
-        const elevation = Math.sin(vx * 0.05) * 0.8 + Math.cos(vz * 0.04) * 0.7;
-        posAttr.setY(i, Math.max(-0.2, elevation));
-      } else {
-        // Flat ground around Kudawa outpost cabin
-        posAttr.setY(i, 0);
-      }
+      posAttr.setY(i, this.getTerrainHeight(vx, vz));
     }
     terrainGeo.computeVertexNormals();
 
@@ -356,12 +423,11 @@ export class Sinharaja3DEngine {
       metalness: 0.08,
     });
     this.terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
-    this.terrainMesh.position.set(520, 0, 720);
+    this.terrainMesh.position.set(0, 0, 0); // World origin
     this.terrainMesh.receiveShadow = true;
     this.scene.add(this.terrainMesh);
 
     // ── B. Kudawa Outpost 3D Cabin Architecture ──
-    // Coordinates match 2D layout: Center ~ (520, 720), Width: 18m (430 to 610), Depth: 14m (650 to 790)
     const cabinOriginX = 520;
     const cabinOriginZ = 720;
     const cabinW = 18;
@@ -392,7 +458,7 @@ export class Sinharaja3DEngine {
     ceilMesh.position.set(cabinOriginX, cabinH, cabinOriginZ);
     this.scene.add(ceilMesh);
 
-    // 3. Kudawa Cabin Walls Material (Weathered Teak Logs)
+    // 3. Kudawa Cabin Log Walls Material
     const wallMat = new THREE.MeshStandardMaterial({
       color: 0x2b190f,
       roughness: 0.82,
@@ -405,7 +471,7 @@ export class Sinharaja3DEngine {
     northWall.castShadow = true;
     northWall.receiveShadow = true;
     this.scene.add(northWall);
-    this.colliders.push({ type: "box", minX: cabinOriginX - cabinW / 2, maxX: cabinOriginX + cabinW / 2, minZ: cabinOriginZ - cabinD / 2 - 0.3, maxZ: cabinOriginZ - cabinD / 2 + 0.3 });
+    this.colliders.push({ type: "box", minX: cabinOriginX - cabinW / 2, maxX: cabinOriginX + cabinW / 2, minZ: cabinOriginZ - cabinD / 2 - 0.35, maxZ: cabinOriginZ - cabinD / 2 + 0.35 });
 
     // West Wall (Left)
     const westWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, cabinH, cabinD), wallMat);
@@ -413,7 +479,7 @@ export class Sinharaja3DEngine {
     westWall.castShadow = true;
     westWall.receiveShadow = true;
     this.scene.add(westWall);
-    this.colliders.push({ type: "box", minX: cabinOriginX - cabinW / 2 - 0.3, maxX: cabinOriginX - cabinW / 2 + 0.3, minZ: cabinOriginZ - cabinD / 2, maxZ: cabinOriginZ + cabinD / 2 });
+    this.colliders.push({ type: "box", minX: cabinOriginX - cabinW / 2 - 0.35, maxX: cabinOriginX - cabinW / 2 + 0.35, minZ: cabinOriginZ - cabinD / 2, maxZ: cabinOriginZ + cabinD / 2 });
 
     // East Wall (Right)
     const eastWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, cabinH, cabinD), wallMat);
@@ -421,7 +487,7 @@ export class Sinharaja3DEngine {
     eastWall.castShadow = true;
     eastWall.receiveShadow = true;
     this.scene.add(eastWall);
-    this.colliders.push({ type: "box", minX: cabinOriginX + cabinW / 2 - 0.3, maxX: cabinOriginX + cabinW / 2 + 0.3, minZ: cabinOriginZ - cabinD / 2, maxZ: cabinOriginZ + cabinD / 2 });
+    this.colliders.push({ type: "box", minX: cabinOriginX + cabinW / 2 - 0.35, maxX: cabinOriginX + cabinW / 2 + 0.35, minZ: cabinOriginZ - cabinD / 2, maxZ: cabinOriginZ + cabinD / 2 });
 
     // South Wall Left Section (with door opening in center)
     const doorGapW = 2.4;
@@ -431,7 +497,7 @@ export class Sinharaja3DEngine {
     southWallL.castShadow = true;
     southWallL.receiveShadow = true;
     this.scene.add(southWallL);
-    this.colliders.push({ type: "box", minX: cabinOriginX - cabinW / 2, maxX: cabinOriginX - doorGapW / 2, minZ: cabinOriginZ + cabinD / 2 - 0.3, maxZ: cabinOriginZ + cabinD / 2 + 0.3 });
+    this.colliders.push({ type: "box", minX: cabinOriginX - cabinW / 2, maxX: cabinOriginX - doorGapW / 2, minZ: cabinOriginZ + cabinD / 2 - 0.35, maxZ: cabinOriginZ + cabinD / 2 + 0.35 });
 
     // South Wall Right Section
     const southWallR = new THREE.Mesh(new THREE.BoxGeometry(sideW, cabinH, 0.5), wallMat);
@@ -439,7 +505,7 @@ export class Sinharaja3DEngine {
     southWallR.castShadow = true;
     southWallR.receiveShadow = true;
     this.scene.add(southWallR);
-    this.colliders.push({ type: "box", minX: cabinOriginX + doorGapW / 2, maxX: cabinOriginX + cabinW / 2, minZ: cabinOriginZ + cabinD / 2 - 0.3, maxZ: cabinOriginZ + cabinD / 2 + 0.3 });
+    this.colliders.push({ type: "box", minX: cabinOriginX + doorGapW / 2, maxX: cabinOriginX + cabinW / 2, minZ: cabinOriginZ + cabinD / 2 - 0.35, maxZ: cabinOriginZ + cabinD / 2 + 0.35 });
 
     // Lintel above door
     const lintelH = 1.4;
@@ -470,6 +536,17 @@ export class Sinharaja3DEngine {
       action: () => this.toggleCabinDoor(),
     };
     this.interactableMeshes.push(doorMesh);
+
+    // Doorway Barrier Collider when door is closed
+    this.doorCollider = {
+      type: "box",
+      isDoorBarrier: true,
+      minX: cabinOriginX - doorGapW / 2,
+      maxX: cabinOriginX + doorGapW / 2,
+      minZ: cabinOriginZ + cabinD / 2 - 0.4,
+      maxZ: cabinOriginZ + cabinD / 2 + 0.4,
+    };
+    this.colliders.push(this.doorCollider);
 
     // 5. Cabin Interior Hanging Lantern
     const lanternLight = new THREE.PointLight(0xfbbf24, 2.2, 18, 1.4);
@@ -621,7 +698,8 @@ export class Sinharaja3DEngine {
       canopy.castShadow = true;
       treeGroup.add(canopy);
 
-      treeGroup.position.set(tx, 0, tz);
+      const ty = this.getTerrainHeight(tx, tz);
+      treeGroup.position.set(tx, ty, tz);
       this.scene.add(treeGroup);
       this.colliders.push({ type: "circle", x: tx, z: tz, radius: 0.9 });
     });
@@ -648,84 +726,130 @@ export class Sinharaja3DEngine {
 
   // ── Input & 360° First-Person Pointer Lock Controls ───────────────────────
   setupInputs() {
-    window.addEventListener("keydown", (e) => {
-      this.keys[e.key.toLowerCase()] = true;
+    window.addEventListener("keydown", this._onKeyDown);
+    window.addEventListener("keyup", this._onKeyUp);
+    this.canvas.addEventListener("click", this._onCanvasClick);
+    document.addEventListener("pointerlockchange", this._onPointerLockChange);
+    document.addEventListener("pointerlockerror", this._onPointerLockError);
+    window.addEventListener("mousemove", this._onMouseMove);
+    this.canvas.addEventListener("wheel", this._onWheel, { passive: false });
+  }
 
-      // Space -> Throw Salt / Leech repellent
-      if (e.code === "Space") {
-        e.preventDefault();
+  _onKeyDown(e) {
+    // If a modal or paused, do not capture movement inputs
+    if (this.paused) return;
+
+    // Filter out if user is typing in an input or textarea
+    const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+    if (tag === "input" || tag === "textarea") return;
+
+    this.keys[e.key.toLowerCase()] = true;
+
+    // Space -> Jump (when grounded) / Leech removal
+    if (e.code === "Space") {
+      e.preventDefault();
+      if (this.player.isGrounded && !this.player.isCrouching && this.player.stamina >= 8) {
+        this.player.vy = 5.6; // Launch upward
+        this.player.isGrounded = false;
+        this.player.stamina = Math.max(0, this.player.stamina - 8);
+        this.playSfx("jump");
+      } else if (this.attachedLeeches > 0) {
         this.throwSalt();
       }
-      // F -> Flashlight Toggle
-      if (e.key.toLowerCase() === "f") {
-        this.torchOn = !this.torchOn;
-        this.flashlight.visible = this.torchOn;
-        this.playSfx("step");
-      }
-      // E -> Interact with Raycasted Object
-      if (e.key.toLowerCase() === "e") {
-        this.interactTarget();
-      }
-      // H -> Heal Herb
-      if (e.key.toLowerCase() === "h") {
-        this.useHerb();
-      }
-      // Quick items
-      if (e.key === "1") this.throwSalt();
-      if (e.key === "2") this.useHerb();
-      if (e.key === "3") {
-        this.torchOn = !this.torchOn;
-        this.flashlight.visible = this.torchOn;
-      }
-      if (e.key === "4") this.interactTarget();
-      // B -> Balm
-      if (e.key.toLowerCase() === "b") this.useBalm();
-      // R -> Crank Dynamo
-      if (e.key.toLowerCase() === "r") this.crankDynamo();
-      // U -> UV Mode
-      if (e.key.toLowerCase() === "u") this.toggleUv();
-      // Z -> Zoom
-      if (e.key.toLowerCase() === "z") {
-        this.targetZoom = this.targetZoom === 1.0 ? 0.75 : 1.0;
-      }
-      // Escape -> Pause
-      if (e.key === "Escape" && this.cb.onTogglePause) {
-        this.cb.onTogglePause();
-      }
-    });
+    }
 
-    window.addEventListener("keyup", (e) => {
-      this.keys[e.key.toLowerCase()] = false;
-    });
+    // C -> Toggle Crouch
+    if (e.key.toLowerCase() === "c") {
+      this.player.isCrouching = !this.player.isCrouching;
+      this.playSfx("step");
+    }
 
-    // Mouse Look via Pointer Lock
-    this.canvas.addEventListener("click", () => {
-      if (document.pointerLockElement !== this.canvas) {
-        try {
-          this.canvas.requestPointerLock();
-        } catch (err) {}
-      } else {
-        // Clicking while locked interacts with focused crosshair object
-        this.interactTarget();
-      }
-    });
+    // F -> Flashlight Toggle
+    if (e.key.toLowerCase() === "f") {
+      this.toggleTorch();
+    }
 
-    document.addEventListener("pointerlockchange", () => {
-      this.pointerLocked = document.pointerLockElement === this.canvas;
-    });
-    document.addEventListener("pointerlockerror", () => {
-      this.pointerLocked = false;
-    });
+    // T -> Adjust Flashlight Intensity (Low -> Med -> High)
+    if (e.key.toLowerCase() === "t") {
+      this.cycleTorchIntensity();
+    }
 
-    window.addEventListener("mousemove", (e) => {
-      if (this.pointerLocked) {
-        const sens = 0.0022;
-        this.player.yaw -= (e.movementX || 0) * sens;
-        this.player.pitch -= (e.movementY || 0) * sens;
-        // Clamp pitch (-80 deg to +80 deg)
-        this.player.pitch = Math.max(-1.4, Math.min(1.4, this.player.pitch));
-      }
-    });
+    // E -> Interact with Raycasted Object
+    if (e.key.toLowerCase() === "e") {
+      this.interactTarget();
+    }
+
+    // H -> Heal Herb
+    if (e.key.toLowerCase() === "h") {
+      this.useHerb();
+    }
+
+    // Quick items
+    if (e.key === "1") this.throwSalt();
+    if (e.key === "2") this.useHerb();
+    if (e.key === "3") this.toggleTorch();
+    if (e.key === "4") this.interactTarget();
+    // B -> Balm
+    if (e.key.toLowerCase() === "b") this.useBalm();
+    // R -> Crank Dynamo
+    if (e.key.toLowerCase() === "r") this.crankDynamo();
+    // U -> UV Mode
+    if (e.key.toLowerCase() === "u") this.toggleUv();
+    // Z -> Zoom
+    if (e.key.toLowerCase() === "z") {
+      this.targetZoom = this.targetZoom === 1.0 ? 0.75 : 1.0;
+    }
+    // Escape -> Pause
+    if (e.key === "Escape" && this.cb.onTogglePause) {
+      this.cb.onTogglePause();
+    }
+  }
+
+  _onKeyUp(e) {
+    this.keys[e.key.toLowerCase()] = false;
+  }
+
+  _onCanvasClick(e) {
+    // Check if click was on modal or UI element above canvas
+    if (this.paused) return;
+    if (e.target !== this.canvas) return;
+
+    if (document.pointerLockElement !== this.canvas) {
+      try {
+        this.canvas.requestPointerLock();
+      } catch (err) {}
+    } else {
+      // Clicking while locked interacts with focused crosshair object
+      this.interactTarget();
+    }
+  }
+
+  _onPointerLockChange() {
+    this.pointerLocked = document.pointerLockElement === this.canvas;
+  }
+
+  _onPointerLockError() {
+    this.pointerLocked = false;
+  }
+
+  _onMouseMove(e) {
+    if (this.pointerLocked && !this.paused) {
+      const sens = 0.0022;
+      this.player.targetYaw -= (e.movementX || 0) * sens;
+      this.player.targetPitch -= (e.movementY || 0) * sens;
+      // Clamp pitch (-80 deg to +80 deg)
+      this.player.targetPitch = Math.max(-1.4, Math.min(1.4, this.player.targetPitch));
+    }
+  }
+
+  _onWheel(e) {
+    if (this.paused) return;
+    e.preventDefault();
+    if (e.deltaY > 0) {
+      this.targetZoom = Math.max(0.72, this.targetZoom - 0.08);
+    } else {
+      this.targetZoom = Math.min(1.15, this.targetZoom + 0.08);
+    }
   }
 
   // ── Survival Mechanics & Gameplay Actions ─────────────────────────────────
@@ -738,6 +862,41 @@ export class Sinharaja3DEngine {
       this.playSfx("door_close");
       this.cb.onNotify("🚪 කුඩව මුරපොළේ දොර වැසුවා.");
     }
+  }
+
+  toggleTorch() {
+    this.torchOn = !this.torchOn;
+    this.updateFlashlight();
+    this.playSfx("click");
+    this.cb.onNotify(this.torchOn ? "💡 විදුලි පන්දම දැල්වීය (Flashlight ON)" : "🌑 විදුලි පන්දම නිවා දැමීය (Flashlight OFF)");
+  }
+
+  cycleTorchIntensity() {
+    if (!this.torchOn) {
+      this.torchOn = true;
+      this.torchIntensity = 0.5;
+    } else if (this.torchIntensity === 0.5) {
+      this.torchIntensity = 1.0;
+    } else if (this.torchIntensity === 1.0) {
+      this.torchIntensity = 1.6;
+    } else {
+      this.torchIntensity = 0.5;
+    }
+    this.updateFlashlight();
+    this.playSfx("click");
+    const label = this.torchIntensity === 0.5 ? "අඩු (Low)" : (this.torchIntensity === 1.0 ? "මධ්‍යම (Medium)" : "උපරිම (High / Turbo)");
+    this.cb.onNotify(`🔦 විදුලි පන්දමේ දීප්තිය: ${label}`);
+  }
+
+  updateFlashlight() {
+    if (!this.torchOn || this.battery <= 0) {
+      this.flashlight.visible = false;
+      return;
+    }
+    this.flashlight.visible = true;
+    const baseIntensity = this.uvMode ? 3.0 : 4.5;
+    this.flashlight.intensity = baseIntensity * this.torchIntensity;
+    this.flashlight.distance = this.uvMode ? 28 : (38 * Math.sqrt(this.torchIntensity));
   }
 
   interactTarget() {
@@ -793,10 +952,11 @@ export class Sinharaja3DEngine {
     }
     if (this.crankCooldown > 0) return;
     this.crankCooldown = 0.45;
-    this.battery = Math.min(100, this.battery + 15);
+    this.battery = Math.min(100, this.battery + 16);
     this.playSfx("step");
     this.noiseLevel = 75;
-    this.cb.onNotify("⚙️ ඩයිනමෝ කරකවා බැටරිය ආරෝපණය කළා! (+15%)");
+    this.updateFlashlight();
+    this.cb.onNotify("⚙️ ඩයිනමෝ කරකවා බැටරිය ආරෝපණය කළා! (+16%)");
   }
 
   toggleUv() {
@@ -807,12 +967,13 @@ export class Sinharaja3DEngine {
     this.uvMode = !this.uvMode;
     this.playSfx("uv_toggle");
     if (this.uvMode) {
-      this.flashlight.color.setHex(0xa855f7); // Ultraviolet purple
+      this.flashlight.color.setHex(0xa855f7); // Ultraviolet phosphorescence
       this.cb.onNotify("🟣 UV Blacklight සක්‍රියයි: සැඟවුණු සලකුණු පෙනෙනු ඇත.");
     } else {
       this.flashlight.color.setHex(0xfff8db); // Warm incandescent
       this.cb.onNotify("💡 සාමාන්‍ය විදුලි පන්දම සක්‍රියයි.");
     }
+    this.updateFlashlight();
   }
 
   // ── Physics, Collision, & Player Movement ─────────────────────────────────
@@ -823,9 +984,15 @@ export class Sinharaja3DEngine {
     if (this.crankCooldown > 0) this.crankCooldown -= dt;
     if (this.repellentTimer > 0) this.repellentTimer -= dt;
 
-    // Battery Depletion
+    // Smooth Binoculars Zoom
+    this.zoom += (this.targetZoom - this.zoom) * Math.min(1.0, dt * 10);
+    this.camera.fov = 74 * this.zoom;
+    this.camera.updateProjectionMatrix();
+
+    // Battery Depletion proportional to torch intensity
     if (this.torchOn && this.battery > 0) {
-      this.battery = Math.max(0, this.battery - dt * 0.45);
+      const drainRate = 0.35 * this.torchIntensity;
+      this.battery = Math.max(0, this.battery - dt * drainRate);
       if (this.battery <= 0) {
         this.flashlight.visible = false;
       }
@@ -838,6 +1005,14 @@ export class Sinharaja3DEngine {
       this.doorPivot.rotation.y = this.doorSwingAngle;
     }
 
+    // Smooth Jitter-Free Mouse Look Interpolation
+    this.player.yaw += (this.player.targetYaw - this.player.yaw) * Math.min(1.0, dt * 25);
+    this.player.pitch += (this.player.targetPitch - this.player.pitch) * Math.min(1.0, dt * 25);
+
+    // Crouch Height Smooth Transition
+    const targetHeight = this.player.isCrouching ? this.player.crouchHeight : this.player.standHeight;
+    this.player.curEyeHeight += (targetHeight - this.player.curEyeHeight) * Math.min(1.0, dt * 12);
+
     // Movement Vector Calculation
     let moveFwd = 0;
     let moveRgt = 0;
@@ -849,9 +1024,21 @@ export class Sinharaja3DEngine {
     const isMoving = moveFwd !== 0 || moveRgt !== 0;
     this.player.isMoving = isMoving;
 
-    const isSprint = this.keys["shift"] && this.player.stamina > 10;
+    // Sprinting handling with stamina drain
+    const isSprint = this.keys["shift"] && !this.player.isCrouching && this.player.stamina > 10;
     this.player.isSprinting = isSprint;
-    const curSpeed = this.player.speed * (isSprint ? this.player.sprintMultiplier : 1.0);
+    if (isSprint && isMoving) {
+      this.player.stamina = Math.max(0, this.player.stamina - dt * 16);
+    } else {
+      this.player.stamina = Math.min(100, this.player.stamina + dt * 12);
+    }
+
+    let curSpeed = this.player.speed;
+    if (this.player.isCrouching) {
+      curSpeed *= this.player.crouchMultiplier;
+    } else if (isSprint) {
+      curSpeed *= this.player.sprintMultiplier;
+    }
 
     if (isMoving) {
       const len = Math.hypot(moveFwd, moveRgt);
@@ -864,19 +1051,20 @@ export class Sinharaja3DEngine {
       const worldDx = (nx * cosY - nz * sinY) * curSpeed * dt;
       const worldDz = (nx * sinY + nz * cosY) * curSpeed * dt;
 
-      // Proposed new position
+      // Proposed horizontal positions
       let nextX = this.player.x + worldDx;
       let nextZ = this.player.z + worldDz;
 
-      // Collision Resolution against World Obstacles
+      // ── Obstacle Collision Resolution & Smooth Sliding ──
       const pr = this.player.radius;
       for (let col of this.colliders) {
+        if (col.isDoorBarrier && this.kudawaDoorOpen) continue; // Doorway is open!
+
         if (col.type === "box") {
-          // Push out from AABB Box
           const cx = Math.max(col.minX, Math.min(col.maxX, nextX));
           const cz = Math.max(col.minZ, Math.min(col.maxZ, nextZ));
           const dist = Math.hypot(nextX - cx, nextZ - cz);
-          if (dist < pr && dist > 0.001) {
+          if (dist < pr && dist > 0.0001) {
             const push = pr - dist;
             nextX += ((nextX - cx) / dist) * push;
             nextZ += ((nextZ - cz) / dist) * push;
@@ -884,7 +1072,7 @@ export class Sinharaja3DEngine {
         } else if (col.type === "circle") {
           const dist = Math.hypot(nextX - col.x, nextZ - col.z);
           const minDist = col.radius + pr;
-          if (dist < minDist && dist > 0.001) {
+          if (dist < minDist && dist > 0.0001) {
             const push = minDist - dist;
             nextX += ((nextX - col.x) / dist) * push;
             nextZ += ((nextZ - col.z) / dist) * push;
@@ -895,20 +1083,50 @@ export class Sinharaja3DEngine {
       this.player.x = nextX;
       this.player.z = nextZ;
 
-      // Footstep Sound Trigger
+      // Surface-Aware Footstep Sound Trigger
       this.footstepDist += Math.hypot(worldDx, worldDz);
-      if (this.footstepDist > (isSprint ? 1.8 : 1.4)) {
+      const stepInterval = isSprint ? 1.9 : (this.player.isCrouching ? 1.0 : 1.4);
+      if (this.footstepDist > stepInterval && this.player.isGrounded) {
         this.footstepDist = 0;
         this.playSfx(this.player.inShelter ? "step_wood" : "step_mud");
       }
 
-      // Head Bobbing
-      this.headBob += dt * (isSprint ? 12 : 8);
+      // Head Bobbing calculation
+      const bobFreq = isSprint ? 13 : (this.player.isCrouching ? 6 : 8.5);
+      this.headBob += dt * bobFreq;
     } else {
       this.headBob = 0;
     }
 
-    // Check if player is inside Kudawa Cabin
+    // ── Vertical Physics: Gravity, Ground Collision & Jumping ──
+    const targetGroundY = this.getTerrainHeight(this.player.x, this.player.z);
+    const gravity = 18.0; // Realistic downward acceleration
+
+    if (!this.player.isGrounded) {
+      this.player.vy -= gravity * dt;
+      this.player.y += this.player.vy * dt;
+
+      // Landing check
+      if (this.player.y <= targetGroundY + this.player.curEyeHeight) {
+        this.player.y = targetGroundY + this.player.curEyeHeight;
+        this.player.vy = 0;
+        this.player.isGrounded = true;
+        this.playSfx("land");
+      }
+    } else {
+      // Firm ground snapping along uneven terrain
+      const currentEyeGoal = targetGroundY + this.player.curEyeHeight;
+      if (this.player.y > currentEyeGoal + 0.15) {
+        // Player walked off a ledge or slope into freefall
+        this.player.isGrounded = false;
+        this.player.vy = -1.0;
+      } else {
+        // Smooth elevation follow
+        this.player.y += (currentEyeGoal - this.player.y) * Math.min(1.0, dt * 18);
+      }
+    }
+
+    // Kudawa Cabin Interior detection
     this.player.inShelter = (
       this.player.x >= 520 - 9 &&
       this.player.x <= 520 + 9 &&
@@ -916,8 +1134,8 @@ export class Sinharaja3DEngine {
       this.player.z <= 720 + 7
     );
 
-    // Update Camera Position & Rotation
-    const bobOffset = isMoving ? Math.sin(this.headBob) * 0.06 : 0;
+    // Update Camera Position & Rotation with Subtle Head Bob
+    const bobOffset = (isMoving && this.player.isGrounded) ? Math.sin(this.headBob) * 0.045 : 0;
     this.camera.position.set(this.player.x, this.player.y + bobOffset, this.player.z);
     this.camera.rotation.y = this.player.yaw;
     this.camera.rotation.x = this.player.pitch;
@@ -926,7 +1144,7 @@ export class Sinharaja3DEngine {
     if (this.rainParticles) {
       const pos = this.rainParticles.geometry.attributes.position.array;
       for (let i = 1; i < pos.length; i += 3) {
-        pos[i] -= dt * 26; // Rain falls rapidly
+        pos[i] -= dt * 28;
         if (pos[i] < 0) pos[i] = 25;
       }
       this.rainParticles.geometry.attributes.position.needsUpdate = true;
@@ -952,6 +1170,7 @@ export class Sinharaja3DEngine {
         battery: Math.round(this.battery),
         stamina: Math.round(this.player.stamina),
         torchOn: this.torchOn,
+        torchIntensity: this.torchIntensity,
         saltCount: this.saltCount,
         herbCount: this.herbCount,
         balmCount: this.balmCount,
@@ -1007,6 +1226,16 @@ export class Sinharaja3DEngine {
   destroy() {
     this.running = false;
     if (this.animId) cancelAnimationFrame(this.animId);
+
+    // Clean up all DOM and Window Listeners
+    window.removeEventListener("keydown", this._onKeyDown);
+    window.removeEventListener("keyup", this._onKeyUp);
+    this.canvas.removeEventListener("click", this._onCanvasClick);
+    document.removeEventListener("pointerlockchange", this._onPointerLockChange);
+    document.removeEventListener("pointerlockerror", this._onPointerLockError);
+    window.removeEventListener("mousemove", this._onMouseMove);
+    this.canvas.removeEventListener("wheel", this._onWheel);
+
     if (this.audioCtx && this.audioCtx.state !== "closed") {
       try {
         this.audioCtx.close();
