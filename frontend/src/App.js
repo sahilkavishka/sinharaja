@@ -703,6 +703,7 @@ export default function App() {
   const [isPointerLocked, setIsPointerLocked] = useState(false);
   const [controlsEngaged, setControlsEngaged] = useState(false);
   const [isImmersiveHud, setIsImmersiveHud] = useState(false);
+  const [isMissionCollapsed, setIsMissionCollapsed] = useState(false);
   const [sanityWhisper, setSanityWhisper] = useState("");
   const whisperTimerRef = useRef(0);
 
@@ -1577,6 +1578,12 @@ export default function App() {
   // Heart Rate BPM (Simulated based on health/danger)
   const heartBpm = stats.bleeding || stats.health < 40 ? 138 : stats.health < 75 ? 96 : 72;
 
+  // Tactical Compass Bearing & Cardinal Orientation
+  const headingDeg = Math.round(((((stats.playerAngle || 0) * 180) / Math.PI) % 360 + 360) % 360);
+  const cardinalDirections = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  const cardinalIndex = Math.round(headingDeg / 45) % 8;
+  const cardinalStr = cardinalDirections[cardinalIndex];
+
   // ══════════════════════════════════════════════════════════════════════════
   // VIEW 1: CHAPTER SELECT SCREEN (FLASHCARDS & MISSION DOSSIER)
   // ══════════════════════════════════════════════════════════════════════════
@@ -2212,7 +2219,7 @@ export default function App() {
       <div
         className={`tactical-center-crosshair ${
           stats.nearInteractable ? "focused-interactive" : ""
-        }`}
+        } ${isPointerLocked ? "crosshair-locked" : "crosshair-idle"}`}
       >
         <div className="crosshair-dot" />
         <div className="crosshair-tick tick-top" />
@@ -2511,6 +2518,10 @@ export default function App() {
 
           {/* Center: Tactical Expedition Compass Bar */}
           <div className="tactical-compass-pod">
+            <div className="compass-bearing-header">
+              <span className="compass-bearing-val">{String(headingDeg).padStart(3, "0")}°</span>
+              <span className="compass-bearing-cardinal">{cardinalStr}</span>
+            </div>
             <div className="compass-tape">
               <span className="compass-mark">NW</span>
               <span className="compass-mark dot">·</span>
@@ -2527,7 +2538,7 @@ export default function App() {
             </div>
           </div>
 
-          {/* Right: Handheld GPS Terminal & Audio/Pause Buttons */}
+          {/* Right: Handheld GPS Terminal & Consolidated Command Bar */}
           <div className="gps-terminal-pod">
             <div className="gps-header">
               <span className="gps-label">{CHAPTER_LOCATIONS[activeChapter]?.label || "EXPEDITION TELEMETRY"}</span>
@@ -2536,12 +2547,16 @@ export default function App() {
 
             <div
               className="gps-radar-screen"
-              title="ක්ලික් කර සම්පූර්ණ සිතියම බලන්න [M]"
+              title={lang === "en" ? "Click to Open Tactical Survey Map [M]" : "ක්ලික් කර සිතියම බලන්න [M]"}
               onClick={() => {
                 if (engineRef.current) engineRef.current.playSfx("pda_open");
                 setShowTacticalMap(true);
               }}
             >
+              <div className="radar-grid-ring ring-1" />
+              <div className="radar-grid-ring ring-2" />
+              <div className="radar-grid-crosshair-h" />
+              <div className="radar-grid-crosshair-v" />
               <div className="radar-sweep-beam" />
               <div
                 className="player-radar-dot"
@@ -2587,77 +2602,60 @@ export default function App() {
               </div>
             )}
 
-            <div className="gps-controls-row">
-              {stats.uvUnlocked && (
-                <button
-                  className={`tactical-uv-btn ${stats.uvMode ? "uv-active" : ""}`}
-                  onClick={() => handleVirtualAction("uv")}
-                  title="පාරජම්බුල (UV) කිරණ ක්‍රියාත්මක කරන්න [U]"
-                >
-                  <Icons.UV className="tactical-svg-icon" /> {stats.uvMode ? "UV ON" : "UV OFF"}
-                </button>
-              )}
+            {/* Streamlined Tactical Command Toolbar */}
+            <div className="tactical-command-toolbar">
               <button
-                className="tactical-cam-btn"
-                onClick={() => handleVirtualAction("camera")}
-                title="කැමරාවෙන් ඡායාරූපයක් ගන්න [C]"
-              >
-                <Icons.Camera className="tactical-svg-icon" /> SNAP
-              </button>
-              <button
-                className="tactical-zoom-btn"
-                onClick={() => handleVirtualAction("zoom")}
-                title="දුරදක්නය / Zoom [Z]"
-              >
-                <Icons.Zoom className="tactical-svg-icon" /> {stats.zoom < 0.95 ? "1.0x" : "WIDE"}
-              </button>
-              <button
-                className={`tactical-hud-btn ${isImmersiveHud ? "hud-hidden" : ""}`}
-                onClick={() => handleVirtualAction("hud")}
-                title="HUD දර්ශනය පාලනය කරන්න [V]"
-              >
-                <Icons.Eye className="tactical-svg-icon" /> HUD
-              </button>
-              <button
-                className={`tactical-audio-btn ${isMuted ? "muted" : ""}`}
-                onClick={toggleMute}
-                title="ශබ්ද පාලනය"
-              >
-                {isMuted ? <Icons.AudioMute className="tactical-svg-icon" /> : <Icons.AudioOn className="tactical-svg-icon" />}
-              </button>
-              <button
-                className="tactical-hud-btn tactical-quality-btn"
-                onClick={() => handleVirtualAction("quality")}
-                title="ග්‍රැෆික් මට්ටම / Graphics Quality [O] (High / Medium / Low)"
-              >
-                <Icons.Settings className="tactical-svg-icon" /> {(stats.quality || "HIGH").toUpperCase()}
-              </button>
-              <button
-                className="tactical-lang-btn"
-                onClick={toggleLanguage}
-                title="භාෂාව මාරු කරන්න / Switch Language"
-              >
-                🌐 {lang.toUpperCase()}
-              </button>
-              <button
-                className="tactical-fullscreen-btn"
-                onClick={toggleFullscreen}
-                title={isFullscreen ? I18N[lang].exit_fullscreen : I18N[lang].fullscreen}
-              >
-                <Icons.Zoom className="tactical-svg-icon" /> {isFullscreen ? "EXIT FS" : "FULL"}
-              </button>
-              <button
-                className="tactical-map-btn"
+                className="cmd-tool-btn"
                 onClick={() => {
                   if (engineRef.current) engineRef.current.playSfx("pda_open");
                   setShowTacticalMap(true);
                 }}
-                title="සිතියම [M]"
+                title={lang === "en" ? "Tactical Topographical Map [M]" : "සිතියම [M]"}
               >
-                <Icons.Map className="tactical-svg-icon" /> MAP
+                <Icons.Map className="tactical-svg-icon" />
+                <span className="cmd-btn-label">MAP</span>
               </button>
-              <button className="tactical-pause-btn" onClick={togglePause}>
-                <Icons.Pause className="tactical-svg-icon" /> ESC
+              <button
+                className={`cmd-tool-btn ${isMissionCollapsed ? "btn-dimmed" : "btn-active"}`}
+                onClick={() => {
+                  if (engineRef.current) engineRef.current.playSfx("click");
+                  setIsMissionCollapsed((prev) => !prev);
+                }}
+                title={lang === "en" ? "Toggle Mission Directives Panel [O]" : "මෙහෙයුම් සටහන පෙන්වන්න/සඟවන්න"}
+              >
+                <Icons.Target className="tactical-svg-icon" />
+                <span className="cmd-btn-label">DIR</span>
+              </button>
+              <button
+                className={`cmd-tool-btn ${stats.quality === "high" ? "quality-high" : ""}`}
+                onClick={() => handleVirtualAction("quality")}
+                title={lang === "en" ? "Graphics Quality (High / Medium / Low) [O]" : "ග්‍රැෆික් මට්ටම [O]"}
+              >
+                <Icons.Settings className="tactical-svg-icon" />
+                <span className="cmd-btn-label">{(stats.quality || "HIGH").substring(0, 3).toUpperCase()}</span>
+              </button>
+              <button
+                className={`cmd-tool-btn ${isMuted ? "btn-danger" : ""}`}
+                onClick={toggleMute}
+                title={lang === "en" ? "Mute / Unmute Audio" : "ශබ්දය On / Off"}
+              >
+                {isMuted ? <Icons.AudioMute className="tactical-svg-icon" /> : <Icons.AudioOn className="tactical-svg-icon" />}
+                <span className="cmd-btn-label">{isMuted ? "MUTED" : "SND"}</span>
+              </button>
+              <button
+                className="cmd-tool-btn lang-cmd-btn"
+                onClick={toggleLanguage}
+                title={lang === "en" ? "Switch to Sinhala" : "Switch to English"}
+              >
+                <span className="cmd-btn-label">🌐 {lang.toUpperCase()}</span>
+              </button>
+              <button
+                className="cmd-tool-btn menu-cmd-btn"
+                onClick={togglePause}
+                title={lang === "en" ? "Pause / Mission Menu [ESC]" : "මෙනුව [ESC]"}
+              >
+                <Icons.Pause className="tactical-svg-icon" />
+                <span className="cmd-btn-label">ESC</span>
               </button>
             </div>
           </div>
@@ -2666,18 +2664,49 @@ export default function App() {
 
       {/* ── Left Side Floating Mission Objective HUD ── */}
       {!isImmersiveHud && (
-      <div className="tactical-mission-panel">
-        <div className="mission-panel-header">
-          <span className="mission-badge">ACTIVE OP</span>
-          <span className="mission-chap-title">CHAPTER 0{activeChapter}</span>
-        </div>
-        <div className="evidence-counter-strip">
-          <span>සාක්ෂි ප්‍රගතිය:</span>
-          <span className="counter-val">{currentChapterEvidenceCount} / 3</span>
-        </div>
+        <div className={`tactical-mission-panel ${isMissionCollapsed ? "panel-collapsed" : ""}`}>
+          <div
+            className="mission-panel-header clickable-header"
+            onClick={() => {
+              if (engineRef.current) engineRef.current.playSfx("click");
+              setIsMissionCollapsed((prev) => !prev);
+            }}
+            title={lang === "en" ? "Click to Collapse / Expand Mission Directives" : "මෙහෙයුම් සටහන හකුලන්න / දිගහරින්න [Click]"}
+          >
+            <div className="mission-header-left">
+              <span className="mission-badge">ACTIVE OP</span>
+              <span className="mission-chap-title">CHAPTER 0{activeChapter}</span>
+            </div>
+            <div className="mission-header-right">
+              <span className="evidence-mini-badge">{currentChapterEvidenceCount} / 3</span>
+              <span className="collapse-chevron">{isMissionCollapsed ? "▼" : "▲"}</span>
+            </div>
+          </div>
 
-        {activeChapter === 2 ? (
-          <ul className="mission-checklist">
+          {isMissionCollapsed ? (
+            <div
+              className="mission-collapsed-summary"
+              onClick={() => {
+                if (engineRef.current) engineRef.current.playSfx("click");
+                setIsMissionCollapsed(false);
+              }}
+            >
+              <span className="collapsed-obj-icon"><Icons.Target className="tactical-svg-icon" /></span>
+              <div className="collapsed-obj-info">
+                <span className="collapsed-obj-label">{lang === "en" ? "DIRECTIVE:" : "ඉලක්කය:"}</span>
+                <span className="collapsed-obj-title">{activeObj.title}</span>
+              </div>
+              <span className="collapsed-obj-dist">{distToActiveObj}m</span>
+            </div>
+          ) : (
+            <div className="mission-panel-body animate-fade-in">
+              <div className="evidence-counter-strip">
+                <span>{lang === "en" ? "Evidence Secured:" : "සාක්ෂි ප්‍රගතිය:"}</span>
+                <span className="counter-val">{currentChapterEvidenceCount} / 3</span>
+              </div>
+
+              {activeChapter === 2 ? (
+                <ul className="mission-checklist">
             <li className={stats.tasks?.mapFound ? "task-complete" : "task-active"}>
               <span className="check-box">{stats.tasks?.mapFound ? "✓" : "○"}</span>
               <span>භූවිද්‍යා සිතියම සොයාගන්න</span>
@@ -2800,7 +2829,9 @@ export default function App() {
             </li>
           </ul>
         )}
-      </div>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Friendly Explorer Onboarding Tip */}
@@ -3151,156 +3182,149 @@ export default function App() {
 
       {/* ── Bottom Tactical Quick-Action Belt ── */}
       <div className="tactical-action-belt">
-        <div className="belt-slot" onClick={() => handleVirtualAction("salt")}>
-          <span className="belt-hotkey">[1]</span>
-          <span className="belt-icon"><Icons.Salt className="tactical-svg-icon" /></span>
-          <span className="belt-tag">{I18N[lang].salt} ({stats.saltCount})</span>
-        </div>
-
-        <div
-          className={`belt-slot ${stats.herbCount > 0 ? "" : "slot-empty"}`}
-          onClick={() => handleVirtualAction("herb")}
-        >
-          <span className="belt-hotkey">[2]</span>
-          <span className="belt-icon"><Icons.Herb className="tactical-svg-icon" /></span>
-          <span className="belt-tag">{I18N[lang].herb} ({stats.herbCount})</span>
-        </div>
-
-        <div
-          className={`belt-slot ${stats.balmCount > 0 ? "" : "slot-empty"} ${stats.repellentTimer > 0 ? "highlight-tea" : ""}`}
-          onClick={() => handleVirtualAction("balm")}
-          title="කූඩැලි විකර්ෂක ආලේපනය [B]"
-        >
-          <span className="belt-hotkey">[B]</span>
-          <span className="belt-icon"><Icons.Balm className="tactical-svg-icon" /></span>
-          <span className="belt-tag">{I18N[lang].balm} ({stats.balmCount})</span>
-        </div>
-
-        <div
-          className={`belt-slot ${stats.nearCampfire && stats.herbCount > 0 ? "highlight-tea" : ""}`}
-          onClick={() => handleVirtualAction("tea")}
-          title="ගිනිමැලය අසල ඔසුපැන් පෙරන්න"
-        >
-          <span className="belt-hotkey">[T]</span>
-          <span className="belt-icon"><Icons.Tea className="tactical-svg-icon" /></span>
-          <span className="belt-tag">{I18N[lang].tea}</span>
-        </div>
-
-        {(stats.chapter === 2 || activeChapter === 2) && (
+        {/* Survival Gear Group */}
+        <div className="belt-subgroup survival-subgroup">
           <div
-            className={`belt-slot ${(stats.gingerTeaCount || 0) > 0 ? "" : "slot-empty"} ${(stats.temperature ?? 100) < 40 ? "highlight-cold" : ""}`}
-            onClick={() => handleVirtualAction("gingertea")}
-            title="ඉඟුරු තේ පානය කර ශරීරය උණුසුම් කරන්න [G]"
+            className={`belt-slot ${stats.attachedLeeches > 0 ? "highlight-hazard-leech animate-pulse" : ""}`}
+            onClick={() => handleVirtualAction("salt")}
+            title={lang === "en" ? "Throw Salt to remove leeches [1]" : "කූඩැල්ලන්ට ලුණු දමන්න [1]"}
           >
-            <span className="belt-hotkey">[G]</span>
-            <span className="belt-icon"><Icons.GingerTea className="tactical-svg-icon" /></span>
-            <span className="belt-tag">{I18N[lang].ginger_tea} ({stats.gingerTeaCount || 0})</span>
+            <span className="belt-hotkey">[1]</span>
+            <span className="belt-icon"><Icons.Salt className="tactical-svg-icon" /></span>
+            <span className="belt-tag">{I18N[lang].salt}</span>
+            <span className="belt-count-badge">{stats.saltCount}</span>
           </div>
-        )}
 
-        <div
-          className="belt-slot"
-          onClick={() => handleVirtualAction("camera")}
-          title="ක්ෂේත්‍ර කැමරාවෙන් ඡායාරූපයක් ගන්න [C]"
-        >
-          <span className="belt-hotkey">[C]</span>
-          <span className="belt-icon"><Icons.Camera className="tactical-svg-icon" /></span>
-          <span className="belt-tag">{I18N[lang].camera} ({capturedPhotos.length})</span>
-        </div>
-
-        {stats.uvUnlocked && (
           <div
-            className={`belt-slot ${stats.uvMode ? "belt-uv-on" : ""}`}
-            onClick={() => handleVirtualAction("uv")}
-            title="පාරජම්බුල (UV) කිරණ ක්‍රියාත්මක කරන්න [U]"
+            className={`belt-slot ${stats.herbCount > 0 ? "" : "slot-empty"} ${stats.venomToxicity > 0 ? "highlight-hazard-venom animate-pulse" : ""}`}
+            onClick={() => handleVirtualAction("herb")}
+            title={lang === "en" ? "Use medicinal herb to heal & cure poison [2]" : "ඖෂධ භාවිතය / සුවවීම [2]"}
           >
-            <span className="belt-hotkey">[U]</span>
-            <span className="belt-icon"><Icons.UV className="tactical-svg-icon" /></span>
-            <span className="belt-tag">{stats.uvMode ? "UV ON" : "UV OFF"}</span>
+            <span className="belt-hotkey">[2]</span>
+            <span className="belt-icon"><Icons.Herb className="tactical-svg-icon" /></span>
+            <span className="belt-tag">{I18N[lang].herb}</span>
+            <span className="belt-count-badge">{stats.herbCount}</span>
           </div>
-        )}
 
-        {activeChapter === 2 ? (
           <div
-            className={`belt-slot ${stats.hasEmf ? "highlight-cold" : "slot-empty"}`}
-            onClick={() => handleVirtualAction("interact")}
-            title="විද්‍යුත් චුම්භක අනාවරකය (EMF Detector)"
+            className={`belt-slot ${stats.balmCount > 0 ? "" : "slot-empty"} ${stats.repellentTimer > 0 ? "highlight-active-buff" : ""}`}
+            onClick={() => handleVirtualAction("balm")}
+            title={lang === "en" ? "Leech repellent balm (90s protection) [B]" : "කූඩැලි විකර්ෂක ආලේපනය [B]"}
           >
-            <span className="belt-hotkey">[3]</span>
-            <span className="belt-icon"><Icons.EMF className="tactical-svg-icon" /></span>
-            <span className="belt-tag">EMF {Math.round((stats.emfProximity || 0) * 100)}%</span>
+            <span className="belt-hotkey">[B]</span>
+            <span className="belt-icon"><Icons.Balm className="tactical-svg-icon" /></span>
+            <span className="belt-tag">{I18N[lang].balm}</span>
+            <span className="belt-count-badge">{stats.balmCount}</span>
           </div>
-        ) : (
+
+          {stats.nearCampfire && (
+            <div
+              className="belt-slot highlight-tea"
+              onClick={() => handleVirtualAction("tea")}
+              title="ගිනිමැලය අසල ඔසුපැන් පෙරන්න [T]"
+            >
+              <span className="belt-hotkey">[T]</span>
+              <span className="belt-icon"><Icons.Tea className="tactical-svg-icon" /></span>
+              <span className="belt-tag">{I18N[lang].tea}</span>
+            </div>
+          )}
+
+          {(stats.chapter === 2 || activeChapter === 2) && (
+            <div
+              className={`belt-slot ${(stats.gingerTeaCount || 0) > 0 ? "" : "slot-empty"} ${(stats.temperature ?? 100) < 40 ? "highlight-cold" : ""}`}
+              onClick={() => handleVirtualAction("gingertea")}
+              title="ඉඟුරු තේ පානය කර ශරීරය උණුසුම් කරන්න [G]"
+            >
+              <span className="belt-hotkey">[G]</span>
+              <span className="belt-icon"><Icons.GingerTea className="tactical-svg-icon" /></span>
+              <span className="belt-tag">{I18N[lang].ginger_tea}</span>
+              <span className="belt-count-badge">{stats.gingerTeaCount || 0}</span>
+            </div>
+          )}
+
           <div
             className={`belt-slot ${stats.torchOn ? "belt-torch-on" : ""}`}
             onClick={() => handleVirtualAction("torch")}
+            title={lang === "en" ? "Toggle Tactical Flashlight [F]" : "විදුලි පන්දම [F]"}
           >
-            <span className="belt-hotkey">[3]</span>
+            <span className="belt-hotkey">[F]</span>
             <span className="belt-icon"><Icons.Torch className="tactical-svg-icon" /></span>
             <span className="belt-tag">{stats.torchOn ? I18N[lang].torch_on : I18N[lang].torch_off}</span>
           </div>
-        )}
 
-        <div
-          className={`belt-slot ${stats.battery < 25 ? "highlight-dynamo" : ""}`}
-          onClick={() => handleVirtualAction("crank")}
-          title="හෑන්ඩ්-ක්‍රෑන්ක් ඩයිනමෝවෙන් ආරෝපණය කරන්න [R]"
-        >
-          <span className="belt-hotkey">[R]</span>
-          <span className="belt-icon"><Icons.Crank className="tactical-svg-icon" /></span>
-          <span className="belt-tag">CRANK ({stats.battery}%)</span>
+          <div
+            className={`belt-slot ${stats.battery < 25 ? "highlight-dynamo animate-pulse" : ""}`}
+            onClick={() => handleVirtualAction("crank")}
+            title={lang === "en" ? "Hand-Crank Dynamo Battery Charge (+14%) [R]" : "ඩයිනමෝවෙන් ආරෝපණය කරන්න [R]"}
+          >
+            <span className="belt-hotkey">[R]</span>
+            <span className="belt-icon"><Icons.Crank className="tactical-svg-icon" /></span>
+            <span className="belt-tag">CRANK</span>
+            <span className="belt-count-badge">{stats.battery}%</span>
+          </div>
         </div>
 
-        <div className="belt-slot" onClick={() => handleVirtualAction("interact")}>
-          <span className="belt-hotkey">[4]</span>
-          <span className="belt-icon"><Icons.Inspect className="tactical-svg-icon" /></span>
-          <span className="belt-tag">{I18N[lang].interact}</span>
-        </div>
+        {/* Tactical Divider */}
+        <div className="belt-divider" />
 
-        <div className="belt-slot" onClick={() => handleVirtualAction("zoom")}>
-          <span className="belt-hotkey">[Z]</span>
-          <span className="belt-icon"><Icons.Zoom className="tactical-svg-icon" /></span>
-          <span className="belt-tag">{I18N[lang].zoom}</span>
-        </div>
+        {/* Exploration Tools Group */}
+        <div className="belt-subgroup tools-subgroup">
+          <div
+            className="belt-slot"
+            onClick={() => handleVirtualAction("camera")}
+            title={lang === "en" ? "Wildlife Field Camera [C]" : "ක්ෂේත්‍ර කැමරාව [C]"}
+          >
+            <span className="belt-hotkey">[C]</span>
+            <span className="belt-icon"><Icons.Camera className="tactical-svg-icon" /></span>
+            <span className="belt-tag">{I18N[lang].camera}</span>
+            <span className="belt-count-badge">{capturedPhotos.length}</span>
+          </div>
 
-        <div
-          className={`belt-slot ${stats.viewMode === "fps" ? "belt-fps-active" : ""}`}
-          onClick={() => handleVirtualAction("viewMode")}
-          title="දසුන වෙනස් කරන්න (1st Person IGI / 2.5D Isometric) [V]"
-        >
-          <span className="belt-hotkey">[V]</span>
-          <span className="belt-icon"><Icons.Crosshair className="tactical-svg-icon" /></span>
-          <span className="belt-tag">{stats.viewMode === "fps" ? "1ST PERSON" : "2.5D VIEW"}</span>
-        </div>
+          {stats.uvUnlocked && (
+            <div
+              className={`belt-slot ${stats.uvMode ? "belt-uv-on" : ""}`}
+              onClick={() => handleVirtualAction("uv")}
+              title="පාරජම්බුල (UV) කිරණ [U]"
+            >
+              <span className="belt-hotkey">[U]</span>
+              <span className="belt-icon"><Icons.UV className="tactical-svg-icon" /></span>
+              <span className="belt-tag">UV</span>
+            </div>
+          )}
 
-        <div className="belt-slot" onClick={() => setShowEvidenceBoard(true)}>
-          <span className="belt-hotkey">[5]</span>
-          <span className="belt-icon"><Icons.Evidence className="tactical-svg-icon" /></span>
-          <span className="belt-tag">{I18N[lang].evidence} ({currentChapterEvidenceCount}/3)</span>
-        </div>
+          <div
+            className="belt-slot"
+            onClick={() => handleVirtualAction("zoom")}
+            title={lang === "en" ? "Toggle Binocular Zoom [Z]" : "දුරදක්නය [Z]"}
+          >
+            <span className="belt-hotkey">[Z]</span>
+            <span className="belt-icon"><Icons.Zoom className="tactical-svg-icon" /></span>
+            <span className="belt-tag">{I18N[lang].zoom}</span>
+          </div>
 
-        <div
-          className="belt-slot"
-          onClick={() => {
-            if (engineRef.current) engineRef.current.playSfx("pda_open");
-            setShowTacticalMap(true);
-          }}
-        >
-          <span className="belt-hotkey">[M]</span>
-          <span className="belt-icon"><Icons.Map className="tactical-svg-icon" /></span>
-          <span className="belt-tag">{I18N[lang].map}</span>
-        </div>
+          <div
+            className="belt-slot"
+            onClick={() => setShowEvidenceBoard(true)}
+            title={lang === "en" ? "Investigation Evidence Board [5]" : "සාක්ෂි පුවරුව [5]"}
+          >
+            <span className="belt-hotkey">[5]</span>
+            <span className="belt-icon"><Icons.Evidence className="tactical-svg-icon" /></span>
+            <span className="belt-tag">{I18N[lang].evidence}</span>
+            <span className="belt-count-badge">{currentChapterEvidenceCount}/3</span>
+          </div>
 
-        <div
-          className="belt-slot"
-          onClick={() => {
-            if (engineRef.current) engineRef.current.playSfx("pda_open");
-            setShowInventory(true);
-          }}
-        >
-          <span className="belt-hotkey">[I]</span>
-          <span className="belt-icon"><Icons.Backpack className="tactical-svg-icon" /></span>
-          <span className="belt-tag">{I18N[lang].bag}</span>
+          <div
+            className="belt-slot"
+            onClick={() => {
+              if (engineRef.current) engineRef.current.playSfx("pda_open");
+              setShowInventory(true);
+            }}
+            title={lang === "en" ? "Survival Backpack Inventory [I]" : "බඩු මල්ල [I]"}
+          >
+            <span className="belt-hotkey">[I]</span>
+            <span className="belt-icon"><Icons.Backpack className="tactical-svg-icon" /></span>
+            <span className="belt-tag">{I18N[lang].bag}</span>
+          </div>
         </div>
       </div>
 
