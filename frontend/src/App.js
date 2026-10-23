@@ -563,6 +563,1203 @@ const DIAL_3_OPTIONS = ["[I] ELEPHANT (හස්තියා)", "[II] LION (ස�
 
 const SAVE_KEY = "sinharaja_save_v2";
 
+// ── Scientific Field Guide Vector Illustrations ───────────────────────────
+const MagpieIllustration = () => (
+  <svg viewBox="0 0 120 100" width="100%" height="100%">
+    <defs>
+      <linearGradient id="magpieBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#1e88e5" />
+        <stop offset="100%" stopColor="#0d47a1" />
+      </linearGradient>
+      <linearGradient id="magpieChestnut" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#8d6e63" />
+        <stop offset="100%" stopColor="#4e342e" />
+      </linearGradient>
+    </defs>
+    <path d="M 10 75 Q 60 70 110 78" stroke="#5d4037" strokeWidth="5" strokeLinecap="round" fill="none" />
+    <path d="M 45 73 Q 55 60 40 50" stroke="#4e342e" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+    <path d="M 35 60 Q 15 80 8 95" stroke="#1565c0" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+    <path d="M 38 62 Q 22 84 18 98" stroke="#0d47a1" strokeWidth="3" strokeLinecap="round" fill="none" />
+    <path d="M 40 62 Q 28 85 28 98" stroke="#42a5f5" strokeWidth="2" strokeLinecap="round" fill="none" />
+    <ellipse cx="55" cy="55" rx="18" ry="12" fill="url(#magpieBlue)" transform="rotate(-15 55 55)" />
+    <path d="M 42 50 C 45 42 62 48 65 58 C 58 64 45 60 42 50 Z" fill="#0d47a1" />
+    <path d="M 60 48 Q 72 45 74 38 Q 65 35 55 42 Z" fill="url(#magpieChestnut)" />
+    <circle cx="75" cy="35" r="9" fill="url(#magpieChestnut)" />
+    <circle cx="77" cy="33" r="3" fill="#d32f2f" />
+    <circle cx="77" cy="33" r="1.5" fill="#fff" />
+    <circle cx="77.5" cy="33" r="0.8" fill="#111" />
+    <path d="M 83 33 L 95 36 L 83 39 Z" fill="#e53935" />
+    <path d="M 52 65 L 50 74 M 58 65 L 56 74" stroke="#d32f2f" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);
+
+const LangurIllustration = () => (
+  <svg viewBox="0 0 120 100" width="100%" height="100%">
+    <defs>
+      <linearGradient id="langurFur" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#37474f" />
+        <stop offset="100%" stopColor="#212121" />
+      </linearGradient>
+    </defs>
+    <path d="M 85 5 Q 82 50 88 95" stroke="#4e342e" strokeWidth="10" strokeLinecap="round" fill="none" />
+    <path d="M 50 70 Q 35 85 45 96" stroke="#263238" strokeWidth="4" strokeLinecap="round" fill="none" />
+    <ellipse cx="58" cy="55" rx="16" ry="18" fill="url(#langurFur)" />
+    <path d="M 65 45 Q 75 42 82 40" stroke="#212121" strokeWidth="5" strokeLinecap="round" fill="none" />
+    <path d="M 62 62 Q 74 65 83 62" stroke="#212121" strokeWidth="5" strokeLinecap="round" fill="none" />
+    <circle cx="50" cy="32" r="12" fill="#1e272c" />
+    <path d="M 38 32 Q 44 42 42 46" stroke="#eceff1" strokeWidth="3" strokeLinecap="round" fill="none" />
+    <path d="M 62 32 Q 56 42 58 46" stroke="#eceff1" strokeWidth="3" strokeLinecap="round" fill="none" />
+    <ellipse cx="50" cy="34" rx="7" ry="8" fill="#111" />
+    <circle cx="47" cy="32" r="1.5" fill="#ffb300" />
+    <circle cx="53" cy="32" r="1.5" fill="#ffb300" />
+    <circle cx="47" cy="32" r="0.8" fill="#111" />
+    <circle cx="53" cy="32" r="0.8" fill="#111" />
+  </svg>
+);
+
+const ViperIllustration = () => (
+  <svg viewBox="0 0 120 100" width="100%" height="100%">
+    <defs>
+      <linearGradient id="viperScales" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#6d4c41" />
+        <stop offset="50%" stopColor="#4e342e" />
+        <stop offset="100%" stopColor="#3e2723" />
+      </linearGradient>
+    </defs>
+    <ellipse cx="60" cy="72" rx="45" ry="16" fill="rgba(62, 39, 35, 0.4)" />
+    <path d="M 30 70 C 30 55 55 52 70 60 C 85 68 85 80 65 82 C 45 84 35 75 48 70 C 60 65 72 70 75 62" 
+          stroke="url(#viperScales)" strokeWidth="8" strokeLinecap="round" fill="none" />
+    <circle cx="42" cy="62" r="2.5" fill="#8d6e63" />
+    <circle cx="60" cy="56" r="2.5" fill="#8d6e63" />
+    <circle cx="78" cy="66" r="2.5" fill="#8d6e63" />
+    <circle cx="62" cy="78" r="2.5" fill="#8d6e63" />
+    <polygon points="76,55 90,52 86,65" fill="#3e2723" />
+    <path d="M 90 52 Q 93 49 92 53" stroke="#8d6e63" strokeWidth="2" fill="none" />
+    <circle cx="82" cy="57" r="1.5" fill="#ffb300" />
+    <line x1="82" y1="55.8" x2="82" y2="58.2" stroke="#111" strokeWidth="0.8" />
+  </svg>
+);
+
+const FireflyIllustration = () => (
+  <svg viewBox="0 0 120 100" width="100%" height="100%">
+    <defs>
+      <radialGradient id="fireflyGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stopColor="#76ff03" stopOpacity="0.9" />
+        <stop offset="40%" stopColor="#64dd17" stopOpacity="0.4" />
+        <stop offset="100%" stopColor="#00e676" stopOpacity="0" />
+      </radialGradient>
+    </defs>
+    <circle cx="60" cy="55" r="35" fill="url(#fireflyGlow)" />
+    <circle cx="30" cy="30" r="1.5" fill="#b2ff59" opacity="0.6" />
+    <circle cx="88" cy="35" r="2" fill="#b2ff59" opacity="0.7" />
+    <circle cx="95" cy="70" r="1.5" fill="#b2ff59" opacity="0.5" />
+    <circle cx="25" cy="65" r="1.5" fill="#b2ff59" opacity="0.6" />
+    <ellipse cx="60" cy="46" rx="7" ry="10" fill="#263238" />
+    <ellipse cx="60" cy="57" rx="6" ry="7" fill="#76ff03" />
+    <path d="M 60 42 Q 40 30 35 48 C 42 55 55 48 60 42 Z" fill="rgba(144, 164, 174, 0.6)" stroke="#37474f" strokeWidth="0.8" />
+    <path d="M 60 42 Q 80 30 85 48 C 78 55 65 48 60 42 Z" fill="rgba(144, 164, 174, 0.6)" stroke="#37474f" strokeWidth="0.8" />
+    <circle cx="60" cy="33" r="4" fill="#37474f" />
+    <path d="M 58 30 Q 52 20 48 18" stroke="#37474f" strokeWidth="1" fill="none" />
+    <path d="M 62 30 Q 68 20 72 18" stroke="#37474f" strokeWidth="1" fill="none" />
+  </svg>
+);
+
+const PitcherIllustration = () => (
+  <svg viewBox="0 0 120 100" width="100%" height="100%">
+    <defs>
+      <linearGradient id="pitcherGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#66bb6a" />
+        <stop offset="50%" stopColor="#d32f2f" />
+        <stop offset="100%" stopColor="#43a047" />
+      </linearGradient>
+    </defs>
+    <path d="M 30 15 Q 50 10 60 30 Q 65 45 60 55" stroke="#388e3c" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+    <ellipse cx="58" cy="42" rx="12" ry="4" fill="#81c784" stroke="#2e7d32" strokeWidth="1" />
+    <ellipse cx="60" cy="48" rx="10" ry="3.5" fill="#c62828" stroke="#b71c1c" strokeWidth="1.2" />
+    <path d="M 50 48 C 48 65 52 85 64 88 C 74 85 72 65 70 48 Z" fill="url(#pitcherGrad)" stroke="#2e7d32" strokeWidth="1.2" />
+    <circle cx="58" cy="62" r="1.5" fill="#b71c1c" />
+    <circle cx="65" cy="70" r="1.8" fill="#b71c1c" />
+    <circle cx="56" cy="75" r="1.2" fill="#b71c1c" />
+    <path d="M 64 88 Q 67 94 62 96" stroke="#2e7d32" strokeWidth="1.5" fill="none" />
+  </svg>
+);
+
+const TreeFernIllustration = () => (
+  <svg viewBox="0 0 120 100" width="100%" height="100%">
+    <defs>
+      <linearGradient id="trunkGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#3e2723" />
+        <stop offset="50%" stopColor="#5d4037" />
+        <stop offset="100%" stopColor="#2e1c14" />
+      </linearGradient>
+    </defs>
+    <path d="M 57 95 L 59 45 L 61 45 L 63 95 Z" fill="url(#trunkGrad)" />
+    <path d="M 60 45 Q 40 38 18 45" stroke="#2e7d32" strokeWidth="3" strokeLinecap="round" fill="none" />
+    <path d="M 60 45 Q 45 28 25 22" stroke="#388e3c" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+    <path d="M 60 45 Q 55 18 50 10" stroke="#43a047" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+    <path d="M 60 45 Q 65 18 70 10" stroke="#43a047" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+    <path d="M 60 45 Q 75 28 95 22" stroke="#388e3c" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+    <path d="M 60 45 Q 80 38 102 45" stroke="#2e7d32" strokeWidth="3" strokeLinecap="round" fill="none" />
+    <path d="M 28 39 L 26 44 M 35 37 L 34 43 M 44 38 L 44 44" stroke="#4caf50" strokeWidth="1.5" />
+    <path d="M 92 39 L 94 44 M 85 37 L 86 43 M 76 38 L 76 44" stroke="#4caf50" strokeWidth="1.5" />
+  </svg>
+);
+
+const SPECIES_ILLUSTRATIONS = {
+  magpie: MagpieIllustration,
+  langur: LangurIllustration,
+  viper: ViperIllustration,
+  firefly: FireflyIllustration,
+  pitcher: PitcherIllustration,
+  fern: TreeFernIllustration,
+};
+
+// ── Master Evidence Case Data (15 Items Across 5 Chapters) ───────────────
+export const MASTER_EVIDENCE = [
+  // Chapter 1: Kudawa Outpost
+  {
+    id: "diary",
+    chapterId: 1,
+    chapterTitle: "CHAPTER 01: කුඩව පිවිසුම (Kudawa Trailhead)",
+    titleSinhala: "ලෙයින් පෙඟුණු දිනපොත",
+    titleEnglish: "Bloodstained Expedition Diary",
+    icon: "Book",
+    pinColor: "red",
+    stamp: "TOP SECRET // CLASSIFIED",
+    location: "Kudawa Abandoned Outpost Quarters (06°24′33″N 80°29′42″E)",
+    dateFound: "1987 NOV 14",
+    summarySinhala: "මහාචාර්ය ඩග්ලස්ගේ අවසන් සටහන. ලෙන් දොරටුවේ රහස් සංකේත [I: සූර්යයා, II: ගංගාව, III: සිංහයා] බවත් යතුර ඔරු තොටේ සඟවා ඇති බවත් හෙළි කරයි.",
+    summaryEnglish: "Prof. Douglas's last diary log. Discloses the cave rune code [I: SUN, II: RIVER, III: LION] and the brass key hidden near the river pier.",
+    clueLeadSinhala: "අතහැර දැමූ මුරපොළේ ඇඳ හෝ මේසය මත පරීක්ෂා කරන්න...",
+    clueLeadEnglish: "Search the abandoned bunkhouse desk or footlocker...",
+    forensicNotesSinhala: "පිටු 14 ක් ලේ සහ මඩ පැල්ලම් වලින් වැසී ඇත. 1987 නොවැම්බර් 14 දිනැති අවසාන පිටුව හදිසියේ ලියා නවත්වා ඇත. පාරජම්බුල (UV) තීන්ත සටහන් ද හමුවිය.",
+    forensicNotesEnglish: "14 water-damaged pages with blood spatters. The final page dated Nov 14, 1987 was written in frantic haste with luminescent UV ink markers.",
+    connectionTo: "key",
+    connectionText: "යතුර ඇති ස්ථානය සහ ලෙන් සංකේත හෙළි කරයි (Points to Ancient Brass Key)",
+    hasInspectAction: "diary",
+  },
+  {
+    id: "key",
+    chapterId: 1,
+    chapterTitle: "CHAPTER 01: කුඩව පිවිසුම (Kudawa Trailhead)",
+    titleSinhala: "පුරාණ පිත්තල යතුර",
+    titleEnglish: "Ancient Brass Outpost Key",
+    icon: "Key",
+    pinColor: "yellow",
+    stamp: "PHYSICAL ARTIFACT #02",
+    location: "Riverbank Pier / Muddy Landing (06°24′28″N 80°29′55″E)",
+    dateFound: "1987 NOV 14",
+    summarySinhala: "ගංගා ඉවුරේ වැලි අතර සඟවා තිබූ බරැති පැරණි පිත්තල යතුර. සිංහරාජයේ රහස් ගල් ලෙනේ යකඩ ගේට්ටුව විවෘත කළ හැක.",
+    summaryEnglish: "Heavy brass key discovered hidden in the riverbank sand. Unlocks the iron-reinforced subterranean cave portal.",
+    clueLeadSinhala: "ගංගා නිම්නයේ පැරණි ඔරු තොට පරීක්ෂා කරන්න...",
+    clueLeadEnglish: "Search the muddy river landing and bamboo boat dock...",
+    forensicNotesSinhala: "ලන්දේසි හෝ මහනුවර යුගයේ ලෝහ මිශ්‍රණයකින් නිර්මාණය කර ඇත. යතුරෙහි සිංහ හිසක හැඩයක් කැටයම් කර ඇති අතර මලකඩ බැඳී නොමැත.",
+    forensicNotesEnglish: "Ancient hand-forged brass alloy showing zero corrosion despite decades in tropical damp soil. Intricately engraved with a stylized lion crest.",
+    connectionTo: "sample",
+    connectionText: "ගල් ලෙන් දොරටුව විවෘත කර සාම්පලයට මඟ පාදයි (Unlocks cave sanctum chamber)",
+  },
+  {
+    id: "sample",
+    chapterId: 1,
+    chapterTitle: "CHAPTER 01: කුඩව පිවිසුම (Kudawa Trailhead)",
+    titleSinhala: "ප්‍රතිදීප්ත පර්යේෂණ සාම්පලය",
+    titleEnglish: "Bioluminescent Spore Sample",
+    icon: "Vial",
+    pinColor: "blue",
+    stamp: "BIOHAZARD CLASS-4",
+    location: "Subterranean Cave Sanctum Altar (06°24′19″N 80°30′08″E)",
+    dateFound: "1987 NOV 15",
+    summarySinhala: "වසර 30ක් මුද්‍රා තැබූ ප්‍රතිදීප්ත දිලීර අඩංගු අභිරහස් වීදුරු බඳුන. අඳුරේ දීප්තිමත් නිල්-කොළ ආලෝකයක් විහිදුවයි.",
+    summaryEnglish: "Hermetically sealed glass vial containing living bioluminescent fungal spores that glow with an ethereal cyan pulse in darkness.",
+    clueLeadSinhala: "රූන් අගුල විවෘත කර ලෙන තුළට පිවිසෙන්න...",
+    clueLeadEnglish: "Solve the rune dial lock and enter the deep cave sanctum...",
+    forensicNotesSinhala: "අධික සාන්ද්‍රණයකින් යුත් ස්වභාවික ප්‍රතිජීවක සහ සෛල පුනර්ජනනීය සංයෝග අඩංගු බවට සැක කෙරේ. 1987 කණ්ඩායමේ ප්‍රධාන පර්යේෂණ ඉලක්කය මෙයයි.",
+    forensicNotesEnglish: "Exhibits intense cellular regeneration and hyper-stable bioluminescence. Confirmed as the primary scientific objective of the 1987 expedition.",
+    connectionTo: "diary",
+    connectionText: "දිනපොතේ සඳහන් රහස් ශාකයේ ජීවී සාක්ෂියයි (Validates Douglas's botanical thesis)",
+  },
+  // Chapter 2: Waterfall Valley
+  {
+    id: "map2",
+    chapterId: 2,
+    chapterTitle: "CHAPTER 02: දියඇලි නිම්නය (Waterfall Valley)",
+    titleSinhala: "භූවිද්‍යාඥයින්ගේ සිතියම",
+    titleEnglish: "Geological Survey Cartograph",
+    icon: "Map",
+    pinColor: "red",
+    stamp: "CARTOGRAPHIC SURVEY",
+    location: "Abandoned Valley Basecamp Survey Desk",
+    dateFound: "1987 DEC 02",
+    summarySinhala: "දියඇලි නිම්නය හරහා උණ බම්බු පහුරෙන් ගමන් කරන මාර්ගය සහ රහස් පතලේ පිවිසුම සලකුණු කර ඇත.",
+    summaryEnglish: "Detailed topographical blueprint charting the turbulent rapids, bamboo ferry route, and lost gem mine entrance.",
+    clueLeadSinhala: "භූවිද්‍යා කඳවුරේ මේසය පරීක්ෂා කරන්න...",
+    clueLeadEnglish: "Inspect the survey drafting table in the waterfall gorge...",
+    forensicNotesSinhala: "දියඇල්ලේ ජල මට්ටම් සහ සැඟවුණු ලෙන් පිවිසුම අඩි 150 කඳු ගැටය පාමුල ඇති බව පැහැදිලිව සටහන් කර ඇත.",
+    forensicNotesEnglish: "Hand-inked elevations on waterproof vellum marking the cavern coordinates behind the secondary cascade.",
+    connectionTo: "tape",
+    connectionText: "සන්නිවේදන කඳවුර දෙසට මඟ පෙන්වයි (Directs to field radio post)",
+  },
+  {
+    id: "tape",
+    chapterId: 2,
+    chapterTitle: "CHAPTER 02: දියඇලි නිම්නය (Waterfall Valley)",
+    titleSinhala: "පටිගත කළ හඬපටය (Microcassette)",
+    titleEnglish: "Recovered Microcassette Reel",
+    icon: "Tape",
+    pinColor: "yellow",
+    stamp: "AUDIO EVIDENCE #05",
+    location: "Waterfall Lookout Ridge Rocks",
+    dateFound: "1987 DEC 02",
+    summarySinhala: "අතුරුදහන් වූ ගවේෂකයන්ගේ අවසාන හඬ පණිවිඩය: 'කඳු මුදුනේ මුරකුළුණෙන් සංඥා කරන්න!'",
+    summaryEnglish: "Distress recording recovered from the rocks: 'The radio tower at the mountain summit is our only lifeline!'",
+    clueLeadSinhala: "දියඇල්ල අසල ගල්පර පරීක්ෂා කරන්න...",
+    clueLeadEnglish: "Examine the slippery boulders near the lower plunge basin...",
+    forensicNotesSinhala: "1987 දෙසැම්බර් 02 දිනැති පටිගත කිරීමකි. පසුබිමින් ගිගුරුම් හඬ සහ දියඇල්ලක ඝෝෂාව තහවුරු වේ.",
+    forensicNotesEnglish: "Recorded on magnetic tape. Captures background cascade roar, thunder, and panicked geologist dispatch.",
+    connectionTo: "gem",
+    connectionText: "පතල තුළ ඇති දීප්තිමත් ස්ඵටිකය ගැන අනතුරු අඟවයි (Reveals crystal anomaly)",
+    hasInspectAction: "tape",
+  },
+  {
+    id: "gem",
+    chapterId: 2,
+    chapterTitle: "CHAPTER 02: දියඇලි නිම්නය (Waterfall Valley)",
+    titleSinhala: "නිල් ස්ඵටික සාම්පලය",
+    titleEnglish: "Subterranean Azure Crystal",
+    icon: "Crystal",
+    pinColor: "blue",
+    stamp: "MINERALOGICAL SPECIMEN",
+    location: "Flooded Mine Tunnel Shaft",
+    dateFound: "1987 DEC 03",
+    summarySinhala: "පැරණි පතල ඇතුළතින් සොයාගත් නිල් ආලෝකය විහිදුවන අභිරහස් ස්ඵටිකය.",
+    summaryEnglish: "Uncut piezoelectric azure crystal harvested from the flooded mine vein, emitting constant faint electromagnetic resonance.",
+    clueLeadSinhala: "පතල් කුහරය පරීක්ෂා කරන්න...",
+    clueLeadEnglish: "Descend into the abandoned amethyst and sapphire mine drift...",
+    forensicNotesSinhala: "අධික විද්‍යුත් චුම්භක තරංග නිකුත් කරයි. මෙමගින් ගුවන් විදුලි සන්නිවේදනයට බාධා සිදුවූ බව පැහැදිලි වේ.",
+    forensicNotesEnglish: "Discharges low-frequency EM pulses that disrupted vintage VHF expedition communication arrays.",
+    connectionTo: "map2",
+    connectionText: "සිතියමේ සලකුණු කළ ප්‍රධාන ඛනිජ නිධිය මෙයයි (Matches cartographic epicenter)",
+  },
+  // Chapter 3: Yaksha Giri
+  {
+    id: "ch3_slate",
+    chapterId: 3,
+    chapterTitle: "CHAPTER 03: යක්ෂ ගිරි භූගත අගාධය (Yaksha Giri Chasm)",
+    titleSinhala: "ප්‍රාග් ඓතිහාසික ශිලා ලේඛනය",
+    titleEnglish: "Prehistoric Basalt Inscription",
+    icon: "Scroll",
+    pinColor: "red",
+    stamp: "ARCHAEOLOGICAL CODEX",
+    location: "Chasm Gate Archway",
+    dateFound: "1987 DEC 08",
+    summarySinhala: "පුරාණ ලෙන් කුටියේ තිබූ සොරොව්ව සහ ගිලීගිය ශුද්ධ භූමිය පිළිබඳ සටහන්.",
+    summaryEnglish: "Ancient carved slate outlining the subterranean sluice mechanism and submerged ritual sanctum.",
+    clueLeadSinhala: "ලෙන් පිවිසුම අසල පරීක්ෂා කරන්න...",
+    clueLeadEnglish: "Inspect the cyclopean carved basalt pillars near the chasm maw...",
+    forensicNotesSinhala: "බ්‍රාහ්මී අක්ෂර වලට සමාන රූපාක්ෂර කැටයම් කර ඇත. ජල මට්ටම් පාලනය පිළිබඳ පුරාණ ඉංජිනේරු විද්‍යාව විස්තර කරයි.",
+    forensicNotesEnglish: "Early proto-historic petroglyphs delineating hydraulic mechanisms used to safeguard underground relics.",
+    connectionTo: "ch3_core",
+    connectionText: "සොරොව්ව විවෘත කිරීමෙන් පාෂාණය ලබාගත හැකි බව පවසයි (Instructions for draining reservoir)",
+  },
+  {
+    id: "ch3_core",
+    chapterId: 3,
+    chapterTitle: "CHAPTER 03: යක්ෂ ගිරි භූගත අගාධය (Yaksha Giri Chasm)",
+    titleSinhala: "ප්‍රතිදීප්ත අගාධ පාෂාණය",
+    titleEnglish: "Abyssal Luminescent Geode",
+    icon: "Orb",
+    pinColor: "yellow",
+    stamp: "GEOLOGICAL ANOMALY",
+    location: "Drained Chasm Altar Pedestal",
+    dateFound: "1987 DEC 09",
+    summarySinhala: "ගිලීගිය ලෙන් ශුද්ධ භූමියේ ජලය බැසයාමෙන් පසු හමුවූ දම් පැහැති දීප්තිමත් ස්ඵටිකය.",
+    summaryEnglish: "Pulsing violet geode unveiled from the deep drained subterranean basin, radiating gentle warmth.",
+    clueLeadSinhala: "සොරොව්ව කරකවා ජලය බැස්සවීමෙන් පසු ලබාගන්න...",
+    clueLeadEnglish: "Turn the ancient stone sluice wheel to expose the submerged pedestal...",
+    forensicNotesSinhala: "විකිරණශීලී නොවන ස්වභාවික තාප ශක්තියක් නිකුත් කරයි. ලෙන් පරිසර පද්ධතියට ජීවය සපයන මූලාශ්‍රයයි.",
+    forensicNotesEnglish: "Zero harmful radiation; emits a steady 28°C caloric envelope supporting unique cave flora.",
+    connectionTo: "ch3_torch",
+    connectionText: "කම්කරුවන්ගේ සටහනේ ඇති 'අගාධ හදවත' මෙයයි (Identified as the 'Heart of the Chasm')",
+  },
+  {
+    id: "ch3_torch",
+    chapterId: 3,
+    chapterTitle: "CHAPTER 03: යක්ෂ ගිරි භූගත අගාධය (Yaksha Giri Chasm)",
+    titleSinhala: "පතල් කම්කරු අවසාන සටහන",
+    titleEnglish: "Miners' Sealed Dispatch Note",
+    icon: "Lantern",
+    pinColor: "blue",
+    stamp: "EXPEDITION LOG #09",
+    location: "Abyssal Rim Scaffold Remains",
+    dateFound: "1987 DEC 10",
+    summarySinhala: "1987 පතල් කම්කරුවන් අගාධයෙන් ඉහළ රහස් විද්‍යාගාරයට පිවිසි බව තහවුරු කරන ලිපිය.",
+    summaryEnglish: "Weathered dispatch certifying that surviving mining crews discovered a high-tech bio-facility above the chasm.",
+    clueLeadSinhala: "අගාධ කෙළවර පරීක්ෂා කරන්න...",
+    clueLeadEnglish: "Examine the rusted iron hoist cage at the abyss edge...",
+    forensicNotesSinhala: "පැරණි තෙල් කඩදාසියක පැන්සලෙන් ලියා ඇත. රහස් විද්‍යාගාරයේ ප්‍රවේශ කේතය සහ මොනොරේල් මාර්ගය සඳහන් වේ.",
+    forensicNotesEnglish: "Pencil scribbled on waxed parchment with schematic vectors toward the hidden canopy monorail.",
+    connectionTo: "ch3_slate",
+    connectionText: "පුරාණ ලෙන සහ නූතන රහස් විද්‍යාගාරය යා කරන පාලමයි (Connects ancient ruins to modern lab)",
+  },
+  // Chapter 4: Research Lab
+  {
+    id: "ch4_docs",
+    chapterId: 4,
+    chapterTitle: "CHAPTER 04: රහස් පර්යේෂණාගාරය (Secret Research Lab)",
+    titleSinhala: "1987 රහස් ව්‍යාපෘති ලිපිගොනුව",
+    titleEnglish: "Classified Project Dossier 'PROJECT CANOPY'",
+    icon: "Folder",
+    pinColor: "red",
+    stamp: "DEFENSE LEVEL-5 CONFIDENTIAL",
+    location: "Mainframe Terminal Server Rack",
+    dateFound: "1987 DEC 15",
+    summarySinhala: "පරිගණක පර්යන්තයෙන් ලබාගත් රහස් ජෛව විද්‍යාත්මක පර්යේෂණ වාර්තාව.",
+    summaryEnglish: "Declassified project folders confirming classified botanical genetics sponsored in the late 1980s.",
+    clueLeadSinhala: "ප්‍රධාන පරිගණකය පරීක්ෂා කරන්න...",
+    clueLeadEnglish: "Reboot the green phosphor mainframe terminal...",
+    forensicNotesSinhala: "සිංහරාජයේ දුර්ලභ ශාක වලින් මිනිස් ආයු කාලය දෙගුණ කළ හැකි සුවිශේෂී සංයෝගයක් නිස්සාරණය කළ බව සනාථ වේ.",
+    forensicNotesEnglish: "Confirms synthesis of longevity alkaloids extracted from Sinharaja endemic flora.",
+    connectionTo: "ch4_keycard",
+    connectionText: "ක්‍රයෝ-කුටියේ ආරක්ෂක කේත සටහන් කර ඇත (References Cryo-Vault Level 3 protocol)",
+  },
+  {
+    id: "ch4_keycard",
+    chapterId: 4,
+    chapterTitle: "CHAPTER 04: රහස් පර්යේෂණාගාරය (Secret Research Lab)",
+    titleSinhala: "Level 3 ආරක්ෂක ප්‍රවේශ කාඩ්පත",
+    titleEnglish: "Level-3 Security Keycard",
+    icon: "Keycard",
+    pinColor: "yellow",
+    stamp: "SECURITY CLEARANCE",
+    location: "Chief Scientist Office Desk",
+    dateFound: "1987 DEC 15",
+    summarySinhala: "ක්‍රයෝ-කුටිය සහ වියන් මොනොරේල් දොරටුව විවෘත කිරීමට හැකි ආරක්ෂක කාඩ්පත.",
+    summaryEnglish: "Magnetic stripe keycard unlocking the cryogenic vault and canopy monorail airlock.",
+    clueLeadSinhala: "කාර්යාල මේසය පරීක්ෂා කරන්න...",
+    clueLeadEnglish: "Search the director's locked rolltop desk in Sector B...",
+    forensicNotesSinhala: "කාඩ්පතේ 'DR. DOUGLAS - DIRECTOR' ලෙස මුද්‍රණය කර ඇත. චුම්භක තීරුව තවමත් සක්‍රියයි.",
+    forensicNotesEnglish: "Embossed with 'DR. DOUGLAS - DIRECTOR'. Magnetic strip fully validated by the security sub-system.",
+    connectionTo: "ch4_sample",
+    connectionText: "ක්‍රයෝ-කුටිය විවෘත කර විකෘති DNA සාම්පලය ලබාගැනීමට අවශ්‍ය වේ (Unlocks cryogenic specimen chamber)",
+  },
+  {
+    id: "ch4_sample",
+    chapterId: 4,
+    chapterTitle: "CHAPTER 04: රහස් පර්යේෂණාගාරය (Secret Research Lab)",
+    titleSinhala: "විකෘති DNA සාම්පලය (Cryo-Vial)",
+    titleEnglish: "Cryopreserved Hybrid DNA Sample",
+    icon: "Dna",
+    pinColor: "blue",
+    stamp: "SYNTHETIC GENOME",
+    location: "Sub-Zero Cryo Chamber",
+    dateFound: "1987 DEC 16",
+    summarySinhala: "වසර 30ක් ආරක්ෂිතව පැවති දුර්ලභ ශාක-සත්ව විකෘති ජෛව සාම්පලය.",
+    summaryEnglish: "Deep-frozen cryogenic tube holding the synthesis matrix of the miraculous canopy flora.",
+    clueLeadSinhala: "ක්‍රයෝ-කුටිය විවෘත කරන්න...",
+    clueLeadEnglish: "Cycle the nitrogen purge system and open Cryo-Chamber 04...",
+    forensicNotesSinhala: "ශුන්‍යයට අඩු උෂ්ණත්වයක තවමත් සක්‍රියයි. විකෘති ශාක සෛල අසාමාන්‍ය ශක්තියක් ජනනය කරයි.",
+    forensicNotesEnglish: "Active cellular mitosis observed under polarized microscopy despite 35 years in sub-zero cryostasis.",
+    connectionTo: "ch4_docs",
+    connectionText: "පර්යේෂණ ලිපිගොනුවේ සඳහන් කළ ප්‍රධාන සොයාගැනීම මෙයයි (Physical proof of Project Canopy)",
+  },
+  // Chapter 5: Sacred Canopy Tree
+  {
+    id: "ch5_blackbox",
+    chapterId: 5,
+    chapterTitle: "CHAPTER 05: මහා නාවෘක්ෂය (Sacred Canopy Tree)",
+    titleSinhala: "ගවේෂණ කළු පෙට්ටිය (Flight Blackbox)",
+    titleEnglish: "Expedition Chopper Flight Blackbox",
+    icon: "Box",
+    pinColor: "red",
+    stamp: "AVIONICS FLIGHT RECORDER",
+    location: "Canopy Chopper Wreckage Cockpit",
+    dateFound: "1987 DEC 20",
+    summarySinhala: "1987 හෙලිකොප්ටර් අනතුරේ සම්පූර්ණ ටෙලිමෙට්‍රි සහ සංවාද දත්ත අඩංගු ෆ්ලයිට් රෙකෝඩරය.",
+    summaryEnglish: "Armored flight telemetry recorder recovered from the suspended Bell-206 wreckage.",
+    clueLeadSinhala: "වියන් මාවත ආරම්භය පරීක්ෂා කරන්න...",
+    clueLeadEnglish: "Climb the braided vine ladder into the canopy crash site...",
+    forensicNotesSinhala: "අනතුර සිදුව ඇත්තේ කුණාටුවක් නිසා නොව, මහා නාවෘක්ෂයෙන් නිකුත් වූ බලගතු විද්‍යුත් චුම්භක තරංගයක් හේතුවෙනි.",
+    forensicNotesEnglish: "Cockpit audio discloses avionics failure triggered by electromagnetic pulse from the giant ancient canopy.",
+    connectionTo: "ch5_truth",
+    connectionText: "මහාචාර්යවරයා අනතුරින් පසු දිවි ගලවාගත් බව හෙළි කරයි (Confirms Douglas survived crash)",
+  },
+  {
+    id: "ch5_truth",
+    chapterId: 5,
+    chapterTitle: "CHAPTER 05: මහා නාවෘක්ෂය (Sacred Canopy Tree)",
+    titleSinhala: "මහාචාර්ය ඩග්ලස්ගේ අවසාන පාපොච්චාරණය",
+    titleEnglish: "Prof. Douglas's Final Testament",
+    icon: "Scroll",
+    pinColor: "yellow",
+    stamp: "PRIMARY TESTAMENT",
+    location: "Crown Canopy Observation Eyrie",
+    dateFound: "1987 DEC 21",
+    summarySinhala: "සිංහරාජයේ රහස සහ විකෘති ශාකයෙන් සුව කළ හැකි විශ්වීය ඖෂධීය සූත්‍රය.",
+    summaryEnglish: "The handwritten ultimate confession detailing the ecosystem cure and true nature of Sinharaja.",
+    clueLeadSinhala: "වියන් කුටිය පරීක්ෂා කරන්න...",
+    clueLeadEnglish: "Ascend to the highest observation eyrie at the crown of the giant tree...",
+    forensicNotesSinhala: "ඩග්ලස් වනාන්තරයේ රහස් සොබාදහමටම අයිති විය යුතු බව තේරුම් ගෙන පිටව නොගොස් එහිම රැඳුණු බව ලියා ඇත.",
+    forensicNotesEnglish: "Douglas resolved to protect the forest from exploitation, hiding the coordinates until a worthy guardian arrived.",
+    connectionTo: "ch5_beacon",
+    connectionText: "සැටලයිට් බීකනයෙන් පණිවිඩය මුදාහැරීමට සංඥා කේතය ලබාදෙයි (Supplies satellite transmission code)",
+  },
+  {
+    id: "ch5_beacon",
+    chapterId: 5,
+    chapterTitle: "CHAPTER 05: මහා නාවෘක්ෂය (Sacred Canopy Tree)",
+    titleSinhala: "සැටලයිට් බීකන සම්ප්‍රේෂණය",
+    titleEnglish: "Orbital Satellite Uplink Transponder",
+    icon: "Satellite",
+    pinColor: "blue",
+    stamp: "GLOBAL UPLINK VERIFIED",
+    location: "Summit Radio Mast Rig",
+    dateFound: "1987 DEC 22",
+    summarySinhala: "සත්‍යය මුළු ලොවටම ප්‍රචාරය කරමින් චන්ද්‍රිකාව හා සම්බන්ධ වූ සක්‍රිය බීකනය.",
+    summaryEnglish: "High-frequency solar-powered emergency uplink transponder broadcasting the declassified expedition files.",
+    clueLeadSinhala: "සැටලයිට් ඇන්ටනාව ක්‍රියාත්මක කරන්න...",
+    clueLeadEnglish: "Align the parabolic antenna toward the meteorological satellite corridor...",
+    forensicNotesSinhala: "ලෝක උරුම සංරක්ෂණ මූලස්ථානය වෙත දත්ත සම්පූර්ණයෙන්ම සම්ප්‍රේෂණය විය. මෙහෙයුම සාර්ථකයි!",
+    forensicNotesEnglish: "Encrypted payload transmitted to Global Rainforest Conservancy servers. Truth permanently safeguarded.",
+    connectionTo: "ch5_blackbox",
+    connectionText: "කළු පෙට්ටියේ දත්ත සහ ඩග්ලස්ගේ සාක්ෂි මුළු ලොවටම යවයි (Transmits all findings globally)",
+  },
+];
+
+// ── Master Field Guide Data (6 Sinharaja Wildlife & Flora Species) ────────
+export const MASTER_FIELD_GUIDE = [
+  {
+    id: "blue_magpie",
+    nameSinhala: "ශ්‍රී ලංකා කැහිබෙල්ලා",
+    nameEnglish: "Sri Lanka Blue Magpie",
+    scientificName: "Urocissa ornata",
+    category: "FAUNA // ENDEMIC BIRD",
+    status: "Vulnerable (IUCN Red List)",
+    habitat: "Wet Zone Rainforest Canopy & Understory",
+    icon: "Eye",
+    illustrationType: "magpie",
+    descriptionSinhala: "සිංහරාජයට ආවේණික අලංකාර නිල් පැහැති පිහාටු, දුඹුරු හිස සහ තද රතු හොටක් සහිත දුර්ලභ පක්ෂියෙකි. මොවුන්ගේ හඬ වැසි වනාන්තරයේ අනතුරු ඇඟවීමේ සංඥාවක් ලෙස ක්‍රියා කරයි. මොවුන්ගේ වැටුණු නිල් පිහාටු එකතු කිරීමෙන් ගවේෂකයාගේ මනසේ සාමය (Sanity) යථා තත්ත්වයට පත්වේ.",
+    descriptionEnglish: "Striking endemic corvid featuring brilliant blue plumage, chestnut head, and crimson bill. Known for complex flocking calls that signal nearby predators or weather changes. Collecting molted feathers restores Sanity.",
+    survivalTipSinhala: "ගස් මුදුන් වල කැහිබෙල්ලන් රංචු ගැසී නාද කරන්නේ නම් ආසන්නයේ සර්පයෙකු හෝ විලෝපිකයෙකු සිටින බවට පෙරනිමිත්තකි.",
+    survivalTipEnglish: "Flocking blue magpies chatter vigorously when pit vipers or dangerous hazards are nearby. Listen for their sharp calls.",
+  },
+  {
+    id: "purple_langur",
+    nameSinhala: "කළු වඳුරා (දම් මුහුණැති කොළ වඳුරා)",
+    nameEnglish: "Purple-faced Langur",
+    scientificName: "Semnopithecus vetulus",
+    category: "FAUNA // ENDEMIC PRIMATE",
+    status: "Endangered (IUCN Red List)",
+    habitat: "High Rainforest Emergent Canopy (25-35m)",
+    icon: "Target",
+    illustrationType: "langur",
+    descriptionSinhala: "සිංහරාජයේ උසම වියන් ස්ථරයේ වෙසෙන අභිමානවත් කොළ වඳුරු විශේෂයකි. මොවුන්ගේ ගැඹුරු උස් වූ හූ හඬ (Resonant whoop) වනාන්තරයේ දිශාව හඳුනාගැනීමට සහ ධාරාණිපාත කුණාටු එන බව කල්තියා දැනගැනීමට උපකාරී වේ.",
+    descriptionEnglish: "Arboreal folivore strictly endemic to the southwestern rainforests. Emits deep, booming resonant whoops heard up to 2km away through thick mist, announcing canopy territorial boundaries and approaching squalls.",
+    survivalTipSinhala: "වඳුරන් හදිසියේ පහළ අතු වලට බසින්නේ නම් ඉහළ වියනේ තද සුළං හෝ අකුණු අනතුරක් ඇත.",
+    survivalTipEnglish: "When langurs drop from emergent trees to mid-canopy, lightning strikes or severe squalls are imminent.",
+  },
+  {
+    id: "humpnosed_viper",
+    nameSinhala: "පොළඟා (කුරුඳු පොළඟා / කැකිටියා පොළඟා)",
+    nameEnglish: "Hump-nosed Pit Viper",
+    scientificName: "Hypnale hypnale",
+    category: "FAUNA // VENOMOUS REPTILE",
+    status: "Common / Venomous Hazard",
+    habitat: "Damp Leaf Litter, Decaying Logs & Trail Edges",
+    icon: "Shield",
+    illustrationType: "viper",
+    descriptionSinhala: "වැසි වනාන්තරයේ බිම වියළි කොළ රොඩු අතර පරිපූර්ණ ලෙස සැඟවී සිටින විෂ සහිත කුඩා සර්පයෙකි. මොවුන්ගේ හිසේ උඩුකුරු නාසික නෙරායාම සහ ත්‍රිකෝණාකාර හිස විශේෂිතය. දෂ්ටනයකින් විෂ රුධිරගත වන අතර ස්ටැමිනා සහ සෞඛ්‍යය වේගයෙන් හීන කරයි.",
+    descriptionEnglish: "Small, expertly camouflaged pit viper blending seamlessly into decaying leaf litter and wet roots. Possesses heat-sensing loreal pits. A strike inflicts localized hemotoxicity and severe stamina drain.",
+    survivalTipSinhala: "මඩ සහිත මංපෙත් වල ගමන් කිරීමේදී පන්දම [F] පහතට එල්ල කර පරීක්ෂා කරන්න. ඖෂධීය පැලෑටි [H] මගින් විෂ සමනය කරගත හැක.",
+    survivalTipEnglish: "Always shine torch [F] on ground trail litter. Apply Kithul Herbal Infusion [H] immediately if envenomed.",
+  },
+  {
+    id: "firefly",
+    nameSinhala: "සිංහරාජ කලාමැදිරියන් (සමමුහුර්ත ප්‍රතිදීප්ත කෘමීන්)",
+    nameEnglish: "Synchronous Fireflies",
+    scientificName: "Luciolinae sp.",
+    category: "FAUNA // BIOLUMINESCENT INSECT",
+    status: "Endemic Nocturnal Phenomenon",
+    habitat: "Streamsides, Wet Ravines & Muddy Clearings",
+    icon: "Torch",
+    illustrationType: "firefly",
+    descriptionSinhala: "රාත්‍රියේදී දහස් ගණනින් එකවර රිද්මයානුකූලව කොළ-කහ පැහැයෙන් දැල්වෙන අද්භූත කලාමැදිරියන් රංචු. මොවුන්ගේ ආලෝකය වනාන්තරයේ ආරක්ෂිත කඳවුරු සහ පිරිසිදු ජල මූලාශ්‍ර අසල වැඩි වශයෙන් දක්නට ලැබේ.",
+    descriptionEnglish: "Thousands of bioluminescent beetles pulsing in synchronized harmonic rhythms across riverbanks. Their gentle glow stabilizes player Sanity and marks safe resting zones free from leech swarms.",
+    survivalTipSinhala: "කලාමැදිරියන් රංචු ගැසී සිටින ස්ථාන වල රැඳී සිටීමෙන් Sanity (මානසික සුවය) වේගයෙන් යථා තත්ත්වයට පත්වේ.",
+    survivalTipEnglish: "Lingering near firefly groves halts Sanity decay and grants +10 Sanity per 30 seconds of quiet rest.",
+  },
+  {
+    id: "pitcher_plant",
+    nameSinhala: "බාඳුරා ශාකය (සිංහරාජ බඳුන් ශාකය)",
+    nameEnglish: "Sinharaja Carnivorous Pitcher",
+    scientificName: "Nepenthes distillatoria",
+    category: "FLORA // CARNIVOROUS PLANT",
+    status: "Vulnerable / Endemic",
+    habitat: "Waterlogged Peat, Sunlit Clearings & Wet Rocks",
+    icon: "Herb",
+    illustrationType: "pitcher",
+    descriptionSinhala: "කෘමීන් සහ කුඩා සතුන් ග්‍රහණය කර දිරවා ගන්නා බඳුනක හැඩැති අලංකාර මාංශ භක්ෂක ශාකයකි. බඳුන තුළ ඇති පිරිසිදු ජලීය එන්සයිම දියරය විෂබීජ නාශකයක් සහ පිපාසය සංසිඳුවන ඖෂධයක් ලෙස භාවිත කළ හැක.",
+    descriptionEnglish: "Endemic tropical pitcher plant with modified lidded urns trapping insects in digestive fluid. The sterile enzyme fluid inside unopened pitchers can be distilled into an emergency antiseptic balm.",
+    survivalTipSinhala: "බාඳුරා බඳුන් අසලින් හමුවන දුර්ලභ ඖෂධීය යුෂ කූඩැල්ලන් සහ කුඩා සීරීම් සුව කිරීමට යොදාගත හැක.",
+    survivalTipEnglish: "Crushed pitcher leaves mixed with herbal balm create an effective leech-repellent barrier.",
+  },
+  {
+    id: "tree_fern",
+    nameSinhala: "මහා ගස් පර්ණාංගය",
+    nameEnglish: "Giant Rainforest Tree Fern",
+    scientificName: "Cyathea walkerae",
+    category: "FLORA // ANCIENT JURASSIC FLORA",
+    status: "Protected Relict Species",
+    habitat: "Dense Cloud Forest & Humid Ravines",
+    icon: "Tree",
+    illustrationType: "fern",
+    descriptionSinhala: "ඩයිනෝසිරස් යුගයේ සිට අද දක්වා නොනැසී පවතින යෝධ ගස් පර්ණාංග විශේෂයකි. මීටර් 10ක් දක්වා උසට වැඩෙන අතර මොවුන්ගේ පුළුල් කොළ වියන මහා වැසි වලින් සහ අකුණු වලින් ආරක්ෂාව සපයයි.",
+    descriptionEnglish: "Ancient relict tree fern surviving since the Jurassic period. Towering up to 10 meters with massive umbrella fronds that provide natural shelter from torrential monsoon downpours.",
+    survivalTipSinhala: "මහා වර්ෂාවකදී ගස් පර්ණාංග යට නවාතැන් ගැනීමෙන් ඇඳුම් තෙත්වීම සහ හයිපොතර්මියාව වළක්වා ගත හැක.",
+    survivalTipEnglish: "Standing directly beneath giant tree fern umbrellas counts as natural environmental shelter during heavy storms.",
+  },
+];
+
+// ── Master Expedition Historical Logs ──────────────────────────────────────
+export const EXPEDITION_LORE_LOGS = [
+  {
+    id: "log_1",
+    date: "1987 NOV 10",
+    location: "Kudawa Outpost (කුඩව මුරපොළ)",
+    author: "Prof. Arthur Douglas (Chief Botanist)",
+    titleSinhala: "ගවේෂණයේ ආරම්භය සහ කුඩව කඳවුර",
+    titleEnglish: "Arrival at Kudawa Trailhead Base",
+    textSinhala: "අප තිදෙනා අද දහවල් කුඩව මුරපොළට ළඟා වීමු. සිංහරාජයේ මහා වැසි වනාන්තරය නිහඬව අප ඉදිරියේ විහිදේ. රේන්ජර් ගුණදාස පැවසුවේ පසුගිය දිනවල අද්භූත නිල් එළියක් කඳු මුදුනින් දැක ඇති බවයි.",
+    textEnglish: "Our 3-man expedition arrived at Kudawa outpost by noon. Sinharaja extends silently before us. Ranger Gunadasa reported mysterious azure lights seen atop the mountain ridge during the last full moon.",
+    stamp: "EXPEDITION LOG #01",
+  },
+  {
+    id: "log_2",
+    date: "1987 NOV 14",
+    location: "River Gorge Crossway (ගංගා නිම්නය)",
+    author: "Prof. Arthur Douglas",
+    titleSinhala: "අනපේක්ෂිත වැසි කුණාටුව සහ ලෙන් පිවිසුම",
+    titleEnglish: "Flash Monsoon & Cavern Discovery",
+    textSinhala: "සවස හදිසියේ ඇදහැළුණු මහා වැස්සෙන් ගංගාව පිටාර ගැලීය. සාමාන්‍ය පාලම ගසාගෙන ගිය බැවින් අපට යෝධ ගස් කොටන් පාලම ඔස්සේ යාමට සිදුවිය. ගල් ලෙන අසලදී පාරජම්බුල (UV) තීන්ත සලකුණු තැබුවෙමි.",
+    textEnglish: "A flash monsoon flooded the river basin, sweeping away the wooden footbridge. We crossed via the giant fallen tree log. Marked our trail with luminescent UV ink markers leading toward the subterranean sanctum.",
+    stamp: "EXPEDITION LOG #02",
+  },
+  {
+    id: "log_3",
+    date: "1987 DEC 02",
+    location: "Waterfall Chasm & Mine (දියඇලි නිම්නය)",
+    author: "Dr. K. Jayasuriya (Lead Geologist)",
+    titleSinhala: "දියඇලි නිම්නයේ භූ විද්‍යාත්මක සොයාගැනීම",
+    titleEnglish: "Waterfall Chasm Piezo-Resonance",
+    textSinhala: "අප උණ බම්බු පහුරෙන් දියඇලි අගාධය තරණය කළෙමු. අතහැර දැමූ පැරණි පතල තුළින් සොයාගත් නිල් ස්ඵටිකය අසාමාන්‍ය විද්‍යුත් චුම්භක තරංග නිකුත් කරයි. ගුවන් විදුලි සන්නිවේදනය මුළුමනින්ම ඇනහිට ඇත.",
+    textEnglish: "Crossed the waterfall gorge using a reinforced bamboo raft. The azure crystal harvested inside the flooded mine shaft emits high-frequency EM pulses, disabling all VHF radio communications.",
+    stamp: "EXPEDITION LOG #03",
+  },
+  {
+    id: "log_4",
+    date: "CURRENT EXPEDITION",
+    location: "Sinharaja Wilderness Core",
+    author: "Ranger Gunadasa (Senior Forest Ranger)",
+    titleSinhala: "වනජීවී නිලධාරී ගුණදාසගේ ක්ෂේත්‍ර අනතුරු ඇඟවීම",
+    titleEnglish: "Ranger Gunadasa's Survival Protocol",
+    textSinhala: "සිංහරාජයේ රාත්‍රිය අතිශය භයානකයි. කූඩැල්ලන්ගෙන් සහ සර්පයන්ගෙන් ආරක්ෂා වීමට ලුණු [1], පැළෑටි [2], සහ කපුරු තෙල් [3] නිරතුරුව භාවිත කරන්න. කැහිබෙල්ලන්ගේ හඬට සවන් දෙන්න; ඔවුන් අනතුර කල්තියා හඳුනාගනී.",
+    textEnglish: "Night in Sinharaja is perilous. Keep salt pouches [1], herbs [2], and citronella balm [3] hotkeyed against leeches and vipers. Listen closely to the blue magpies; their calls herald sudden shifts in weather and predator presence.",
+    stamp: "RANGER FIELD MEMO",
+  },
+];
+
+// ── Forensic Investigation Evidence Board Modal ───────────────────────────
+function EvidenceBoardModal({
+  isOpen,
+  onClose,
+  evidence = {},
+  activeChapter = 1,
+  lang = "si",
+  onInspectDiary,
+  onInspectTape,
+  onInspectDouglasTape,
+  viewMode = "playing",
+}) {
+  const [activeTab, setActiveTab] = useState(viewMode === "playing" ? String(activeChapter) : "all");
+  const [selectedEvidence, setSelectedEvidence] = useState(null);
+  const [filterMode, setFilterMode] = useState("all"); // 'all' | 'collected' | 'missing'
+
+  if (!isOpen) return null;
+
+  const totalCount = MASTER_EVIDENCE.filter((e) => evidence[e.id]).length;
+  const totalPercentage = Math.round((totalCount / MASTER_EVIDENCE.length) * 100);
+
+  const displayedChapters = [1, 2, 3, 4, 5].filter((ch) => {
+    if (activeTab === "all") return true;
+    return String(ch) === String(activeTab);
+  });
+
+  return (
+    <div className="evidence-modal" onClick={onClose}>
+      <div className="tactical-corkboard" onClick={(e) => e.stopPropagation()}>
+        {/* Brass Corner Brackets */}
+        <div className="cork-corner-bracket top-left" />
+        <div className="cork-corner-bracket top-right" />
+        <div className="cork-corner-bracket bottom-left" />
+        <div className="cork-corner-bracket bottom-right" />
+
+        {/* Board Header Bar */}
+        <div className="corkboard-header">
+          <div className="cork-title-wrap">
+            <span className="cork-stamp-seal">CLASSIFIED FORENSIC ARCHIVE // 1987 EXPEDITION</span>
+            <h2>
+              <Icons.Evidence className="tactical-svg-icon" />
+              {lang === "en" ? "SINHARAJA EVIDENCE CASE BOARD" : "සිංහරාජ රහස් සාක්ෂි පුවරුව (EVIDENCE CASE BOARD)"}
+            </h2>
+          </div>
+          <div className="cork-header-right">
+            <div className="cork-progress-badge">
+              <span className="cork-prog-label">{lang === "en" ? "CASE RECOVERY:" : "සමස්ත සාක්ෂි ප්‍රගතිය:"}</span>
+              <strong className="cork-prog-val">{totalCount} / {MASTER_EVIDENCE.length} ({totalPercentage}%)</strong>
+              <div className="cork-mini-progress-bar">
+                <div className="cork-mini-progress-fill" style={{ width: `${totalPercentage}%` }} />
+              </div>
+            </div>
+            <button className="cork-close-btn" onClick={onClose} title="Close Evidence Board">✕</button>
+          </div>
+        </div>
+
+        {/* Chapter Filter & Scope Toolbar */}
+        <div className="cork-toolbar">
+          <div className="cork-chapter-tabs">
+            <button
+              className={`cork-tab-btn ${activeTab === "all" ? "tab-active" : ""}`}
+              onClick={() => setActiveTab("all")}
+            >
+              {lang === "en" ? "ALL ARCHIVES" : "පූර්ණ ලිපිගොනු"} ({totalCount}/15)
+            </button>
+            {[1, 2, 3, 4, 5].map((ch) => {
+              const chEvidence = MASTER_EVIDENCE.filter((e) => e.chapterId === ch);
+              const chCollected = chEvidence.filter((e) => evidence[e.id]).length;
+              return (
+                <button
+                  key={ch}
+                  className={`cork-tab-btn ${String(activeTab) === String(ch) ? "tab-active" : ""}`}
+                  onClick={() => setActiveTab(String(ch))}
+                >
+                  CH 0{ch} ({chCollected}/3)
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="cork-filter-pills">
+            <button
+              className={`cork-pill-btn ${filterMode === "all" ? "pill-active" : ""}`}
+              onClick={() => setFilterMode("all")}
+            >
+              {lang === "en" ? "ALL LEADS" : "සියල්ල"}
+            </button>
+            <button
+              className={`cork-pill-btn ${filterMode === "collected" ? "pill-active" : ""}`}
+              onClick={() => setFilterMode("collected")}
+            >
+              ✓ {lang === "en" ? "COLLECTED" : "හමුවූ සාක්ෂි"} ({totalCount})
+            </button>
+            <button
+              className={`cork-pill-btn ${filterMode === "missing" ? "pill-active" : ""}`}
+              onClick={() => setFilterMode("missing")}
+            >
+              ? {lang === "en" ? "UNSOLVED" : "නොවිසඳුණු හෝඩුවාවන්"} ({15 - totalCount})
+            </button>
+          </div>
+        </div>
+
+        {/* Main Corkboard Surface */}
+        <div className="corkboard-surface">
+          {/* Yellow Detective Sticky Notes Pinned to Corkboard */}
+          <div className="cork-sticky-note note-1">
+            <div className="sticky-pin pin-red" />
+            <span className="sticky-tag">CONFIDENTIAL NOTE</span>
+            <p>
+              {lang === "en"
+                ? "“Prof. Douglas and team vanished in Nov 1987. Use UV Blacklight [U] on wet trails to follow their footsteps.”"
+                : "“1987 නොවැම්බර් මහාචාර්ය ඩග්ලස්ගේ කණ්ඩායම අතුරුදහන් විය. තෙත් මංපෙත් වල ඔවුන්ගේ පා සටහන් සොයාගැනීමට UV Blacklight [U] භාවිත කරන්න.”"}
+            </p>
+          </div>
+
+          <div className="cork-sticky-note note-2">
+            <div className="sticky-pin pin-yellow" />
+            <span className="sticky-tag">RUNE CIPHER MEMO</span>
+            <p>
+              {lang === "en"
+                ? "“Ancient Cave Door Rune Sequence: [I: SUN] -> [II: RIVER] -> [III: LION]. Brass key hidden near muddy boat dock.”"
+                : "“පුරාණ ලෙන් දොරටුවේ රහස් සංකේත: [I: සූර්යයා] -> [II: ගංගාව] -> [III: සිංහයා]. පිත්තල යතුර ඔරු තොටේ ඇත.”"}
+            </p>
+          </div>
+
+          {/* Render Chapter Clusters */}
+          {displayedChapters.map((ch) => {
+            const chapterItems = MASTER_EVIDENCE.filter((e) => e.chapterId === ch);
+            const filteredItems = chapterItems.filter((e) => {
+              const isCol = !!evidence[e.id];
+              if (filterMode === "collected") return isCol;
+              if (filterMode === "missing") return !isCol;
+              return true;
+            });
+
+            const chCollectedCount = chapterItems.filter((e) => evidence[e.id]).length;
+            const isChapterSolved = chCollectedCount === 3;
+
+            return (
+              <div key={ch} className="cork-chapter-cluster">
+                <div className="cluster-header-bar">
+                  <div className="cluster-title-wrap">
+                    <span className="cluster-chapter-badge">CHAPTER 0{ch}</span>
+                    <h3 className="cluster-title">
+                      {chapterItems[0]?.chapterTitle || `CHAPTER 0${ch} EVIDENCE`}
+                    </h3>
+                  </div>
+                  {isChapterSolved && (
+                    <div className="case-solved-stamp">
+                      ✓ {lang === "en" ? "CASE SOLVED // ALL EVIDENCE SECURED" : "සාක්ෂි 3ම තහවුරුයි // නඩුව විසඳුණි"}
+                    </div>
+                  )}
+                </div>
+
+                {/* SVG Red Investigation Yarn Connecting the 3 Clues */}
+                {chapterItems.length === 3 && (
+                  <svg className="corkboard-yarn-layer" viewBox="0 0 1000 60" preserveAspectRatio="none">
+                    <path
+                      d="M 166 20 Q 333 50 500 20"
+                      className={`cork-yarn-path ${evidence[chapterItems[0].id] && evidence[chapterItems[1].id] ? "yarn-active" : "yarn-idle"}`}
+                    />
+                    <path
+                      d="M 500 20 Q 666 50 833 20"
+                      className={`cork-yarn-path ${evidence[chapterItems[1].id] && evidence[chapterItems[2].id] ? "yarn-active" : "yarn-idle"}`}
+                    />
+                  </svg>
+                )}
+
+                {/* Evidence Cards Grid */}
+                <div className="cluster-cards-grid">
+                  {filteredItems.map((item) => {
+                    const isCollected = !!evidence[item.id];
+                    return (
+                      <div
+                        key={item.id}
+                        className={`tactical-polaroid ${isCollected ? "polaroid-collected" : "polaroid-uncollected"}`}
+                        onClick={() => setSelectedEvidence(item)}
+                        title={lang === "en" ? "Click to Inspect Forensic Clue" : "සාක්ෂිය විමර්ශනය කිරීමට ක්ලික් කරන්න"}
+                      >
+                        <div className={`polaroid-pin pin-${item.pinColor || "red"}`}>
+                          <div className="pin-specular" />
+                        </div>
+                        <div className="polaroid-tape top-right" />
+
+                        <div className="polaroid-photo-frame">
+                          <div className="polaroid-inner-photo">
+                            {Icons[item.icon] ? (
+                              React.createElement(Icons[item.icon], { className: "polaroid-svg-icon" })
+                            ) : (
+                              <Icons.Evidence className="polaroid-svg-icon" />
+                            )}
+                          </div>
+                          <span className={`polaroid-rubber-stamp ${isCollected ? "stamp-verified" : "stamp-missing"}`}>
+                            {isCollected
+                              ? (lang === "en" ? "✓ VERIFIED" : "✓ තහවුරුයි")
+                              : (lang === "en" ? "SEEKING LEAD" : "නොවිසඳුණු")}
+                          </span>
+                        </div>
+
+                        <div className="polaroid-body">
+                          <h4 className="polaroid-title">{lang === "en" ? item.titleEnglish : item.titleSinhala}</h4>
+                          <p className="polaroid-desc">
+                            {isCollected
+                              ? (lang === "en" ? item.summaryEnglish : item.summarySinhala)
+                              : (lang === "en" ? item.clueLeadEnglish : item.clueLeadSinhala)}
+                          </p>
+                          <div className="polaroid-footer">
+                            <span className="polaroid-tag-pill">
+                              {isCollected
+                                ? (lang === "en" ? "FORENSIC SPECIMEN" : "භෞතික සාක්ෂිය")
+                                : (lang === "en" ? "UNSOLVED LEAD" : "සොයාගත යුතු හෝඩුවාව")}
+                            </span>
+                            <span className="polaroid-inspect-hint">🔍 {lang === "en" ? "INSPECT" : "පරීක්ෂා කරන්න"}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Forensic Lightbox Inspector Modal */}
+      {selectedEvidence && (
+        <div className="evidence-inspector-overlay" onClick={() => setSelectedEvidence(null)}>
+          <div className="evidence-inspector-card" onClick={(e) => e.stopPropagation()}>
+            <div className="inspector-header">
+              <div className="inspector-title-wrap">
+                <span className="inspector-case-code">
+                  CASE FILE // EVID-0{selectedEvidence.chapterId}-{selectedEvidence.id.toUpperCase()}
+                </span>
+                <h3>{lang === "en" ? selectedEvidence.titleEnglish : selectedEvidence.titleSinhala}</h3>
+              </div>
+              <button className="inspector-close-btn" onClick={() => setSelectedEvidence(null)}>✕</button>
+            </div>
+
+            <div className="inspector-content-grid">
+              <div className="inspector-left-specimen">
+                <div className="specimen-polaroid">
+                  <div className={`polaroid-pin pin-${selectedEvidence.pinColor || "red"}`} />
+                  <div className="specimen-photo-large">
+                    {Icons[selectedEvidence.icon] ? (
+                      React.createElement(Icons[selectedEvidence.icon], { className: "specimen-large-svg" })
+                    ) : (
+                      <Icons.Evidence className="specimen-large-svg" />
+                    )}
+                  </div>
+                  <div className="specimen-stamp-seal">
+                    {evidence[selectedEvidence.id] ? "FORENSIC EVIDENCE CONFIRMED" : "SEEKING FIELD RECOVERY"}
+                  </div>
+                </div>
+
+                <div className="specimen-metadata-box">
+                  <div className="specimen-meta-row">
+                    <span className="meta-label">{lang === "en" ? "COORDINATES" : "ඛණ්ඩාංක"}:</span>
+                    <span className="meta-val">{selectedEvidence.location}</span>
+                  </div>
+                  <div className="specimen-meta-row">
+                    <span className="meta-label">{lang === "en" ? "DATE LOGGED" : "සටහන් කළ දිනය"}:</span>
+                    <span className="meta-val">{selectedEvidence.dateFound || "1987 EXPEDITION"}</span>
+                  </div>
+                  <div className="specimen-meta-row">
+                    <span className="meta-label">{lang === "en" ? "STATUS" : "තත්ත්වය"}:</span>
+                    <span className={`meta-val ${evidence[selectedEvidence.id] ? "val-secured" : "val-pending"}`}>
+                      {evidence[selectedEvidence.id]
+                        ? (lang === "en" ? "RECOVERED // VERIFIED" : "හමුවී ඇත // තහවුරුයි")
+                        : (lang === "en" ? "PENDING FIELD RECOVERY" : "තවමත් හමුවී නැත")}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="inspector-right-dossier">
+                <div className="dossier-section">
+                  <h4><Icons.Inspect className="tactical-svg-icon" /> {lang === "en" ? "EXPEDITION FIELD SUMMARY" : "ක්ෂේත්‍ර සාරාංශය"}</h4>
+                  <p>{lang === "en" ? selectedEvidence.summaryEnglish : selectedEvidence.summarySinhala}</p>
+                </div>
+
+                <div className="dossier-section">
+                  <h4><Icons.Crosshair className="tactical-svg-icon" /> {lang === "en" ? "FORENSIC & PHYSICAL ANALYSIS" : "විද්‍යාත්මක හා භෞතික විශ්ලේෂණය"}</h4>
+                  <p>{lang === "en" ? selectedEvidence.forensicNotesEnglish : selectedEvidence.forensicNotesSinhala}</p>
+                </div>
+
+                <div className="dossier-section">
+                  <h4><Icons.Target className="tactical-svg-icon" /> {lang === "en" ? "INVESTIGATION CONNECTION" : "සාක්ෂි සම්බන්ධතාවය (CLUE CONNECTION)"}</h4>
+                  <div className="dossier-connection-badge">
+                    <span>{selectedEvidence.connectionText}</span>
+                  </div>
+                </div>
+
+                {!evidence[selectedEvidence.id] && (
+                  <div className="dossier-lead-alert">
+                    <strong>⚠️ {lang === "en" ? "FIELD SEARCH LEAD:" : "සොයාගැනීමේ හෝඩුවාව:"}</strong>
+                    <p>{lang === "en" ? selectedEvidence.clueLeadEnglish : selectedEvidence.clueLeadSinhala}</p>
+                  </div>
+                )}
+
+                <div className="inspector-actions-bar">
+                  {evidence[selectedEvidence.id] && selectedEvidence.hasInspectAction === "diary" && (
+                    <button
+                      className="inspector-action-btn btn-primary-gold"
+                      onClick={() => {
+                        setSelectedEvidence(null);
+                        if (onInspectDiary) onInspectDiary();
+                      }}
+                    >
+                      <Icons.Book className="tactical-svg-icon" /> {lang === "en" ? "READ ORIGINAL DIARY PARCHMENT" : "මුල් දිනපොත සටහන කියවන්න"}
+                    </button>
+                  )}
+
+                  {evidence[selectedEvidence.id] && selectedEvidence.hasInspectAction === "tape" && (
+                    <button
+                      className="inspector-action-btn btn-primary-gold"
+                      onClick={() => {
+                        setSelectedEvidence(null);
+                        if (onInspectTape) onInspectTape();
+                      }}
+                    >
+                      <Icons.Tape className="tactical-svg-icon" /> {lang === "en" ? "PLAY AUDIO CASSETTE REEL" : "හඬපටය අසන්න (LISTEN AUDIO)"}
+                    </button>
+                  )}
+
+                  {evidence[selectedEvidence.id] && selectedEvidence.id === "ch4_docs" && (
+                    <button
+                      className="inspector-action-btn btn-primary-gold"
+                      onClick={() => {
+                        setSelectedEvidence(null);
+                        if (onInspectDouglasTape) onInspectDouglasTape();
+                      }}
+                    >
+                      <Icons.Radio className="tactical-svg-icon" /> {lang === "en" ? "PLAY DR. DOUGLAS AUDIO LOG" : "මහාචාර්ය ඩග්ලස්ගේ හඬපටය අසන්න"}
+                    </button>
+                  )}
+
+                  <button className="inspector-action-btn btn-secondary-back" onClick={() => setSelectedEvidence(null)}>
+                    {lang === "en" ? "CLOSE DOSSIER" : "ආපසු පුවරුවට (BACK)"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Explorer Field Journal & Wildlife Album Modal ─────────────────────────
+function FieldJournalModal({
+  isOpen,
+  onClose,
+  journal,
+  capturedPhotos = [],
+  lang = "si",
+}) {
+  const [activeTab, setActiveTab] = useState("guide"); // 'guide' | 'expedition' | 'photos'
+  const [selectedSpeciesIndex, setSelectedSpeciesIndex] = useState(0);
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
+
+  if (!isOpen) return null;
+
+  const currentSpecies = MASTER_FIELD_GUIDE[selectedSpeciesIndex] || MASTER_FIELD_GUIDE[0];
+  const IllustrationComp = SPECIES_ILLUSTRATIONS[currentSpecies.illustrationType] || MagpieIllustration;
+
+  return (
+    <div className="journal-modal" onClick={onClose}>
+      <div className="field-journal-notebook" onClick={(e) => e.stopPropagation()}>
+        <div className="journal-ribbon" />
+        <div className="journal-brass-corner top-left" />
+        <div className="journal-brass-corner top-right" />
+        <div className="journal-brass-corner bottom-left" />
+        <div className="journal-brass-corner bottom-right" />
+
+        {/* Header Bar */}
+        <div className="journal-notebook-header">
+          <div className="journal-leather-title">
+            <Icons.Journal className="tactical-svg-icon" />
+            <span>SINHARAJA RAINFOREST // EXPEDITION FIELD JOURNAL (1987-2024)</span>
+          </div>
+          <button className="journal-close-btn" onClick={onClose} title="Close Journal">✕</button>
+        </div>
+
+        {/* Tab Navigator */}
+        <div className="journal-tab-navigator">
+          <button
+            className={`journal-tab-pill ${activeTab === "guide" ? "tab-active" : ""}`}
+            onClick={() => setActiveTab("guide")}
+          >
+            <Icons.Book className="tactical-svg-icon" />
+            <span>{lang === "en" ? "FAUNA & FLORA GUIDE" : "වනජීවී සහ ශාක සටහන්"}</span>
+          </button>
+          <button
+            className={`journal-tab-pill ${activeTab === "expedition" ? "tab-active" : ""}`}
+            onClick={() => setActiveTab("expedition")}
+          >
+            <Icons.Scroll className="tactical-svg-icon" />
+            <span>{lang === "en" ? "EXPEDITION LOGS" : "ගවේෂණ දින සටහන්"}</span>
+          </button>
+          <button
+            className={`journal-tab-pill ${activeTab === "photos" ? "tab-active" : ""}`}
+            onClick={() => setActiveTab("photos")}
+          >
+            <Icons.Camera className="tactical-svg-icon" />
+            <span>{lang === "en" ? `FIELD ALBUM (${capturedPhotos.length}/4)` : `ඡායාරූප ඇල්බමය (${capturedPhotos.length}/4)`}</span>
+          </button>
+        </div>
+
+        {/* TAB 1: FAUNA & FLORA */}
+        {activeTab === "guide" && (
+          <div className="journal-guide-spread">
+            {/* Left Column: Species Directory */}
+            <div className="species-directory-column">
+              <span className="directory-header-label">
+                {lang === "en" ? "RECORDED TAXA" : "වාර්තාගත විශේෂ"} ({MASTER_FIELD_GUIDE.length})
+              </span>
+              <div className="species-list-items">
+                {MASTER_FIELD_GUIDE.map((sp, idx) => (
+                  <div
+                    key={sp.id}
+                    className={`species-directory-card ${idx === selectedSpeciesIndex ? "card-selected" : ""}`}
+                    onClick={() => setSelectedSpeciesIndex(idx)}
+                  >
+                    <div className="sp-card-icon">
+                      {Icons[sp.icon] ? (
+                        React.createElement(Icons[sp.icon], { className: "sp-thumb-icon" })
+                      ) : (
+                        <Icons.Eye className="sp-thumb-icon" />
+                      )}
+                    </div>
+                    <div className="sp-card-text">
+                      <strong>{lang === "en" ? sp.nameEnglish : sp.nameSinhala}</strong>
+                      <em>{sp.scientificName}</em>
+                      <span className="sp-status-tag">{sp.status}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right Column: Two-Page Botanical Spread */}
+            <div className="species-parchment-sheet">
+              <div className="parchment-top-bar">
+                <span className="parchment-field-tag">FIELD CATALOG // {currentSpecies.category}</span>
+                <span className="parchment-iucn-badge">{currentSpecies.status}</span>
+              </div>
+
+              <div className="parchment-title-row">
+                <h2>{lang === "en" ? currentSpecies.nameEnglish : currentSpecies.nameSinhala}</h2>
+                <span className="scientific-binomial"><em>{currentSpecies.scientificName}</em></span>
+              </div>
+
+              <div className="species-parchment-body">
+                <div className="species-art-frame">
+                  <div className="art-box">
+                    <IllustrationComp />
+                  </div>
+                  <span className="art-caption">
+                    {lang === "en"
+                      ? `Authentic scientific study: ${currentSpecies.scientificName}`
+                      : `විද්‍යාත්මක නිරීක්ෂණ සටහන: ${currentSpecies.nameSinhala}`}
+                  </span>
+                </div>
+
+                <div className="species-field-notes">
+                  <div className="note-block">
+                    <h4>{lang === "en" ? "HABITAT & OCCURRENCE:" : "වාසස්ථානය සහ හමුවන ප්‍රදේශ:"}</h4>
+                    <p>{currentSpecies.habitat}</p>
+                  </div>
+
+                  <div className="note-block">
+                    <h4>{lang === "en" ? "BIOLOGICAL & BEHAVIORAL PROFILE:" : "ජෛව විද්‍යාත්මක සහ හැසිරීම් සටහන්:"}</h4>
+                    <p>{lang === "en" ? currentSpecies.descriptionEnglish : currentSpecies.descriptionSinhala}</p>
+                  </div>
+
+                  <div className="survival-guide-callout">
+                    <div className="survival-icon-wrap"><Icons.Shield className="tactical-svg-icon" /></div>
+                    <div className="survival-text-wrap">
+                      <strong>{lang === "en" ? "SURVIVAL INTELLIGENCE:" : "ගවේෂකයාට උපදෙස් (SURVIVAL TIP):"}</strong>
+                      <p>{lang === "en" ? currentSpecies.survivalTipEnglish : currentSpecies.survivalTipSinhala}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 2: EXPEDITION LOGS */}
+        {activeTab === "expedition" && (
+          <div className="journal-expedition-spread">
+            <div className="expedition-timeline-container">
+              <div className="timeline-banner">
+                <h3><Icons.Scroll className="tactical-svg-icon" /> 1987 LOST EXPEDITION TIMELINE & FIELD DISPATCHES</h3>
+                <p>
+                  {lang === "en"
+                    ? "Historical notes recovered from the field, cross-referenced with modern ranger telemetry."
+                    : "වනාන්තරයෙන් හමුවූ ඓතිහාසික සටහන් සහ වත්මන් නිරීක්ෂණ ලේඛනාගාරය."}
+                </p>
+              </div>
+
+              <div className="timeline-cards-stream">
+                {EXPEDITION_LORE_LOGS.map((log) => (
+                  <div key={log.id} className="timeline-log-entry">
+                    <div className="log-stamp-ribbon">{log.stamp}</div>
+                    <div className="log-entry-meta">
+                      <span className="log-date">{log.date}</span>
+                      <span className="log-loc"><Icons.Map className="tactical-svg-icon" /> {log.location}</span>
+                      <span className="log-author"><Icons.Target className="tactical-svg-icon" /> {log.author}</span>
+                    </div>
+                    <h4 className="log-title">{lang === "en" ? log.titleEnglish : log.titleSinhala}</h4>
+                    <p className="log-body">{lang === "en" ? log.textEnglish : log.textSinhala}</p>
+                  </div>
+                ))}
+
+                {/* Additional runtime lore collected in game */}
+                {journal && journal.map((item, idx) => (
+                  <div key={`runtime-${idx}`} className="timeline-log-entry runtime-entry">
+                    <div className="log-stamp-ribbon">FIELD DISCOVERY</div>
+                    <h4 className="log-title">{item.title}</h4>
+                    <p className="log-body">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: PHOTO ALBUM */}
+        {activeTab === "photos" && (
+          <div className="journal-photos-spread">
+            {capturedPhotos.length === 0 ? (
+              <div className="album-empty-state">
+                <div className="camera-sketch-wrap">
+                  <Icons.Camera className="camera-large-icon" />
+                </div>
+                <h3>{lang === "en" ? "NO WILDLIFE PHOTOGRAPHS CAPTURED YET" : "තවමත් කිසිදු ඡායාරූපයක් ලබාගෙන නොමැත"}</h3>
+                <p>
+                  {lang === "en"
+                    ? "Equip your Field Camera [6] or press [C] when approaching Sinharaja wildlife (Blue Magpie, Langurs, Vipers, Fireflies) to capture authentic polaroid snapshots for your album."
+                    : "කැලයේ සතුන් (කැහිබෙල්ලා, වඳුරන්, පොළඟා, කලාමැදිරියන්) අසලදී [C] ඔබා හෝ Field Camera [6] මගින් ඡායාරූප ගෙන ඔබගේ ඇල්බමයේ සුරකින්න."}
+                </p>
+                <span className="empty-album-badge">
+                  {lang === "en" ? "OBJECTIVE: CAPTURE ALL 4 SPECIES [0 / 4]" : "ඉලක්කය: සතුන් 4 දෙනාගේම ඡායාරූප ගන්න [0 / 4]"}
+                </span>
+              </div>
+            ) : (
+              <div className="album-polaroids-grid">
+                {capturedPhotos.map((photo) => (
+                  <div key={photo.id} className="album-polaroid-frame" onClick={() => setSelectedPhoto(photo)}>
+                    <div className="polaroid-pin pin-yellow" />
+                    <div className="polaroid-tape top-left" />
+                    <div className="album-photo-box">
+                      <Icons.Camera className="album-svg-cam" />
+                      <span className="photo-stamp">FIELD VERIFIED</span>
+                    </div>
+                    <div className="album-caption-box">
+                      <h4>{photo.name}</h4>
+                      <p>{photo.desc}</p>
+                      <span className="album-date-stamp">EXPEDITION SNAPSHOT // 2024</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Enlarged Photo Lightbox Modal */}
+      {selectedPhoto && (
+        <div className="photo-lightbox-overlay" onClick={() => setSelectedPhoto(null)}>
+          <div className="photo-lightbox-card" onClick={(e) => e.stopPropagation()}>
+            <div className="lightbox-header">
+              <h3>{selectedPhoto.name}</h3>
+              <button className="inspector-close-btn" onClick={() => setSelectedPhoto(null)}>✕</button>
+            </div>
+            <div className="lightbox-photo-large">
+              <Icons.Camera className="lightbox-svg-icon" />
+            </div>
+            <p className="lightbox-desc">{selectedPhoto.desc}</p>
+            <button className="inspector-action-btn btn-secondary-back" onClick={() => setSelectedPhoto(null)}>
+              {lang === "en" ? "CLOSE" : "වසන්න"}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function App() {
   const canvasRef = useRef(null);
   const engineRef = useRef(null);
@@ -688,7 +1885,6 @@ export default function App() {
   // UI Panels
   const [showEvidenceBoard, setShowEvidenceBoard] = useState(false);
   const [showJournal, setShowJournal] = useState(false);
-  const [journalTab, setJournalTab] = useState("guide"); // 'guide' | 'photos'
   const [showTacticalMap, setShowTacticalMap] = useState(false);
   const [showInventory, setShowInventory] = useState(false);
   const [inspectDiaryOpen, setInspectDiaryOpen] = useState(false);
@@ -1730,220 +2926,17 @@ export default function App() {
 
         {/* Evidence Board Modal */}
         {showEvidenceBoard && (
-          <div className="evidence-modal" onClick={() => setShowEvidenceBoard(false)}>
-            <div className="evidence-board" onClick={(e) => e.stopPropagation()}>
-              <div className="board-header">
-                <h2><Icons.Evidence className="tactical-svg-icon" /> සිංහරාජ රහස් සාක්ෂි පුවරුව (EVIDENCE CASE BOARD)</h2>
-                <button className="close-btn" onClick={() => setShowEvidenceBoard(false)}>✕</button>
-              </div>
-
-              <div className="case-progress-wrap">
-                <span>සමස්ත සාක්ෂි ප්‍රගතිය:</span>
-                <div className="case-progress-bar">
-                  <div
-                    className="case-progress-fill"
-                    style={{ width: `${((ch1Count + ch2Count + ch3Count + ch4Count + ch5Count) / 15) * 100}%` }}
-                  />
-                </div>
-                <span>{ch1Count + ch2Count + ch3Count + ch4Count + ch5Count} / 15 සාක්ෂි හමුවී ඇත ({Math.round(((ch1Count + ch2Count + ch3Count + ch4Count + ch5Count) / 15) * 100)}%)</span>
-              </div>
-
-              <h3 className="section-dossier-title">CHAPTER 01: කුඩව පිවිසුම සාක්ෂි</h3>
-              <div className="evidence-cards-cluster">
-                <div className={`evidence-polaroid ${evidence.diary ? "collected" : "uncollected"}`}>
-                  <div className="pin-head red-pin" />
-                  <div className="polaroid-icon"><Icons.Book className="tactical-svg-icon" /></div>
-                  <h3>ලෙයින් පෙඟුණු දිනපොත</h3>
-                  <p>
-                    {evidence.diary
-                      ? "1987 නොවැම්බර් 14: ඔවුන් ගල් ලෙන තුළට ගිය බවත් ලෙන් දොරටුවේ රහස් සංකේත [සූර්යයා, ගංගාව, සිංහයා] බවත් තහවුරු කරයි."
-                      : "තවමත් හමුවී නැත. අතහැර දැමූ මුරපොළ පරීක්ෂා කරන්න..."}
-                  </p>
-                  <span className="status-tag">{evidence.diary ? "✓ EVIDENCE VERIFIED" : "MISSING"}</span>
-                </div>
-
-                <div className={`evidence-polaroid ${evidence.key ? "collected" : "uncollected"}`}>
-                  <div className="pin-head yellow-pin" />
-                  <div className="polaroid-icon"><Icons.Key className="tactical-svg-icon" /></div>
-                  <h3>පුරාණ පිත්තල යතුර</h3>
-                  <p>
-                    {evidence.key
-                      ? "සිංහරාජයේ රහස් භූගත ලෙනේ අගුළු විවෘත කළ හැකි පැරණි පිත්තල යතුර."
-                      : "තවමත් හමුවී නැත. ගංගා නිම්නයේ ඔරු තොට පරීක්ෂා කරන්න..."}
-                  </p>
-                  <span className="status-tag">{evidence.key ? "✓ EVIDENCE VERIFIED" : "MISSING"}</span>
-                </div>
-
-                <div className={`evidence-polaroid ${evidence.sample ? "collected" : "uncollected"}`}>
-                  <div className="pin-head blue-pin" />
-                  <div className="polaroid-icon"><Icons.Vial className="tactical-svg-icon" /></div>
-                  <h3>පර්යේෂණ සාම්පලය</h3>
-                  <p>
-                    {evidence.sample
-                      ? "වසර 30ක් අතුරුදහන් වූ ගවේෂකයන්ගේ ප්‍රතිදීප්ත දිලීර අඩංගු අභිරහස් බඳුන."
-                      : "තවමත් හමුවී නැත. අගුළු දැමූ ගල් ලෙන තුළ ඇත..."}
-                  </p>
-                  <span className="status-tag">{evidence.sample ? "✓ EVIDENCE VERIFIED" : "MISSING"}</span>
-                </div>
-              </div>
-
-              <h3 className="section-dossier-title" style={{ marginTop: 24 }}>CHAPTER 02: දියඇලි නිම්නය සාක්ෂි</h3>
-              <div className="evidence-cards-cluster">
-                <div className={`evidence-polaroid ${evidence.map2 ? "collected" : "uncollected"}`}>
-                  <div className="pin-head red-pin" />
-                  <div className="polaroid-icon"><Icons.Map className="tactical-svg-icon" /></div>
-                  <h3>භූවිද්‍යාඥයින්ගේ සිතියම</h3>
-                  <p>
-                    {evidence.map2
-                      ? "දියඇලි නිම්නය හරහා උණ බම්බු පහුරෙන් ගමන් කරන මාර්ගය සහ රහස් පතලේ පිවිසුම සලකුණු කර ඇත."
-                      : "තවමත් හමුවී නැත. භූවිද්‍යා කඳවුරේ මේසය පරීක්ෂා කරන්න..."}
-                  </p>
-                  <span className="status-tag">{evidence.map2 ? "✓ EVIDENCE VERIFIED" : "MISSING"}</span>
-                </div>
-
-                <div className={`evidence-polaroid ${evidence.tape ? "collected" : "uncollected"}`}>
-                  <div className="pin-head yellow-pin" />
-                  <div className="polaroid-icon"><Icons.Tape className="tactical-svg-icon" /></div>
-                  <h3>පටිගත කළ හඬපටය</h3>
-                  <p>
-                    {evidence.tape
-                      ? "අතුරුදහන් වූ ගවේෂකයන්ගේ අවසාන හඬ පණිවිඩය: 'කඳු මුදුනේ මුරකුළුණෙන් සංඥා කරන්න!'"
-                      : "තවමත් හමුවී නැත. දියඇල්ල අසල ගල්පර පරීක්ෂා කරන්න..."}
-                  </p>
-                  <span className="status-tag">{evidence.tape ? "✓ EVIDENCE VERIFIED" : "MISSING"}</span>
-                </div>
-
-                <div className={`evidence-polaroid ${evidence.gem ? "collected" : "uncollected"}`}>
-                  <div className="pin-head blue-pin" />
-                  <div className="polaroid-icon"><Icons.Crystal className="tactical-svg-icon" /></div>
-                  <h3>නිල් ස්ඵටික සාම්පලය</h3>
-                  <p>
-                    {evidence.gem
-                      ? "පැරණි පතල ඇතුළතින් සොයාගත් නිල් ආලෝකය විහිදුවන අභිරහස් ස්ඵටිකය."
-                      : "තවමත් හමුවී නැත. පතල් කුහරය පරීක්ෂා කරන්න..."}
-                  </p>
-                  <span className="status-tag">{evidence.gem ? "✓ EVIDENCE VERIFIED" : "MISSING"}</span>
-                </div>
-              </div>
-
-              <h3 className="section-dossier-title" style={{ marginTop: 24 }}>CHAPTER 03: යක්ෂ ගිරි භූගත අගාධය සාක්ෂි</h3>
-              <div className="evidence-cards-cluster">
-                <div className={`evidence-polaroid ${evidence.ch3_slate ? "collected" : "uncollected"}`}>
-                  <div className="pin-head red-pin" />
-                  <div className="polaroid-icon"><Icons.Scroll className="tactical-svg-icon" /></div>
-                  <h3>ප්‍රාග් ඓතිහාසික ශිලා ලේඛනය</h3>
-                  <p>
-                    {evidence.ch3_slate
-                      ? "පුරාණ ලෙන් කුටියේ තිබූ සොරොව්ව සහ ගිලීගිය ශුද්ධ භූමිය පිළිබඳ සටහන්."
-                      : "තවමත් හමුවී නැත. ලෙන් පිවිසුම අසල පරීක්ෂා කරන්න..."}
-                  </p>
-                  <span className="status-tag">{evidence.ch3_slate ? "✓ EVIDENCE VERIFIED" : "MISSING"}</span>
-                </div>
-
-                <div className={`evidence-polaroid ${evidence.ch3_core ? "collected" : "uncollected"}`}>
-                  <div className="pin-head yellow-pin" />
-                  <div className="polaroid-icon"><Icons.Orb className="tactical-svg-icon" /></div>
-                  <h3>ප්‍රතිදීප්ත අගාධ පාෂාණය</h3>
-                  <p>
-                    {evidence.ch3_core
-                      ? "ගිලීගිය ලෙන් ශුද්ධ භූමියේ ජලය බැසයාමෙන් පසු හමුවූ දම් පැහැති දීප්තිමත් ස්ඵටිකය."
-                      : "තවමත් හමුවී නැත. සොරොව්ව කරකවා ජලය බැස්සවීමෙන් පසු ලබාගන්න..."}
-                  </p>
-                  <span className="status-tag">{evidence.ch3_core ? "✓ EVIDENCE VERIFIED" : "MISSING"}</span>
-                </div>
-
-                <div className={`evidence-polaroid ${evidence.ch3_torch ? "collected" : "uncollected"}`}>
-                  <div className="pin-head blue-pin" />
-                  <div className="polaroid-icon"><Icons.Lantern className="tactical-svg-icon" /></div>
-                  <h3>පතල් කම්කරු අවසාන සටහන</h3>
-                  <p>
-                    {evidence.ch3_torch
-                      ? "1987 පතල් කම්කරුවන් අගාධයෙන් ඉහළ රහස් විද්‍යාගාරයට පිවිසි බව තහවුරු කරන ලිපිය."
-                      : "තවමත් හමුවී නැත. අගාධ කෙළවර පරීක්ෂා කරන්න..."}
-                  </p>
-                  <span className="status-tag">{evidence.ch3_torch ? "✓ EVIDENCE VERIFIED" : "MISSING"}</span>
-                </div>
-              </div>
-
-              <h3 className="section-dossier-title" style={{ marginTop: 24 }}>CHAPTER 04: නටබුන් වූ රහස් පර්යේෂණාගාරය සාක්ෂි</h3>
-              <div className="evidence-cards-cluster">
-                <div className={`evidence-polaroid ${evidence.ch4_docs ? "collected" : "uncollected"}`}>
-                  <div className="pin-head red-pin" />
-                  <div className="polaroid-icon"><Icons.Folder className="tactical-svg-icon" /></div>
-                  <h3>1987 රහස් ව්‍යාපෘති ලිපිගොනුව</h3>
-                  <p>
-                    {evidence.ch4_docs
-                      ? "පරිගණක පර්යන්තයෙන් ලබාගත් රහස් ජෛව විද්‍යාත්මක පර්යේෂණ වාර්තාව."
-                      : "තවමත් හමුවී නැත. ප්‍රධාන පරිගණකය පරීක්ෂා කරන්න..."}
-                  </p>
-                  <span className="status-tag">{evidence.ch4_docs ? "✓ EVIDENCE VERIFIED" : "MISSING"}</span>
-                </div>
-
-                <div className={`evidence-polaroid ${evidence.ch4_keycard ? "collected" : "uncollected"}`}>
-                  <div className="pin-head yellow-pin" />
-                  <div className="polaroid-icon"><Icons.Keycard className="tactical-svg-icon" /></div>
-                  <h3>Level 3 ප්‍රවේශ කාඩ්පත</h3>
-                  <p>
-                    {evidence.ch4_keycard
-                      ? "ක්‍රයෝ-කුටිය සහ වියන් මොනොරේල් දොරටුව විවෘත කිරීමට හැකි ආරක්ෂක කාඩ්පත."
-                      : "තවමත් හමුවී නැත. කාර්යාල මේසය පරීක්ෂා කරන්න..."}
-                  </p>
-                  <span className="status-tag">{evidence.ch4_keycard ? "✓ EVIDENCE VERIFIED" : "MISSING"}</span>
-                </div>
-
-                <div className={`evidence-polaroid ${evidence.ch4_sample ? "collected" : "uncollected"}`}>
-                  <div className="pin-head blue-pin" />
-                  <div className="polaroid-icon"><Icons.Dna className="tactical-svg-icon" /></div>
-                  <h3>විකෘති DNA සාම්පලය</h3>
-                  <p>
-                    {evidence.ch4_sample
-                      ? "වසර 30ක් ආරක්ෂිතව පැවති දුර්ලභ ශාක-සත්ව විකෘති ජෛව සාම්පලය."
-                      : "තවමත් හමුවී නැත. ක්‍රයෝ-කුටිය විවෘත කරන්න..."}
-                  </p>
-                  <span className="status-tag">{evidence.ch4_sample ? "✓ EVIDENCE VERIFIED" : "MISSING"}</span>
-                </div>
-              </div>
-
-              <h3 className="section-dossier-title" style={{ marginTop: 24 }}>CHAPTER 05: මහා නාවෘක්ෂය සහ අවසාන සත්‍යය සාක්ෂි</h3>
-              <div className="evidence-cards-cluster">
-                <div className={`evidence-polaroid ${evidence.ch5_blackbox ? "collected" : "uncollected"}`}>
-                  <div className="pin-head red-pin" />
-                  <div className="polaroid-icon"><Icons.Box className="tactical-svg-icon" /></div>
-                  <h3>ගවේෂණ කළු පෙට්ටිය (Blackbox)</h3>
-                  <p>
-                    {evidence.ch5_blackbox
-                      ? "1987 හෙලිකොප්ටර් අනතුරේ සම්පූර්ණ ටෙලිමෙට්‍රි සහ සංවාද දත්ත අඩංගු ෆ්ලයිට් රෙකෝඩරය."
-                      : "තවමත් හමුවී නැත. වියන් මාවත ආරම්භය පරීක්ෂා කරන්න..."}
-                  </p>
-                  <span className="status-tag">{evidence.ch5_blackbox ? "✓ EVIDENCE VERIFIED" : "MISSING"}</span>
-                </div>
-
-                <div className={`evidence-polaroid ${evidence.ch5_truth ? "collected" : "uncollected"}`}>
-                  <div className="pin-head yellow-pin" />
-                  <div className="polaroid-icon"><Icons.Scroll className="tactical-svg-icon" /></div>
-                  <h3>මහාචාර්ය ඩග්ලස්ගේ අවසාන පාපොච්චාරණය</h3>
-                  <p>
-                    {evidence.ch5_truth
-                      ? "සිංහරාජයේ රහස සහ විකෘති ශාකයෙන් සුව කළ හැකි විශ්වීය ඖෂධීය සූත්‍රය."
-                      : "තවමත් හමුවී නැත. වියන් කුටිය පරීක්ෂා කරන්න..."}
-                  </p>
-                  <span className="status-tag">{evidence.ch5_truth ? "✓ EVIDENCE VERIFIED" : "MISSING"}</span>
-                </div>
-
-                <div className={`evidence-polaroid ${evidence.ch5_beacon ? "collected" : "uncollected"}`}>
-                  <div className="pin-head blue-pin" />
-                  <div className="polaroid-icon"><Icons.Satellite className="tactical-svg-icon" /></div>
-                  <h3>සැටලයිට් බීකන සම්ප්‍රේෂණය</h3>
-                  <p>
-                    {evidence.ch5_beacon
-                      ? "සත්‍යය මුළු ලොවටම ප්‍රචාරය කරමින් චන්ද්‍රිකාව හා සම්බන්ධ වූ සක්‍රිය බීකනය."
-                      : "තවමත් පෙළගස්වා නැත. සැටලයිට් ඇන්ටනාව ක්‍රියාත්මක කරන්න..."}
-                  </p>
-                  <span className="status-tag">{evidence.ch5_beacon ? "✓ EVIDENCE VERIFIED" : "MISSING"}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          <EvidenceBoardModal
+            isOpen={showEvidenceBoard}
+            onClose={() => setShowEvidenceBoard(false)}
+            evidence={evidence}
+            activeChapter={activeChapter}
+            lang={lang}
+            onInspectDiary={() => setInspectDiaryOpen(true)}
+            onInspectTape={() => setInspectTapeOpen(true)}
+            onInspectDouglasTape={() => setInspectDouglasTapeOpen(true)}
+            viewMode="chapters"
+          />
         )}
 
         {/* Trophies & Achievements Modal */}
@@ -1986,63 +2979,13 @@ export default function App() {
 
         {/* Field Journal Modal */}
         {showJournal && (
-          <div className="journal-modal" onClick={() => setShowJournal(false)}>
-            <div className="journal-content" onClick={(e) => e.stopPropagation()}>
-              <div className="journal-header">
-                <h2><Icons.Journal className="tactical-svg-icon" /> සිංහරාජ වනජීවී සටහන් සහ ඇල්බමය</h2>
-                <button className="close-btn" onClick={() => setShowJournal(false)}>✕</button>
-              </div>
-
-              <div className="journal-tabs">
-                <button
-                  className={`journal-tab-btn ${journalTab === "guide" ? "active" : ""}`}
-                  onClick={() => setJournalTab("guide")}
-                >
-                  <Icons.Book className="tactical-svg-icon" /> වනජීවී සටහන් (FIELD GUIDE)
-                </button>
-                <button
-                  className={`journal-tab-btn ${journalTab === "photos" ? "active" : ""}`}
-                  onClick={() => setJournalTab("photos")}
-                >
-                  <Icons.Camera className="tactical-svg-icon" /> ඡායාරූප ඇල්බමය ({capturedPhotos.length}/4)
-                </button>
-              </div>
-
-              {journalTab === "guide" ? (
-                <div className="journal-list">
-                  {journal.map((item, i) => (
-                    <div key={i} className="journal-card">
-                      <h3>{item.title}</h3>
-                      <p>{item.desc}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="photo-gallery-grid">
-                  {capturedPhotos.length === 0 ? (
-                    <div className="empty-gallery-box">
-                      <span className="empty-cam-icon"><Icons.Camera className="tactical-svg-icon" /></span>
-                      <p>තවමත් කිසිදු ඡායාරූපයක් ගෙන නොමැත.</p>
-                      <small>කැලයේ සතුන් (කැහිබෙල්ලා, වඳුරන්, පොළඟා, කලාමැදිරියන්) අසලදී <strong>[C]</strong> ඔබා ඡායාරූප ගන්න!</small>
-                    </div>
-                  ) : (
-                    capturedPhotos.map((photo) => (
-                      <div key={photo.id} className="polaroid-photo-item">
-                        <div className="polaroid-img-preview">
-                          <span className="polaroid-preview-icon"><Icons.Camera className="tactical-svg-icon" /></span>
-                          <span className="polaroid-badge">FIELD PHOTO</span>
-                        </div>
-                        <div className="polaroid-item-info">
-                          <h4>{photo.name}</h4>
-                          <p>{photo.desc}</p>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
+          <FieldJournalModal
+            isOpen={showJournal}
+            onClose={() => setShowJournal(false)}
+            journal={journal}
+            capturedPhotos={capturedPhotos}
+            lang={lang}
+          />
         )}
       </div>
     );
@@ -3330,278 +4273,28 @@ export default function App() {
 
       {/* Evidence Board Modal while Playing */}
       {showEvidenceBoard && (
-        <div className="evidence-modal" onClick={() => setShowEvidenceBoard(false)}>
-          <div className="evidence-board" onClick={(e) => e.stopPropagation()}>
-            <div className="board-header">
-              <h2><Icons.Evidence className="tactical-svg-icon" /> සිංහරාජ රහස් සාක්ෂි පුවරුව (EVIDENCE CASE BOARD)</h2>
-              <button className="close-btn" onClick={() => setShowEvidenceBoard(false)}>✕</button>
-            </div>
-
-            <div className="case-progress-wrap">
-              <span>වත්මන් පරිච්ඡේදයේ ප්‍රගතිය:</span>
-              <div className="case-progress-bar">
-                <div
-                  className="case-progress-fill"
-                  style={{ width: `${(currentChapterEvidenceCount / 3) * 100}%` }}
-                />
-              </div>
-              <span>{currentChapterEvidenceCount} / 3 සාක්ෂි හමුවී ඇත</span>
-            </div>
-
-            {activeChapter === 2 ? (
-              <div className="evidence-cards-cluster">
-                <div className={`evidence-polaroid ${evidence.map2 ? "collected" : "uncollected"}`}>
-                  <div className="pin-head red-pin" />
-                  <div className="polaroid-icon"><Icons.Map className="tactical-svg-icon" /></div>
-                  <h3>භූවිද්‍යාඥයින්ගේ සිතියම</h3>
-                  <p>
-                    {evidence.map2
-                      ? "දියඇලි නිම්නය හරහා උණ බම්බු පහුරෙන් ගමන් කරන මාර්ගය සහ රහස් පතලේ පිවිසුම සලකුණු කර ඇත."
-                      : "තවමත් හමුවී නැත. භූවිද්‍යා කඳවුරේ මේසය පරීක්ෂා කරන්න..."}
-                  </p>
-                  <span className="status-tag">{evidence.map2 ? "✓ EVIDENCE VERIFIED" : "MISSING"}</span>
-                </div>
-
-                <div className={`evidence-polaroid ${evidence.tape ? "collected" : "uncollected"}`}>
-                  <div className="pin-head yellow-pin" />
-                  <div className="polaroid-icon"><Icons.Tape className="tactical-svg-icon" /></div>
-                  <h3>පටිගත කළ හඬපටය</h3>
-                  <p>
-                    {evidence.tape
-                      ? "අතුරුදහන් වූ ගවේෂකයන්ගේ අවසාන හඬ පණිවිඩය: 'කඳු මුදුනේ මුරකුළුණෙන් සංඥා කරන්න!'"
-                      : "තවමත් හමුවී නැත. දියඇල්ල අසල ගල්පර පරීක්ෂා කරන්න..."}
-                  </p>
-                  <span className="status-tag">{evidence.tape ? "✓ EVIDENCE VERIFIED" : "MISSING"}</span>
-                </div>
-
-                <div className={`evidence-polaroid ${evidence.gem ? "collected" : "uncollected"}`}>
-                  <div className="pin-head blue-pin" />
-                  <div className="polaroid-icon"><Icons.Crystal className="tactical-svg-icon" /></div>
-                  <h3>නිල් ස්ඵටික සාම්පලය</h3>
-                  <p>
-                    {evidence.gem
-                      ? "පැරණි පතල ඇතුළතින් සොයාගත් නිල් ආලෝකය විහිදුවන අභිරහස් ස්ඵටිකය."
-                      : "තවමත් හමුවී නැත. පතල් කුහරය පරීක්ෂා කරන්න..."}
-                  </p>
-                  <span className="status-tag">{evidence.gem ? "✓ EVIDENCE VERIFIED" : "MISSING"}</span>
-                </div>
-              </div>
-            ) : activeChapter === 3 ? (
-              <div className="evidence-cards-cluster">
-                <div className={`evidence-polaroid ${evidence.ch3_slate ? "collected" : "uncollected"}`}>
-                  <div className="pin-head red-pin" />
-                  <div className="polaroid-icon"><Icons.Scroll className="tactical-svg-icon" /></div>
-                  <h3>ප්‍රාග් ඓතිහාසික ශිලා ලේඛනය</h3>
-                  <p>
-                    {evidence.ch3_slate
-                      ? "පුරාණ ලෙන් කුටියේ තිබූ සොරොව්ව සහ ගිලීගිය ශුද්ධ භූමිය පිළිබඳ සටහන්."
-                      : "තවමත් හමුවී නැත. ලෙන් පිවිසුම අසල පරීක්ෂා කරන්න..."}
-                  </p>
-                  <span className="status-tag">{evidence.ch3_slate ? "✓ EVIDENCE VERIFIED" : "MISSING"}</span>
-                </div>
-
-                <div className={`evidence-polaroid ${evidence.ch3_core ? "collected" : "uncollected"}`}>
-                  <div className="pin-head yellow-pin" />
-                  <div className="polaroid-icon"><Icons.Orb className="tactical-svg-icon" /></div>
-                  <h3>ප්‍රතිදීප්ත අගාධ පාෂාණය</h3>
-                  <p>
-                    {evidence.ch3_core
-                      ? "ගිලීගිය ලෙන් ශුද්ධ භූමියේ ජලය බැසයාමෙන් පසු හමුවූ දම් පැහැති දීප්තිමත් ස්ඵටිකය."
-                      : "තවමත් හමුවී නැත. සොරොව්ව කරකවා ජලය බැස්සවීමෙන් පසු ලබාගන්න..."}
-                  </p>
-                  <span className="status-tag">{evidence.ch3_core ? "✓ EVIDENCE VERIFIED" : "MISSING"}</span>
-                </div>
-
-                <div className={`evidence-polaroid ${evidence.ch3_torch ? "collected" : "uncollected"}`}>
-                  <div className="pin-head blue-pin" />
-                  <div className="polaroid-icon"><Icons.Lantern className="tactical-svg-icon" /></div>
-                  <h3>පතල් කම්කරු අවසාන සටහන</h3>
-                  <p>
-                    {evidence.ch3_torch
-                      ? "1987 පතල් කම්කරුවන් අගාධයෙන් ඉහළ රහස් විද්‍යාගාරයට පිවිසි බව තහවුරු කරන ලිපිය."
-                      : "තවමත් හමුවී නැත. අගාධ කෙළවර පරීක්ෂා කරන්න..."}
-                  </p>
-                  <span className="status-tag">{evidence.ch3_torch ? "✓ EVIDENCE VERIFIED" : "MISSING"}</span>
-                </div>
-              </div>
-            ) : activeChapter === 4 ? (
-              <div className="evidence-cards-cluster">
-                <div className={`evidence-polaroid ${evidence.ch4_docs ? "collected" : "uncollected"}`}>
-                  <div className="pin-head red-pin" />
-                  <div className="polaroid-icon"><Icons.Folder className="tactical-svg-icon" /></div>
-                  <h3>1987 රහස් ව්‍යාපෘති ලිපිගොනුව</h3>
-                  <p>
-                    {evidence.ch4_docs
-                      ? "පරිගණක පර්යන්තයෙන් ලබාගත් රහස් ජෛව විද්‍යාත්මක පර්යේෂණ වාර්තාව."
-                      : "තවමත් හමුවී නැත. ප්‍රධාන පරිගණකය පරීක්ෂා කරන්න..."}
-                  </p>
-                  <span className="status-tag">{evidence.ch4_docs ? "✓ EVIDENCE VERIFIED" : "MISSING"}</span>
-                </div>
-
-                <div className={`evidence-polaroid ${evidence.ch4_keycard ? "collected" : "uncollected"}`}>
-                  <div className="pin-head yellow-pin" />
-                  <div className="polaroid-icon"><Icons.Keycard className="tactical-svg-icon" /></div>
-                  <h3>Level 3 ප්‍රවේශ කාඩ්පත</h3>
-                  <p>
-                    {evidence.ch4_keycard
-                      ? "ක්‍රයෝ-කුටිය සහ වියන් මොනොරේල් දොරටුව විවෘත කිරීමට හැකි ආරක්ෂක කාඩ්පත."
-                      : "තවමත් හමුවී නැත. කාර්යාල මේසය පරීක්ෂා කරන්න..."}
-                  </p>
-                  <span className="status-tag">{evidence.ch4_keycard ? "✓ EVIDENCE VERIFIED" : "MISSING"}</span>
-                </div>
-
-                <div className={`evidence-polaroid ${evidence.ch4_sample ? "collected" : "uncollected"}`}>
-                  <div className="pin-head blue-pin" />
-                  <div className="polaroid-icon"><Icons.Dna className="tactical-svg-icon" /></div>
-                  <h3>විකෘති DNA සාම්පලය</h3>
-                  <p>
-                    {evidence.ch4_sample
-                      ? "වසර 30ක් ආරක්ෂිතව පැවති දුර්ලභ ශාක-සත්ව විකෘති ජෛව සාම්පලය."
-                      : "තවමත් හමුවී නැත. ක්‍රයෝ-කුටිය විවෘත කරන්න..."}
-                  </p>
-                  <span className="status-tag">{evidence.ch4_sample ? "✓ EVIDENCE VERIFIED" : "MISSING"}</span>
-                </div>
-              </div>
-            ) : activeChapter === 5 ? (
-              <div className="evidence-cards-cluster">
-                <div className={`evidence-polaroid ${evidence.ch5_blackbox ? "collected" : "uncollected"}`}>
-                  <div className="pin-head red-pin" />
-                  <div className="polaroid-icon"><Icons.Box className="tactical-svg-icon" /></div>
-                  <h3>ගවේෂණ කළු පෙට්ටිය (Blackbox)</h3>
-                  <p>
-                    {evidence.ch5_blackbox
-                      ? "1987 හෙලිකොප්ටර් අනතුරේ සම්පූර්ණ ටෙලිමෙට්‍රි සහ සංවාද දත්ත අඩංගු ෆ්ලයිට් රෙකෝඩරය."
-                      : "තවමත් හමුවී නැත. වියන් මාවත ආරම්භය පරීක්ෂා කරන්න..."}
-                  </p>
-                  <span className="status-tag">{evidence.ch5_blackbox ? "✓ EVIDENCE VERIFIED" : "MISSING"}</span>
-                </div>
-
-                <div className={`evidence-polaroid ${evidence.ch5_truth ? "collected" : "uncollected"}`}>
-                  <div className="pin-head yellow-pin" />
-                  <div className="polaroid-icon"><Icons.Scroll className="tactical-svg-icon" /></div>
-                  <h3>මහාචාර්ය ඩග්ලස්ගේ අවසාන පාපොච්චාරණය</h3>
-                  <p>
-                    {evidence.ch5_truth
-                      ? "සිංහරාජයේ රහස සහ විකෘති ශාකයෙන් සුව කළ හැකි විශ්වීය ඖෂධීය සූත්‍රය."
-                      : "තවමත් හමුවී නැත. වියන් කුටිය පරීක්ෂා කරන්න..."}
-                  </p>
-                  <span className="status-tag">{evidence.ch5_truth ? "✓ EVIDENCE VERIFIED" : "MISSING"}</span>
-                </div>
-
-                <div className={`evidence-polaroid ${evidence.ch5_beacon ? "collected" : "uncollected"}`}>
-                  <div className="pin-head blue-pin" />
-                  <div className="polaroid-icon"><Icons.Satellite className="tactical-svg-icon" /></div>
-                  <h3>සැටලයිට් බීකන සම්ප්‍රේෂණය</h3>
-                  <p>
-                    {evidence.ch5_beacon
-                      ? "සත්‍යය මුළු ලොවටම ප්‍රචාරය කරමින් චන්ද්‍රිකාව හා සම්බන්ධ වූ සක්‍රිය බීකනය."
-                      : "තවමත් පෙළගස්වා නැත. සැටලයිට් ඇන්ටනාව ක්‍රියාත්මක කරන්න..."}
-                  </p>
-                  <span className="status-tag">{evidence.ch5_beacon ? "✓ EVIDENCE VERIFIED" : "MISSING"}</span>
-                </div>
-              </div>
-            ) : (
-              <div className="evidence-cards-cluster">
-                <div className={`evidence-polaroid ${evidence.diary ? "collected" : "uncollected"}`}>
-                  <div className="pin-head red-pin" />
-                  <div className="polaroid-icon"><Icons.Book className="tactical-svg-icon" /></div>
-                  <h3>ලෙයින් පෙඟුණු දිනපොත</h3>
-                  <p>
-                    {evidence.diary
-                      ? "1987 නොවැම්බර් 14: ඔවුන් ගල් ලෙන තුළට ගිය බවත් ලෙන් දොරටුවේ රහස් සංකේත [සූර්යයා, ගංගාව, සිංහයා] බවත් තහවුරු කරයි."
-                      : "තවමත් හමුවී නැත. අතහැර දැමූ මුරපොළ පරීක්ෂා කරන්න..."}
-                  </p>
-                  <span className="status-tag">{evidence.diary ? "✓ EVIDENCE VERIFIED" : "MISSING"}</span>
-                </div>
-
-                <div className={`evidence-polaroid ${evidence.key ? "collected" : "uncollected"}`}>
-                  <div className="pin-head yellow-pin" />
-                  <div className="polaroid-icon"><Icons.Key className="tactical-svg-icon" /></div>
-                  <h3>පුරාණ පිත්තල යතුර</h3>
-                  <p>
-                    {evidence.key
-                      ? "සිංහරාජයේ රහස් භූගත ලෙනේ අගුළු විවෘත කළ හැකි පැරණි පිත්තල යතුර."
-                      : "තවමත් හමුවී නැත. ගංගා නිම්නයේ ඔරු තොට පරීක්ෂා කරන්න..."}
-                  </p>
-                  <span className="status-tag">{evidence.key ? "✓ EVIDENCE VERIFIED" : "MISSING"}</span>
-                </div>
-
-                <div className={`evidence-polaroid ${evidence.sample ? "collected" : "uncollected"}`}>
-                  <div className="pin-head blue-pin" />
-                  <div className="polaroid-icon"><Icons.Vial className="tactical-svg-icon" /></div>
-                  <h3>පර්යේෂණ සාම්පලය</h3>
-                  <p>
-                    {evidence.sample
-                      ? "වසර 30ක් අතුරුදහන් වූ ගවේෂකයන්ගේ ප්‍රතිදීප්ත දිලීර අඩංගු අභිරහස් බඳුන."
-                      : "තවමත් හමුවී නැත. අගුළු දැමූ ගල් ලෙන තුළ ඇත..."}
-                  </p>
-                  <span className="status-tag">{evidence.sample ? "✓ EVIDENCE VERIFIED" : "MISSING"}</span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+        <EvidenceBoardModal
+          isOpen={showEvidenceBoard}
+          onClose={() => setShowEvidenceBoard(false)}
+          evidence={evidence}
+          activeChapter={activeChapter}
+          lang={lang}
+          onInspectDiary={() => setInspectDiaryOpen(true)}
+          onInspectTape={() => setInspectTapeOpen(true)}
+          onInspectDouglasTape={() => setInspectDouglasTapeOpen(true)}
+          viewMode="playing"
+        />
       )}
 
       {/* Field Journal Modal */}
       {showJournal && (
-        <div className="journal-modal" onClick={() => setShowJournal(false)}>
-          <div className="journal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="journal-header">
-              <h2><Icons.Journal className="tactical-svg-icon" /> සිංහරාජ වනජීවී සටහන් සහ ඇල්බමය</h2>
-              <button className="close-btn" onClick={() => setShowJournal(false)}>✕</button>
-            </div>
-
-            <div className="journal-tabs">
-              <button
-                className={`journal-tab-btn ${journalTab === "guide" ? "active" : ""}`}
-                onClick={() => setJournalTab("guide")}
-              >
-                <Icons.Book className="tactical-svg-icon" /> වනජීවී සටහන් (FIELD GUIDE)
-              </button>
-              <button
-                className={`journal-tab-btn ${journalTab === "photos" ? "active" : ""}`}
-                onClick={() => setJournalTab("photos")}
-              >
-                <Icons.Camera className="tactical-svg-icon" /> ඡායාරූප ඇල්බමය ({capturedPhotos.length}/4)
-              </button>
-            </div>
-
-            {journalTab === "guide" ? (
-              <div className="journal-list">
-                {journal.map((item, i) => (
-                  <div key={i} className="journal-card">
-                    <h3>{item.title}</h3>
-                    <p>{item.desc}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="photo-gallery-grid">
-                {capturedPhotos.length === 0 ? (
-                  <div className="empty-gallery-box">
-                    <span className="empty-cam-icon"><Icons.Camera className="tactical-svg-icon" /></span>
-                    <p>තවමත් කිසිදු ඡායාරූපයක් ගෙන නොමැත.</p>
-                    <small>කැලයේ සතුන් (කැහිබෙල්ලා, වඳුරන්, පොළඟා, කලාමැදිරියන්) අසලදී <strong>[C]</strong> ඔබා ඡායාරූප ගන්න!</small>
-                  </div>
-                ) : (
-                  capturedPhotos.map((photo) => (
-                    <div key={photo.id} className="polaroid-photo-item">
-                      <div className="polaroid-img-preview">
-                        <span className="polaroid-preview-icon"><Icons.Camera className="tactical-svg-icon" /></span>
-                        <span className="polaroid-badge">FIELD PHOTO</span>
-                      </div>
-                      <div className="polaroid-item-info">
-                        <h4>{photo.name}</h4>
-                        <p>{photo.desc}</p>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
-        </div>
+        <FieldJournalModal
+          isOpen={showJournal}
+          onClose={() => setShowJournal(false)}
+          journal={journal}
+          capturedPhotos={capturedPhotos}
+          lang={lang}
+        />
       )}
 
       {/* Trophies & Achievements Modal while Playing */}
