@@ -156,15 +156,9 @@ body {
   display: block;
 }
 
-/* CRT Scanline Overlay */
+/* CRT Scanline Overlay - Disabled for crystal-clear 3D WebGL immersion */
 .crt-scanline-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
-  background-size: 100% 4px;
-  pointer-events: none;
-  z-index: 5;
-  opacity: 0.6;
+  display: none;
 }
 
 /* Low Health Blood Screen Vignette */
@@ -212,17 +206,17 @@ body {
 
 /* ── A. Left: Biometric Survival Pod ── */
 .biometric-pod {
-  background: linear-gradient(145deg, rgba(8, 16, 11, 0.88) 0%, rgba(4, 9, 6, 0.94) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(6, 14, 10, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-top: 2px solid #4ade80;
-  padding: 10px 14px;
-  border-radius: 12px;
-  backdrop-filter: blur(16px);
+  padding: 6px 12px;
+  border-radius: 10px;
+  backdrop-filter: blur(12px);
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  min-width: 260px;
-  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 0, 0, 0.4);
+  gap: 4px;
+  min-width: 230px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
   pointer-events: auto;
 }
 
@@ -594,16 +588,16 @@ body {
 
 /* ── B. Center: Tactical Expedition Compass Bar ── */
 .tactical-compass-pod {
-  background: linear-gradient(145deg, rgba(8, 16, 11, 0.88) 0%, rgba(4, 9, 6, 0.94) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(6, 14, 10, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-top: 2px solid #38bdf8;
-  padding: 6px 20px 8px;
-  border-radius: 12px;
-  backdrop-filter: blur(16px);
+  padding: 4px 14px 6px;
+  border-radius: 10px;
+  backdrop-filter: blur(12px);
   display: flex;
   flex-direction: column;
   align-items: center;
-  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
   pointer-events: auto;
 }
 
@@ -667,20 +661,20 @@ body {
 
 /* ── C. Right: Handheld GPS Terminal & Radar ── */
 .gps-terminal-pod {
-  background: linear-gradient(145deg, rgba(8, 16, 11, 0.88) 0%, rgba(4, 9, 6, 0.94) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(6, 14, 10, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-top: 2px solid #a855f7;
-  padding: 8px 12px;
-  border-radius: 12px;
-  backdrop-filter: blur(16px);
+  padding: 6px 10px;
+  border-radius: 10px;
+  backdrop-filter: blur(12px);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
-  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.7);
+  gap: 4px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
   pointer-events: auto;
-  min-width: 175px;
-  max-width: 210px;
+  min-width: 155px;
+  max-width: 185px;
 }
 
 .gps-header {

@@ -117,15 +117,19 @@ export class Sinharaja3DEngine {
     this.footstepDist = 0;
     this.headBob = 0;
 
-    // Graphics Quality & Hand-Held Torch Sway State
+    // Graphics Quality & Tactical Flashlight State
     this.quality = "high"; // "high" | "medium" | "low"
     this.torchLag = {
       yaw: Math.PI,
       pitch: 0,
     };
     this.torchGroup = null;
+    this.flashlight = null;
+    this.flashlightSpill = null;
     this.volumetricBeam = null;
     this.volumetricUniforms = null;
+    this.gameTextures = {};
+    this.broadleafMesh = null;
 
     // Continuous Procedural Ambience & 3D Audio State
     this.ambientStarted = false;
@@ -152,6 +156,9 @@ export class Sinharaja3DEngine {
     this.lightningFlashTimer = 0;
     this.nextLightningTime = 22.0;
     this.fernBaseMatrices = [];
+    if (typeof window !== "undefined") {
+      window.__sinharaja3d = this;
+    }
 
     // Bind event handlers for clean disposal
     this._onKeyDown = this._onKeyDown.bind(this);
@@ -787,10 +794,7 @@ export class Sinharaja3DEngine {
         this.flashlight.castShadow = true;
         this.flashlight.shadow.mapSize.set(1024, 1024);
       }
-      if (this.volumetricBeam) {
-        this.volumetricBeam.visible = this.torchOn && this.battery > 0;
-      }
-      this.cb.onNotify("⚙️ ග්‍රැෆික් මට්ටම: HIGH (Full Shadows, Volumetric Beam & Dynamic Foliage)");
+      this.cb.onNotify("⚙️ ග්‍රැෆික් මට්ටම: HIGH (Full Shadows, PBR Materials & Lush Foliage)");
     } else if (mode === "medium") {
       this.renderer.shadowMap.enabled = true;
       this.renderer.shadowMap.type = THREE.PCFShadowMap;
@@ -798,17 +802,11 @@ export class Sinharaja3DEngine {
         this.flashlight.castShadow = true;
         this.flashlight.shadow.mapSize.set(512, 512);
       }
-      if (this.volumetricBeam) {
-        this.volumetricBeam.visible = this.torchOn && this.battery > 0;
-      }
       this.cb.onNotify("⚙️ ග්‍රැෆික් මට්ටම: MEDIUM (Optimized Shadows & Mist)");
     } else {
       this.renderer.shadowMap.enabled = false;
       if (this.flashlight) {
         this.flashlight.castShadow = false;
-      }
-      if (this.volumetricBeam) {
-        this.volumetricBeam.visible = false;
       }
       this.cb.onNotify("⚙️ ග්‍රැෆික් මට්ටම: LOW (Max Performance, Shadows Disabled)");
     }
@@ -853,12 +851,12 @@ export class Sinharaja3DEngine {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.05;
+    this.renderer.toneMappingExposure = 1.15;
 
     // 2. 3D Scene & Sinharaja Nocturnal Atmospheric Fog
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color("#030a06");
-    this.scene.fog = new THREE.FogExp2("#05120a", 0.016);
+    this.scene.background = new THREE.Color("#05120a");
+    this.scene.fog = new THREE.FogExp2("#071a10", 0.0075);
 
     // 3. True Perspective Camera
     this.camera = new THREE.PerspectiveCamera(74, width / height, 0.1, 800);
@@ -872,158 +870,429 @@ export class Sinharaja3DEngine {
     this.centerScreen = new THREE.Vector2(0, 0);
 
     // 5. Environmental Lighting (Nocturnal Rain Forest)
-    // Deep nocturnal ambient green-blue to maintain accessibility and visibility
-    this.ambientLight = new THREE.AmbientLight(0x092617, 0.44);
+    // Deep nocturnal ambient green-blue to maintain accessibility and visibility (Project I.G.I. clarity)
+    this.ambientLight = new THREE.AmbientLight(0x163827, 0.72);
     this.scene.add(this.ambientLight);
 
     // Moonlight rim directional light piercing through canopy
-    this.moonLight = new THREE.DirectionalLight(0x38bdf8, 0.48);
-    this.moonLight.position.set(400, 250, 500);
+    this.moonLight = new THREE.DirectionalLight(0x7dd3fc, 0.70);
+    this.moonLight.position.set(450, 220, 600);
     this.scene.add(this.moonLight);
 
     // Outpost porch kerosene lantern (warm welcoming amber light)
-    const porchLantern = new THREE.PointLight(0xf59e0b, 1.8, 14, 1.8);
+    const porchLantern = new THREE.PointLight(0xf59e0b, 2.4, 16, 1.8);
     porchLantern.position.set(527.5, 2.7, 728.5);
     this.scene.add(porchLantern);
 
-    // 6. Tactical Flashlight & Volumetric Light Beam Cone (with hand-held lag)
+    // 6. Tactical Flashlight System (High-Intensity Spot + Soft Foreground Fill Spill)
     this.torchGroup = new THREE.Object3D();
 
-    this.flashlight = new THREE.SpotLight(0xfff8db, 5.0, 48, Math.PI / 5.2, 0.45, 1.35);
+    // Primary Focused Beam (Natural SpotLight with smooth penumbra - zero artificial cones)
+    this.flashlight = new THREE.SpotLight(0xfff4d6, 7.5, 65, Math.PI / 4.4, 0.68, 1.65);
     this.flashlight.position.set(0, 0, 0);
     this.flashlight.castShadow = true;
     this.flashlight.shadow.mapSize.width = 1024;
     this.flashlight.shadow.mapSize.height = 1024;
     this.flashlight.shadow.camera.near = 0.2;
-    this.flashlight.shadow.camera.far = 48;
-    this.flashlight.shadow.bias = -0.0006;
-    this.flashlight.shadow.normalBias = 0.04;
+    this.flashlight.shadow.camera.far = 65;
+    this.flashlight.shadow.bias = -0.0004;
+    this.flashlight.shadow.normalBias = 0.05;
 
     this.flashlightTarget = new THREE.Object3D();
-    this.flashlightTarget.position.set(0, 0, -20);
+    this.flashlightTarget.position.set(0, 0, -25);
     this.torchGroup.add(this.flashlightTarget);
     this.flashlight.target = this.flashlightTarget;
     this.torchGroup.add(this.flashlight);
 
-    // Volumetric Light Cone Geometry (tapered cone along -Z)
-    const coneGeo = new THREE.CylinderGeometry(0.06, 3.4, 40, 24, 1, true);
-    coneGeo.rotateX(Math.PI / 2);
-    coneGeo.translate(0, 0, -20);
+    // Secondary Soft Foreground Spill Light (prevents pitch-black claustrophobia around feet)
+    this.flashlightSpill = new THREE.SpotLight(0xfff4d6, 1.4, 20, Math.PI / 2.2, 0.92, 2.0);
+    this.flashlightSpill.position.set(0, 0, 0);
+    this.flashlightSpill.target = this.flashlightTarget;
+    this.torchGroup.add(this.flashlightSpill);
 
-    const beamVertexShader = `
-      varying vec3 vViewPos;
-      varying vec2 vUv;
-      varying float vZ;
-      void main() {
-        vUv = uv;
-        vZ = -position.z;
-        vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
-        vViewPos = -mvPos.xyz;
-        gl_Position = projectionMatrix * mvPos;
-      }
-    `;
-
-    const beamFragmentShader = `
-      uniform vec3 uColor;
-      uniform float uIntensity;
-      uniform float uTime;
-      varying vec3 vViewPos;
-      varying vec2 vUv;
-      varying float vZ;
-
-      void main() {
-        float distFactor = clamp(1.0 - (vZ / 40.0), 0.0, 1.0);
-        distFactor = pow(distFactor, 1.7);
-
-        vec3 viewDir = normalize(vViewPos);
-        float radial = abs(dot(viewDir, vec3(0.0, 0.0, -1.0)));
-        radial = clamp(radial * 1.5, 0.0, 1.0);
-
-        float mist = 0.85 + 0.15 * sin(vZ * 0.45 - uTime * 2.2 + vUv.x * 6.28);
-        float alpha = distFactor * radial * 0.18 * uIntensity * mist;
-        if (alpha < 0.002) discard;
-
-        gl_FragColor = vec4(uColor, alpha);
-      }
-    `;
-
-    this.volumetricUniforms = {
-      uColor: { value: new THREE.Color(0xfff8db) },
-      uIntensity: { value: 1.0 },
-      uTime: { value: 0.0 },
-    };
-
-    const beamMat = new THREE.ShaderMaterial({
-      vertexShader: beamVertexShader,
-      fragmentShader: beamFragmentShader,
-      uniforms: this.volumetricUniforms,
-      transparent: true,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-      side: THREE.DoubleSide,
-    });
-
-    this.volumetricBeam = new THREE.Mesh(coneGeo, beamMat);
-    this.torchGroup.add(this.volumetricBeam);
     this.scene.add(this.torchGroup);
+
+    // Load Real PBR Textures
+    this.loadRealTextures();
 
     // 7. Interactive 3D Meshes Collection & Obstacle Colliders
     this.interactableMeshes = [];
     this.colliders = [];
   }
 
+  // ── Asset & Procedural Texture Generators ──────────────────────────────────
+  loadRealTextures() {
+    const loader = new THREE.TextureLoader();
+    this.gameTextures = {
+      door: loader.load("/textures/kudawa_door.png"),
+      gunadasa: loader.load("/textures/ranger_gunadasa.png"),
+      radio: loader.load("/textures/outpost_radio.png"),
+      reel: loader.load("/textures/douglas_reel.png"),
+      balm: loader.load("/textures/balm_bottle.png"),
+      salt: loader.load("/textures/salt_pouch.png"),
+      uv: loader.load("/textures/uv_lens.png"),
+      solar: loader.load("/textures/solar_charger.png"),
+      herb: loader.load("/textures/rainforest_herb.png"),
+      flare: loader.load("/textures/flare_gun.png"),
+    };
+  }
+
+  generateGroundPBRTextures() {
+    const size = 512;
+    // 1. Diffuse Canvas
+    const dCanvas = document.createElement("canvas");
+    dCanvas.width = size;
+    dCanvas.height = size;
+    const dCtx = dCanvas.getContext("2d");
+
+    // Base rich nocturnal rainforest soil
+    dCtx.fillStyle = "#162215";
+    dCtx.fillRect(0, 0, size, size);
+
+    // Damp humus and loam blotches
+    for (let i = 0; i < 60; i++) {
+      const rx = Math.random() * size;
+      const ry = Math.random() * size;
+      const rad = 25 + Math.random() * 45;
+      const grad = dCtx.createRadialGradient(rx, ry, 2, rx, ry, rad);
+      grad.addColorStop(0, "rgba(22, 14, 8, 0.7)");
+      grad.addColorStop(1, "rgba(22, 14, 8, 0)");
+      dCtx.fillStyle = grad;
+      dCtx.beginPath();
+      dCtx.arc(rx, ry, rad, 0, Math.PI * 2);
+      dCtx.fill();
+    }
+
+    // Organic moss patches
+    const mossColors = ["rgba(36, 68, 25, 0.65)", "rgba(48, 88, 34, 0.55)", "rgba(24, 52, 20, 0.7)"];
+    for (let i = 0; i < 110; i++) {
+      const mx = Math.random() * size;
+      const my = Math.random() * size;
+      const mRad = 12 + Math.random() * 32;
+      dCtx.fillStyle = mossColors[i % mossColors.length];
+      dCtx.beginPath();
+      dCtx.ellipse(mx, my, mRad, mRad * (0.6 + Math.random() * 0.7), Math.random() * Math.PI, 0, Math.PI * 2);
+      dCtx.fill();
+    }
+
+    // Decayed tropical leaf litter & twigs
+    const leafColors = ["#4a3318", "#5c3e1e", "#3a2512", "#664720"];
+    for (let i = 0; i < 280; i++) {
+      const lx = Math.random() * size;
+      const ly = Math.random() * size;
+      const lw = 3 + Math.random() * 6;
+      const lh = 1.5 + Math.random() * 3;
+      dCtx.save();
+      dCtx.translate(lx, ly);
+      dCtx.rotate(Math.random() * Math.PI * 2);
+      dCtx.fillStyle = leafColors[i % leafColors.length];
+      dCtx.beginPath();
+      dCtx.ellipse(0, 0, lw, lh, 0, 0, Math.PI * 2);
+      dCtx.fill();
+      dCtx.restore();
+    }
+
+    // Fine organic soil grain noise
+    const imgData = dCtx.getImageData(0, 0, size, size);
+    const data = imgData.data;
+    for (let i = 0; i < data.length; i += 4) {
+      const noise = (Math.random() - 0.5) * 16;
+      data[i] = Math.max(0, Math.min(255, data[i] + noise));
+      data[i + 1] = Math.max(0, Math.min(255, data[i + 1] + noise));
+      data[i + 2] = Math.max(0, Math.min(255, data[i + 2] + noise));
+    }
+    dCtx.putImageData(imgData, 0, 0);
+
+    const diffuseTex = new THREE.CanvasTexture(dCanvas);
+    diffuseTex.wrapS = THREE.RepeatWrapping;
+    diffuseTex.wrapT = THREE.RepeatWrapping;
+    diffuseTex.repeat.set(40, 40);
+
+    // 2. Roughness Canvas (differential wetness)
+    const rCanvas = document.createElement("canvas");
+    rCanvas.width = 256;
+    rCanvas.height = 256;
+    const rCtx = rCanvas.getContext("2d");
+    rCtx.fillStyle = "#bbbbbb"; // Default matte damp soil
+    rCtx.fillRect(0, 0, 256, 256);
+
+    // Slick wet mud patches (dark in roughness = high gloss)
+    for (let i = 0; i < 35; i++) {
+      const wx = Math.random() * 256;
+      const wy = Math.random() * 256;
+      const wr = 15 + Math.random() * 35;
+      const wGrad = rCtx.createRadialGradient(wx, wy, 2, wx, wy, wr);
+      wGrad.addColorStop(0, "rgba(45, 45, 45, 0.85)"); // Glossy wet
+      wGrad.addColorStop(1, "rgba(187, 187, 187, 0)");
+      rCtx.fillStyle = wGrad;
+      rCtx.beginPath();
+      rCtx.arc(wx, wy, wr, 0, Math.PI * 2);
+      rCtx.fill();
+    }
+
+    const roughTex = new THREE.CanvasTexture(rCanvas);
+    roughTex.wrapS = THREE.RepeatWrapping;
+    roughTex.wrapT = THREE.RepeatWrapping;
+    roughTex.repeat.set(40, 40);
+
+    return { diffuseTex, roughTex };
+  }
+
+  generateBarkTexture() {
+    const w = 256, h = 512;
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+
+    // Base dark ironwood / dipterocarp trunk
+    ctx.fillStyle = "#22170f";
+    ctx.fillRect(0, 0, w, h);
+
+    // Vertical striated wood grain grooves
+    for (let x = 0; x < w; x += 3) {
+      const shade = 18 + Math.floor(Math.sin(x * 0.15) * 8 + Math.random() * 14);
+      ctx.fillStyle = `rgb(${shade + 12}, ${shade + 6}, ${shade})`;
+      ctx.fillRect(x, 0, 2 + Math.random() * 2, h);
+    }
+
+    // Lichen and moss fissures
+    for (let i = 0; i < 30; i++) {
+      const lx = Math.random() * w;
+      const ly = Math.random() * h;
+      const lw = 6 + Math.random() * 14;
+      const lh = 18 + Math.random() * 45;
+      ctx.fillStyle = "rgba(42, 65, 33, 0.55)";
+      ctx.beginPath();
+      ctx.ellipse(lx, ly, lw, lh, (Math.random() - 0.5) * 0.3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(2, 6);
+    return tex;
+  }
+
+  generateFernFrondTexture() {
+    const w = 256, h = 512;
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+
+    ctx.clearRect(0, 0, w, h);
+
+    // Central rachis (stem)
+    ctx.strokeStyle = "#385e2b";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(w / 2, h);
+    ctx.quadraticCurveTo(w / 2 + 8, h * 0.5, w / 2, 12);
+    ctx.stroke();
+
+    // Leaflets (pinnae) branching out from rachis
+    const pairs = 18;
+    for (let i = 0; i < pairs; i++) {
+      const t = i / pairs;
+      const y = h - 25 - t * (h - 50);
+      const span = Math.sin(t * Math.PI) * (w * 0.44);
+
+      // Left leaflet
+      ctx.fillStyle = "#1e5323";
+      ctx.beginPath();
+      ctx.moveTo(w / 2 - 2, y);
+      ctx.quadraticCurveTo(w / 2 - span * 0.6, y - 12, w / 2 - span, y - 4);
+      ctx.quadraticCurveTo(w / 2 - span * 0.5, y + 8, w / 2 - 2, y + 4);
+      ctx.fill();
+
+      // Right leaflet
+      ctx.fillStyle = "#27682d";
+      ctx.beginPath();
+      ctx.moveTo(w / 2 + 2, y);
+      ctx.quadraticCurveTo(w / 2 + span * 0.6, y - 12, w / 2 + span, y - 4);
+      ctx.quadraticCurveTo(w / 2 + span * 0.5, y + 8, w / 2 + 2, y + 4);
+      ctx.fill();
+
+      // Pinna highlights
+      ctx.strokeStyle = "#4ade80";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(w / 2, y);
+      ctx.lineTo(w / 2 - span * 0.8, y - 3);
+      ctx.moveTo(w / 2, y);
+      ctx.lineTo(w / 2 + span * 0.8, y - 3);
+      ctx.stroke();
+    }
+
+    return new THREE.CanvasTexture(canvas);
+  }
+
+  generateBroadleafTexture() {
+    const w = 256, h = 512;
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+
+    ctx.clearRect(0, 0, w, h);
+
+    // Large elephant-ear leaf shape
+    ctx.fillStyle = "#164522";
+    ctx.beginPath();
+    ctx.moveTo(w / 2, h - 10);
+    ctx.bezierCurveTo(w * 0.05, h * 0.7, 0, h * 0.35, w / 2, 10);
+    ctx.bezierCurveTo(w, h * 0.35, w * 0.95, h * 0.7, w / 2, h - 10);
+    ctx.fill();
+
+    // Central pale rib
+    ctx.strokeStyle = "#4ade80";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(w / 2, h - 10);
+    ctx.lineTo(w / 2, 14);
+    ctx.stroke();
+
+    // Lateral veins
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = "rgba(74, 222, 128, 0.45)";
+    for (let v = 0; v < 8; v++) {
+      const vy = h * 0.2 + v * (h * 0.08);
+      ctx.beginPath();
+      ctx.moveTo(w / 2, vy);
+      ctx.quadraticCurveTo(w * 0.25, vy - 20, w * 0.12, vy - 10);
+      ctx.moveTo(w / 2, vy);
+      ctx.quadraticCurveTo(w * 0.75, vy - 20, w * 0.88, vy - 10);
+      ctx.stroke();
+    }
+
+    return new THREE.CanvasTexture(canvas);
+  }
+
+  generateTimberPlanksTexture() {
+    const w = 512, h = 512;
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+
+    ctx.fillStyle = "#3a2215";
+    ctx.fillRect(0, 0, w, h);
+
+    const numPlanks = 8;
+    const plankH = h / numPlanks;
+    for (let p = 0; p < numPlanks; p++) {
+      const y = p * plankH;
+      const colorV = 45 + Math.floor(Math.sin(p * 2.3) * 12);
+      ctx.fillStyle = `rgb(${colorV + 22}, ${colorV + 8}, ${colorV - 5})`;
+      ctx.fillRect(0, y + 2, w, plankH - 4);
+
+      for (let g = 0; g < 14; g++) {
+        const gy = y + 4 + Math.random() * (plankH - 8);
+        ctx.strokeStyle = "rgba(25, 14, 8, 0.4)";
+        ctx.lineWidth = 1 + Math.random();
+        ctx.beginPath();
+        ctx.moveTo(0, gy);
+        ctx.lineTo(w, gy + (Math.random() - 0.5) * 3);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = "#120804";
+      ctx.fillRect(0, y, w, 2);
+    }
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(4, 4);
+    return tex;
+  }
+
   // ── Build Kudawa Outpost 3D World (Chapter 1) ─────────────────────────────
   build3DWorld() {
     // ── A. Multi-Layer PBR Sinharaja Terrain ──
-    const terrainGeo = new THREE.PlaneGeometry(600, 600, 96, 96);
+    const terrainCenter = { x: 520, z: 780 };
+    const terrainSize = 750;
+    const terrainGeo = new THREE.PlaneGeometry(terrainSize, terrainSize, 140, 140);
     terrainGeo.rotateX(-Math.PI / 2);
 
     const posAttr = terrainGeo.attributes.position;
     for (let i = 0; i < posAttr.count; i++) {
-      const vx = posAttr.getX(i);
-      const vz = posAttr.getZ(i);
-      posAttr.setY(i, this.getTerrainHeight(vx, vz));
+      const localX = posAttr.getX(i);
+      const localZ = posAttr.getZ(i);
+      const worldX = terrainCenter.x + localX;
+      const worldZ = terrainCenter.z + localZ;
+      posAttr.setY(i, this.getTerrainHeight(worldX, worldZ));
     }
     terrainGeo.computeVertexNormals();
 
+    const { diffuseTex, roughTex } = this.generateGroundPBRTextures();
+
     const terrainMat = new THREE.MeshStandardMaterial({
-      color: 0x122414,
-      roughness: 0.88,
+      map: diffuseTex,
+      roughnessMap: roughTex,
+      roughness: 0.82,
       metalness: 0.12,
+      color: 0xa0b298,
     });
     this.terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
-    this.terrainMesh.position.set(0, 0, 0);
+    this.terrainMesh.position.set(terrainCenter.x, 0, terrainCenter.z);
     this.terrainMesh.receiveShadow = true;
     this.scene.add(this.terrainMesh);
 
     // ── B. Muddy Rainforest Trail (Leading from Kudawa Outpost toward River & Cave) ──
-    // Trail Path points from Cabin Entrance (520, 727) -> East toward River (640, 790)
-    const trailCurve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(520, 0.03, 726),
-      new THREE.Vector3(518, 0.03, 735),
-      new THREE.Vector3(512, 0.03, 750),
-      new THREE.Vector3(505, 0.03, 768),
-      new THREE.Vector3(500, 0.03, 790),
-      new THREE.Vector3(492, 0.03, 815),
-      new THREE.Vector3(480, 0.03, 840),
-    ]);
-    const trailGeo = new THREE.TubeGeometry(trailCurve, 40, 1.4, 8, false);
-    trailGeo.scale(1, 0.02, 1); // Flatten into a sunken muddy path
+    const trailRawPoints = [
+      [520, 726],
+      [518, 735],
+      [512, 750],
+      [505, 768],
+      [500, 790],
+      [492, 815],
+      [480, 840],
+    ];
+    const trailCurve = new THREE.CatmullRomCurve3(
+      trailRawPoints.map(([tx, tz]) => new THREE.Vector3(tx, this.getTerrainHeight(tx, tz) + 0.035, tz))
+    );
+    const trailGeo = new THREE.TubeGeometry(trailCurve, 50, 1.5, 8, false);
+    trailGeo.scale(1, 0.02, 1);
     const trailMat = new THREE.MeshStandardMaterial({
-      color: 0x22150c, // Rich damp rainforest mud
-      roughness: 0.35,  // High wetness reflection
-      metalness: 0.25,
+      color: 0x24160d, // Rich damp rainforest mud
+      roughness: 0.32,  // High wetness reflection
+      metalness: 0.28,
     });
     const trailMesh = new THREE.Mesh(trailGeo, trailMat);
     trailMesh.receiveShadow = true;
     this.scene.add(trailMesh);
+
+    // ── B2. Nocturnal Flowing River Stream ──
+    const riverCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(522, this.getTerrainHeight(522, 715) - 0.22, 715),
+      new THREE.Vector3(514, this.getTerrainHeight(514, 738) - 0.22, 738),
+      new THREE.Vector3(505, this.getTerrainHeight(505, 765) - 0.22, 765),
+      new THREE.Vector3(496, this.getTerrainHeight(496, 795) - 0.22, 795),
+      new THREE.Vector3(482, this.getTerrainHeight(482, 830) - 0.22, 830),
+      new THREE.Vector3(468, this.getTerrainHeight(468, 860) - 0.22, 860),
+    ]);
+    const riverGeo = new THREE.TubeGeometry(riverCurve, 40, 3.6, 8, false);
+    riverGeo.scale(1, 0.015, 1);
+    const riverMat = new THREE.MeshStandardMaterial({
+      color: 0x072b38,
+      roughness: 0.08,
+      metalness: 0.88,
+      transparent: true,
+      opacity: 0.82,
+    });
+    const riverMesh = new THREE.Mesh(riverGeo, riverMat);
+    riverMesh.receiveShadow = true;
+    this.scene.add(riverMesh);
 
     // ── C. Reflective Rain Puddles along the Muddy Trail ──
     const puddleGeo = new THREE.CircleGeometry(1.6, 24);
     puddleGeo.rotateX(-Math.PI / 2);
     const puddleMat = new THREE.MeshStandardMaterial({
       color: 0x07151a,
-      roughness: 0.08, // Mirror-like water surface reflecting moonlight
+      roughness: 0.08,
       metalness: 0.85,
       transparent: true,
       opacity: 0.88,
@@ -1051,12 +1320,13 @@ export class Sinharaja3DEngine {
     const cabinH = 4.2;
 
     // 1. Polished Timber Floorboards inside cabin
+    const timberTex = this.generateTimberPlanksTexture();
     const floorGeo = new THREE.PlaneGeometry(cabinW, cabinD);
     floorGeo.rotateX(-Math.PI / 2);
     const floorMat = new THREE.MeshStandardMaterial({
-      color: 0x3d2516,
-      roughness: 0.55,
-      metalness: 0.15,
+      map: timberTex,
+      roughness: 0.45,
+      metalness: 0.12,
     });
     const floorMesh = new THREE.Mesh(floorGeo, floorMat);
     floorMesh.position.set(cabinOriginX, 0.02, cabinOriginZ);
@@ -1067,8 +1337,8 @@ export class Sinharaja3DEngine {
     const ceilGeo = new THREE.PlaneGeometry(cabinW + 1, cabinD + 1);
     ceilGeo.rotateX(Math.PI / 2);
     const ceilMat = new THREE.MeshStandardMaterial({
-      color: 0x24160d,
-      roughness: 0.85,
+      map: timberTex,
+      roughness: 0.82,
     });
     const ceilMesh = new THREE.Mesh(ceilGeo, ceilMat);
     ceilMesh.position.set(cabinOriginX, cabinH, cabinOriginZ);
@@ -1076,8 +1346,9 @@ export class Sinharaja3DEngine {
 
     // 3. Kudawa Cabin Log Walls Material
     const wallMat = new THREE.MeshStandardMaterial({
-      color: 0x2b190f,
-      roughness: 0.82,
+      map: timberTex,
+      color: 0x73482e,
+      roughness: 0.78,
       metalness: 0.08,
     });
 
@@ -1133,8 +1404,9 @@ export class Sinharaja3DEngine {
     const doorLeafGeo = new THREE.BoxGeometry(doorGapW, cabinH - lintelH, 0.12);
     doorLeafGeo.translate(doorGapW / 2, (cabinH - lintelH) / 2, 0);
     const doorLeafMat = new THREE.MeshStandardMaterial({
-      color: 0x4a2e1b,
+      map: this.gameTextures.door,
       roughness: 0.65,
+      metalness: 0.15,
     });
     this.doorPivot = new THREE.Object3D();
     this.doorPivot.position.set(cabinOriginX - doorGapW / 2, 0, cabinOriginZ + cabinD / 2);
@@ -1165,7 +1437,7 @@ export class Sinharaja3DEngine {
     this.colliders.push(this.doorCollider);
 
     // 5. Cabin Interior Hanging Lantern
-    const lanternLight = new THREE.PointLight(0xfbbf24, 2.2, 18, 1.4);
+    const lanternLight = new THREE.PointLight(0xfbbf24, 2.8, 22, 1.4);
     lanternLight.position.set(cabinOriginX, cabinH - 0.8, cabinOriginZ);
     lanternLight.castShadow = true;
     this.scene.add(lanternLight);
@@ -1194,6 +1466,11 @@ export class Sinharaja3DEngine {
     this.scene.add(tableTop);
     this.colliders.push({ type: "box", minX: tableX - tableW / 2, maxX: tableX + tableW / 2, minZ: tableZ - tableD / 2, maxZ: tableZ + tableD / 2 });
 
+    // Warm workbench reading lamp
+    const benchLamp = new THREE.PointLight(0xfef08a, 1.8, 10, 1.5);
+    benchLamp.position.set(tableX, tableH + 1.2, tableZ);
+    this.scene.add(benchLamp);
+
     const legGeo = new THREE.BoxGeometry(0.12, tableH, 0.12);
     const legMat = new THREE.MeshStandardMaterial({ color: 0x27160c, roughness: 0.8 });
     [
@@ -1212,7 +1489,7 @@ export class Sinharaja3DEngine {
     // 1. Outpost Radio Dispatch
     const radioMesh = new THREE.Mesh(
       new THREE.BoxGeometry(0.65, 0.42, 0.35),
-      new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.4, metalness: 0.6 })
+      new THREE.MeshStandardMaterial({ map: this.gameTextures.radio, roughness: 0.4, metalness: 0.6 })
     );
     radioMesh.position.set(tableX - 1.1, tableH + 0.22, tableZ);
     radioMesh.castShadow = true;
@@ -1241,7 +1518,7 @@ export class Sinharaja3DEngine {
     // 2. Douglas Voice Reel
     const reelMesh = new THREE.Mesh(
       new THREE.CylinderGeometry(0.24, 0.24, 0.1, 16),
-      new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8, roughness: 0.25 })
+      new THREE.MeshStandardMaterial({ map: this.gameTextures.reel, metalness: 0.8, roughness: 0.25 })
     );
     reelMesh.position.set(tableX, tableH + 0.12, tableZ);
     reelMesh.castShadow = true;
@@ -1274,7 +1551,7 @@ export class Sinharaja3DEngine {
     // 3. Leech Repellent Balm Bottle
     const balmMesh = new THREE.Mesh(
       new THREE.CylinderGeometry(0.08, 0.09, 0.28, 12),
-      new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.3 })
+      new THREE.MeshStandardMaterial({ map: this.gameTextures.balm, roughness: 0.3 })
     );
     balmMesh.position.set(tableX + 1.1, tableH + 0.15, tableZ);
     balmMesh.castShadow = true;
@@ -1367,7 +1644,7 @@ export class Sinharaja3DEngine {
     // 5. Optical UV Night Filter Lens (UV කාචය)
     const uvGeo = new THREE.CylinderGeometry(0.12, 0.14, 0.06, 16);
     const uvMat = new THREE.MeshStandardMaterial({
-      color: 0x9333ea,
+      map: this.gameTextures.uv,
       roughness: 0.15,
       metalness: 0.85,
     });
@@ -1439,7 +1716,7 @@ export class Sinharaja3DEngine {
     // 7. Emergency Salt Pouch on Bench (ලුණු කුඩු පැකට්ටුව)
     const saltGeo = new THREE.DodecahedronGeometry(0.18, 0);
     const saltMat = new THREE.MeshStandardMaterial({
-      color: 0xe2e8f0,
+      map: this.gameTextures.salt,
       roughness: 0.9,
     });
     const saltMesh = new THREE.Mesh(saltGeo, saltMat);
@@ -1485,6 +1762,17 @@ export class Sinharaja3DEngine {
     npcBody.position.y = 0.95;
     npcBody.castShadow = true;
     npcGroup.add(npcBody);
+
+    // Gunadasa Field Badge Portrait
+    const badgeGeo = new THREE.PlaneGeometry(0.32, 0.42);
+    const badgeMat = new THREE.MeshBasicMaterial({
+      map: this.gameTextures.gunadasa,
+      transparent: true,
+      side: THREE.DoubleSide,
+    });
+    const badgeMesh = new THREE.Mesh(badgeGeo, badgeMat);
+    badgeMesh.position.set(0, 1.02, 0.30);
+    npcGroup.add(badgeMesh);
 
     // Head
     const npcHead = new THREE.Mesh(
@@ -1551,13 +1839,18 @@ export class Sinharaja3DEngine {
     this.interactableMeshes.push(npcBody);
 
     // ── G. Towering Sinharaja Dipterocarp Canopy Trees with Flanged Buttress Roots ──
-    const treeTrunkGeo = new THREE.CylinderGeometry(0.55, 1.1, 18, 9);
-    const treeTrunkMat = new THREE.MeshStandardMaterial({ color: 0x22160d, roughness: 0.92 });
+    const barkTex = this.generateBarkTexture();
+    const treeTrunkGeo = new THREE.CylinderGeometry(0.55, 1.1, 18, 12);
+    const treeTrunkMat = new THREE.MeshStandardMaterial({
+      map: barkTex,
+      roughness: 0.88,
+      metalness: 0.08,
+    });
     const canopyGeo1 = new THREE.DodecahedronGeometry(5.2, 1);
     const canopyGeo2 = new THREE.DodecahedronGeometry(4.2, 1);
-    const canopyMat = new THREE.MeshStandardMaterial({ color: 0x0a240e, roughness: 0.82 });
+    const canopyMat = new THREE.MeshStandardMaterial({ color: 0x0e3214, roughness: 0.82 });
     const rootGeo = new THREE.ConeGeometry(0.65, 3.2, 5);
-    const rootMat = new THREE.MeshStandardMaterial({ color: 0x2e1a0f, roughness: 0.95 });
+    const rootMat = new THREE.MeshStandardMaterial({ map: barkTex, roughness: 0.95 });
 
     const treePositions = [
       [502, 680], [542, 685], [488, 745], [552, 755],
@@ -1608,8 +1901,8 @@ export class Sinharaja3DEngine {
     const fallenLogGeo = new THREE.CylinderGeometry(0.7, 0.85, 12, 8);
     fallenLogGeo.rotateZ(Math.PI / 2);
     const fallenLogMat = new THREE.MeshStandardMaterial({
-      color: 0x271910,
-      roughness: 0.94,
+      map: barkTex,
+      roughness: 0.92,
     });
     const log1 = new THREE.Mesh(fallenLogGeo, fallenLogMat);
     const log1Y = this.getTerrainHeight(495, 785);
@@ -1646,37 +1939,41 @@ export class Sinharaja3DEngine {
       this.colliders.push({ type: "circle", x: bx, z: bz, radius: bScale * 1.05 });
     });
 
-    // ── J. Instanced Undergrowth Foliage (Broadleaf Rainforest Ferns & Shrubs) ──
-    const fernLeafGeo = new THREE.PlaneGeometry(0.75, 1.8);
-    fernLeafGeo.translate(0, 0.9, 0); // Pivot at base
+    // ── J. Instanced Undergrowth Foliage (Feathered Ferns & Broadleaf Tropical Shrubs) ──
+    const fernLeafGeo = new THREE.PlaneGeometry(0.95, 2.0);
+    fernLeafGeo.translate(0, 1.0, 0); // Pivot at base
+    const fernFrondTex = this.generateFernFrondTexture();
     const fernMat = new THREE.MeshStandardMaterial({
-      color: 0x1a451e,
-      roughness: 0.6,
-      metalness: 0.1,
+      map: fernFrondTex,
+      transparent: true,
+      alphaTest: 0.28,
+      roughness: 0.55,
+      metalness: 0.05,
       side: THREE.DoubleSide,
     });
 
-    const fernInstances = 180;
+    const fernInstances = 450;
     this.fernMesh = new THREE.InstancedMesh(fernLeafGeo, fernMat, fernInstances);
     const dummy = new THREE.Object3D();
 
     let fIdx = 0;
-    for (let f = 0; f < 30; f++) {
-      // Clustered fern clumps around trees and trail edges
-      const clumpX = 520 + (Math.random() - 0.5) * 85;
-      const clumpZ = 720 + (Math.random() - 0.5) * 85;
+    const fernClusters = 75;
+    for (let f = 0; f < fernClusters; f++) {
+      const clumpX = 520 + (Math.random() - 0.5) * 120;
+      const clumpZ = 750 + (Math.random() - 0.5) * 140;
 
       // Keep cabin interior clear of ferns
-      if (Math.abs(clumpX - 520) < 9 && Math.abs(clumpZ - 720) < 7) continue;
+      if (Math.abs(clumpX - 520) < 10 && Math.abs(clumpZ - 720) < 8) continue;
 
       const clumpY = this.getTerrainHeight(clumpX, clumpZ);
       const frondsPerClump = 6;
       for (let fr = 0; fr < frondsPerClump; fr++) {
         if (fIdx >= fernInstances) break;
         const angle = (fr / frondsPerClump) * Math.PI * 2 + Math.random() * 0.3;
-        dummy.position.set(clumpX, clumpY, clumpZ);
-        dummy.rotation.set(0.45 + Math.random() * 0.2, angle, 0);
-        dummy.scale.set(1.0, 1.0 + Math.random() * 0.4, 1.0);
+        dummy.position.set(clumpX + (Math.random() - 0.5) * 0.8, clumpY, clumpZ + (Math.random() - 0.5) * 0.8);
+        dummy.rotation.set(0.35 + Math.random() * 0.25, angle, 0);
+        const sc = 0.9 + Math.random() * 0.45;
+        dummy.scale.set(sc, sc, sc);
         dummy.updateMatrix();
         this.fernBaseMatrices.push(dummy.matrix.clone());
         this.fernMesh.setMatrixAt(fIdx++, dummy.matrix);
@@ -1686,7 +1983,61 @@ export class Sinharaja3DEngine {
     this.fernMesh.castShadow = true;
     this.scene.add(this.fernMesh);
 
+    // ── J2. Giant Broadleaf Tropical Foliage (Alocasia / Elephant Ear Understory) ──
+    const broadleafTex = this.generateBroadleafTexture();
+    const broadleafGeo = new THREE.PlaneGeometry(1.6, 2.4);
+    broadleafGeo.translate(0, 1.2, 0);
+    const broadleafMat = new THREE.MeshStandardMaterial({
+      map: broadleafTex,
+      transparent: true,
+      alphaTest: 0.35,
+      roughness: 0.45,
+      side: THREE.DoubleSide,
+    });
+    const broadleafCount = 140;
+    this.broadleafMesh = new THREE.InstancedMesh(broadleafGeo, broadleafMat, broadleafCount);
+    const bDummy = new THREE.Object3D();
+    let bIdx = 0;
+    const broadleafClumps = [
+      [514, 730], [526, 736], [508, 745], [516, 755],
+      [502, 770], [494, 785], [530, 750], [538, 775],
+      [488, 805], [505, 820], [478, 835], [512, 795],
+      [525, 810], [535, 830], [470, 750], [545, 740],
+      [490, 725], [550, 765], [465, 780], [500, 845],
+    ];
+    broadleafClumps.forEach(([bx, bz]) => {
+      const by = this.getTerrainHeight(bx, bz);
+      for (let l = 0; l < 7; l++) {
+        if (bIdx >= broadleafCount) break;
+        const leafAngle = (l / 7) * Math.PI * 2 + Math.random() * 0.4;
+        const lean = 0.5 + Math.random() * 0.3;
+        bDummy.position.set(bx + (Math.random() - 0.5) * 1.8, by, bz + (Math.random() - 0.5) * 1.8);
+        bDummy.rotation.set(lean, leafAngle, 0);
+        const sc = 0.85 + Math.random() * 0.5;
+        bDummy.scale.set(sc, sc, sc);
+        bDummy.updateMatrix();
+        this.broadleafMesh.setMatrixAt(bIdx++, bDummy.matrix);
+      }
+    });
+    this.broadleafMesh.instanceMatrix.needsUpdate = true;
+    this.broadleafMesh.castShadow = true;
+    this.scene.add(this.broadleafMesh);
+
     // ── K. Dynamic Storm Raindrop Particles ──
+    const rDropCanvas = document.createElement("canvas");
+    rDropCanvas.width = 32;
+    rDropCanvas.height = 32;
+    const rDropCtx = rDropCanvas.getContext("2d");
+    const rGrad = rDropCtx.createRadialGradient(16, 16, 0, 16, 16, 16);
+    rGrad.addColorStop(0, "rgba(224, 242, 254, 0.9)");
+    rGrad.addColorStop(0.4, "rgba(186, 230, 253, 0.4)");
+    rGrad.addColorStop(1, "rgba(186, 230, 253, 0)");
+    rDropCtx.fillStyle = rGrad;
+    rDropCtx.beginPath();
+    rDropCtx.arc(16, 16, 16, 0, Math.PI * 2);
+    rDropCtx.fill();
+    const rainTexture = new THREE.CanvasTexture(rDropCanvas);
+
     const rainCount = 1400;
     const rainGeo = new THREE.BufferGeometry();
     const rainPos = new Float32Array(rainCount * 3);
@@ -1697,10 +2048,13 @@ export class Sinharaja3DEngine {
     }
     rainGeo.setAttribute("position", new THREE.BufferAttribute(rainPos, 3));
     const rainMat = new THREE.PointsMaterial({
-      color: 0x93c5fd,
-      size: 0.12,
+      map: rainTexture,
+      color: 0xbae6fd,
+      size: 0.08,
       transparent: true,
-      opacity: 0.65,
+      opacity: 0.55,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
     });
     this.rainParticles = new THREE.Points(rainGeo, rainMat);
     this.scene.add(this.rainParticles);
@@ -2390,20 +2744,23 @@ export class Sinharaja3DEngine {
   }
 
   updateFlashlight() {
-    if (!this.torchOn || this.battery <= 0) {
-      this.flashlight.visible = false;
-      if (this.volumetricBeam) this.volumetricBeam.visible = false;
+    const isLit = Boolean(this.torchOn && this.battery > 0);
+    if (!isLit) {
+      if (this.flashlight) this.flashlight.visible = false;
+      if (this.flashlightSpill) this.flashlightSpill.visible = false;
       return;
     }
-    this.flashlight.visible = true;
-    const baseIntensity = this.uvMode ? 3.0 : 5.0;
-    this.flashlight.intensity = baseIntensity * this.torchIntensity;
-    this.flashlight.distance = this.uvMode ? 28 : (45 * Math.sqrt(this.torchIntensity));
-
-    if (this.volumetricBeam && this.volumetricUniforms) {
-      this.volumetricBeam.visible = (this.quality !== "low");
-      this.volumetricUniforms.uIntensity.value = this.torchIntensity;
-      this.volumetricUniforms.uColor.value.set(this.uvMode ? 0xa855f7 : 0xfff8db);
+    if (this.flashlight) {
+      this.flashlight.visible = true;
+      const baseIntensity = this.uvMode ? 4.5 : 7.5;
+      this.flashlight.intensity = baseIntensity * this.torchIntensity;
+      this.flashlight.color.set(this.uvMode ? 0xa855f7 : 0xfff4d6);
+      this.flashlight.distance = this.uvMode ? 32 : (65 * Math.sqrt(this.torchIntensity));
+    }
+    if (this.flashlightSpill) {
+      this.flashlightSpill.visible = true;
+      this.flashlightSpill.intensity = (this.uvMode ? 1.0 : 1.4) * this.torchIntensity;
+      this.flashlightSpill.color.set(this.uvMode ? 0x9333ea : 0xfff4d6);
     }
   }
 
@@ -2878,28 +3235,30 @@ export class Sinharaja3DEngine {
     this.camera.rotation.y = this.player.yaw;
     this.camera.rotation.x = this.player.pitch;
 
-    // ── Update Volumetric Flashlight Beam & Hand-Held Torch Sway ──
-    if (this.volumetricBeam && this.volumetricUniforms) {
-      this.volumetricUniforms.uTime.value = this.elapsedTime;
-      this.volumetricUniforms.uIntensity.value = (this.torchOn && this.battery > 0) ? this.torchIntensity : 0;
-      this.volumetricUniforms.uColor.value.set(this.uvMode ? 0xa855f7 : 0xfff8db);
-      this.volumetricBeam.visible = this.torchOn && this.battery > 0 && this.quality !== "low";
+    // ── Update Tactical Flashlight & Hand-Held Torch Sway ──
+    if (this.flashlight) {
+      const isLit = Boolean(this.torchOn && this.battery > 0);
+      this.flashlight.visible = isLit;
+      if (this.flashlightSpill) this.flashlightSpill.visible = isLit;
     }
 
     if (this.torchGroup) {
       this.torchLag.yaw += (this.player.yaw - this.torchLag.yaw) * Math.min(1.0, dt * 16);
       this.torchLag.pitch += (this.player.pitch - this.torchLag.pitch) * Math.min(1.0, dt * 16);
 
-      const sinY = Math.sin(this.player.yaw);
-      const cosY = Math.cos(this.player.yaw);
+      const sinY = Math.sin(this.torchLag.yaw);
+      const cosY = Math.cos(this.torchLag.yaw);
       const bobX = Math.cos(this.headBob * 0.5) * 0.02;
-      const offX = 0.28 + bobX;
-      const offY = -0.22;
-      const offZ = -0.15;
 
-      const worldTorchX = this.player.x + (offX * cosY - offZ * sinY);
-      const worldTorchY = this.player.y + bobOffset + offY;
-      const worldTorchZ = this.player.z + (offX * sinY + offZ * cosY);
+      // In Three.js, camera forward is (-sin(yaw), 0, -cos(yaw)), right is (cos(yaw), 0, -sin(yaw))
+      const forwardX = -sinY;
+      const forwardZ = -cosY;
+      const rightX = cosY;
+      const rightZ = -sinY;
+
+      const worldTorchX = this.player.x + rightX * (0.24 + bobX) + forwardX * 0.22;
+      const worldTorchY = this.player.y + bobOffset - 0.20;
+      const worldTorchZ = this.player.z + rightZ * (0.24 + bobX) + forwardZ * 0.22;
 
       this.torchGroup.position.set(worldTorchX, worldTorchY, worldTorchZ);
       this.torchGroup.rotation.order = "YXZ";

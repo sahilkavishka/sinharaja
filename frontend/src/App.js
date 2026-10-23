@@ -2167,8 +2167,7 @@ export default function App() {
     >
       <canvas ref={canvasRef} className="game-canvas" />
 
-      {/* Screen Effects */}
-      <div className="crt-scanline-overlay" />
+      {/* Screen Effects - Scanline removed for clean 3D rendering */}
 
       {/* Achievement Unlocked Floating Toast */}
       {achievementToast && (
