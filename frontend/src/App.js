@@ -648,6 +648,9 @@ export default function App() {
       try {
         localStorage.setItem("sinharaja_lang", next);
       } catch (e) {}
+      if (engineRef.current && engineRef.current.setLang) {
+        engineRef.current.setLang(next);
+      }
       return next;
     });
   }, []);
@@ -784,12 +787,12 @@ export default function App() {
     flareGunFound: false,
     flareFired: false,
     elapsedTime: 0,
-    inShelter: false,
+    inShelter: true,
     inCave: false,
     inMud: false,
     zoom: 1.0,
-    playerX: 250,
-    playerY: 350,
+    playerX: 520,
+    playerY: 720,
     attachedLeeches: 0,
     venomToxicity: 0,
     noiseLevel: 14,
@@ -911,6 +914,7 @@ export default function App() {
     // Instantiate genuine 3D WebGL renderer for true First-Person I.G.I. exploration
     const engine = new Sinharaja3DEngine(canvas, {
       chapter: activeChapter,
+      lang,
       onStatsUpdate: (newStats) => {
         setStats(newStats);
         if (activeChapter === 1) {
@@ -1479,47 +1483,55 @@ export default function App() {
       };
     }
 
-    // Chapter 01
+    // Chapter 01 (Genuine 3D Coordinates & Real-World Meters)
     if (!stats.tasks?.diaryFound) {
       return {
-        title: "මුරපොළේ දිනපොත (Ranger Diary)",
+        title: lang === "en" ? "Douglas Field Journal" : "මුරපොළේ දිනපොත (Ranger Diary)",
         icon: "Book",
-        x: 580,
-        y: 700,
-        desc: "අතහැර දැමූ මුරපොළේ දිනපොත කියවා සාක්ෂි සොයන්න",
+        x: 517,
+        y: 715,
+        desc: lang === "en"
+          ? "Investigate the Kudawa Outpost workbench and secure Douglas's field notes"
+          : "අතහැර දැමූ මුරපොළේ මේසය පරීක්ෂා කර ඩග්ලස්ගේ දිනපොත සොයාගන්න",
       };
     }
     if (!stats.tasks?.keyFound) {
       return {
-        title: "පුරාණ පිත්තල යතුර (Ancient Key)",
+        title: lang === "en" ? "Antique Brass Key" : "පුරාණ පිත්තල යතුර (Ancient Key)",
         icon: "Key",
-        x: 1100,
-        y: 850,
-        desc: "ගංගා නිම්නයේ ඔරු තොටින් පැරණි පිත්තල යතුර සොයාගන්න",
+        x: 512,
+        y: 735,
+        desc: lang === "en"
+          ? "Locate the antique brass key resting atop the river boulder"
+          : "ගංගා නිම්නයේ ගල් පර්වතය මත ඇති පැරණි පිත්තල යතුර සොයාගන්න",
       };
     }
     if (!stats.tasks?.sampleFound) {
       return {
-        title: "භූගත ලෙන & සාම්පලය (Rune Cave)",
+        title: lang === "en" ? "Ancient Monolith Cave & Sample" : "භූගත ලෙන & සාම්පලය (Rune Cave)",
         icon: "Target",
-        x: 1730,
-        y: 1120,
-        desc: "රහස් සංකේත ගලපා ලෙන් දොරටුව විවෘත කරන්න",
+        x: 495,
+        y: 840,
+        desc: lang === "en"
+          ? "Align the three runes to breach the monolith gate and extract the sample"
+          : "රහස් සංකේත ගලපා ලෙන් දොරටුව විවෘත කර දිලීර සාම්පලය ලබාගන්න",
       };
     }
     return {
-      title: "ගලවා ගැනීමේ හෙලිපෑඩ් (Rescue Helipad)",
+      title: lang === "en" ? "Extraction Helipad" : "ගලවා ගැනීමේ හෙලිපෑඩ් (Rescue Helipad)",
       icon: "Helicopter",
-      x: 2700,
-      y: 1800,
-      desc: "හෙලිකොප්ටර් කලාපයට ගොස් මෙහෙයුම අවසන් කරන්න",
+      x: 545,
+      y: 855,
+      desc: lang === "en"
+        ? "Head to the summit ridge helipad and fire the distress rocket for extraction"
+        : "කඳු මුදුනේ හෙලිකොප්ටර් කලාපයට ගොස් සංඥා රොකට්ටුව දල්වා මෙහෙයුම අවසන් කරන්න",
     };
   };
 
   const activeObj = getActiveObjectiveInfo();
-  const distToActiveObj = Math.round(
-    Math.hypot(activeObj.x - stats.playerX, activeObj.y - stats.playerY) / 10
-  );
+  const distToActiveObj = activeChapter === 1
+    ? Math.round(Math.hypot(activeObj.x - stats.playerX, activeObj.y - stats.playerY))
+    : Math.round(Math.hypot(activeObj.x - stats.playerX, activeObj.y - stats.playerY) / 10);
 
   // Heart Rate BPM (Simulated based on health/danger)
   const heartBpm = stats.bleeding || stats.health < 40 ? 138 : stats.health < 75 ? 96 : 72;
@@ -2021,38 +2033,44 @@ export default function App() {
               <span className="grade-status-tag">EVALUATION RATING</span>
               <h2 className="grade-headline">{gradeTitle}</h2>
               <p className="grade-desc">
-                {isGradeS
-                  ? "විශිෂ්ටයි! ඔබ සියලු සාක්ෂි, සියලු වනජීවී ඡායාරූප සහ කැහිබෙලි පිහාටු සොයාගෙන පරිපූර්ණ ගවේෂණයක නිරත විය!"
-                  : isGradeA
-                  ? "ඉතා හොඳයි! ඔබ ප්‍රධාන සාක්ෂි සහ වනජීවී සාක්ෂි සාර්ථකව සම්පූර්ණ කර ගලවාගැනීමේ හෙලිකොප්ටරය වෙත ළඟා විය."
-                  : "ඔබ සාර්ථකව දිවි ගලවාගෙන සාක්ෂි සුරක්ෂිත කළා. උපරිම ලකුණු සඳහා සියලු ඡායාරූප ගැනීමට උත්සාහ කරන්න."}
+                {lang === "en"
+                  ? (isGradeS
+                    ? "Outstanding! You recovered all critical evidence, captured rare endemic wildlife photographs, and reached the extraction zone with supreme tactical survival efficiency!"
+                    : isGradeA
+                    ? "Well done! You secured the main expedition evidence, blue magpie feathers, and signaled the rescue helicopter amid the raging storm."
+                    : "You survived the perilous Kudawa trail and extracted with Douglas's research intact. Attempt to locate all fauna photos and blue magpie feathers for Grade S rating.")
+                  : (isGradeS
+                    ? "විශිෂ්ටයි! ඔබ සියලු සාක්ෂි, සියලු වනජීවී ඡායාරූප සහ කැහිබෙලි පිහාටු සොයාගෙන පරිපූර්ණ ගවේෂණයක නිරත විය!"
+                    : isGradeA
+                    ? "ඉතා හොඳයි! ඔබ ප්‍රධාන සාක්ෂි සහ වනජීවී සාක්ෂි සාර්ථකව සම්පූර්ණ කර ගලවාගැනීමේ හෙලිකොප්ටරය වෙත ළඟා විය."
+                    : "ඔබ සාර්ථකව දිවි ගලවාගෙන සාක්ෂි සුරක්ෂිත කළා. උපරිම ලකුණු සඳහා සියලු ඡායාරූප ගැනීමට උත්සාහ කරන්න.")}
               </p>
             </div>
           </div>
 
           <div className="debrief-stats-grid">
             <div className="debrief-stat-card">
-              <span className="stat-label"><Icons.Clock className="tactical-svg-icon" /> ගතවූ කාලය (TIME)</span>
+              <span className="stat-label"><Icons.Clock className="tactical-svg-icon" /> {lang === "en" ? "ELAPSED TIME" : "ගතවූ කාලය (TIME)"}</span>
               <strong className="stat-val">{minutes}m {seconds < 10 ? `0${seconds}` : seconds}s</strong>
             </div>
             <div className="debrief-stat-card">
-              <span className="stat-label"><Icons.Evidence className="tactical-svg-icon" /> සාක්ෂි (EVIDENCE)</span>
+              <span className="stat-label"><Icons.Evidence className="tactical-svg-icon" /> {lang === "en" ? "EVIDENCE RECOVERED" : "සාක්ෂි (EVIDENCE)"}</span>
               <strong className="stat-val">3 / 3 (100%)</strong>
             </div>
             <div className="debrief-stat-card">
-              <span className="stat-label"><Icons.Camera className="tactical-svg-icon" /> වනජීවී ඡායාරූප (PHOTOS)</span>
+              <span className="stat-label"><Icons.Camera className="tactical-svg-icon" /> {lang === "en" ? "WILDLIFE PHOTOS" : "වනජීවී ඡායාරූප (PHOTOS)"}</span>
               <strong className="stat-val">{capturedPhotos.length} / 4</strong>
             </div>
             <div className="debrief-stat-card">
-              <span className="stat-label"><Icons.Feather className="tactical-svg-icon" /> කැහිබෙලි පිහාටු (FEATHERS)</span>
+              <span className="stat-label"><Icons.Feather className="tactical-svg-icon" /> {lang === "en" ? "BLUE MAGPIE FEATHERS" : "කැහිබෙලි පිහාටු (FEATHERS)"}</span>
               <strong className="stat-val">{stats.feathersCollected} / 3</strong>
             </div>
             <div className="debrief-stat-card">
-              <span className="stat-label"><Icons.Heart className="tactical-svg-icon" /> සෞඛ්‍ය තත්ත්වය (HEALTH)</span>
+              <span className="stat-label"><Icons.Heart className="tactical-svg-icon" /> {lang === "en" ? "HEALTH REMAINING" : "සෞඛ්‍ය තත්ත්වය (HEALTH)"}</span>
               <strong className="stat-val">{stats.health}%</strong>
             </div>
             <div className="debrief-stat-card">
-              <span className="stat-label"><Icons.Brain className="tactical-svg-icon" /> මානසික සුවය (SANITY)</span>
+              <span className="stat-label"><Icons.Brain className="tactical-svg-icon" /> {lang === "en" ? "MENTAL SANITY" : "මානසික සුවය (SANITY)"}</span>
               <strong className="stat-val">{stats.sanity}%</strong>
             </div>
           </div>
@@ -2065,7 +2083,7 @@ export default function App() {
                 launchChapter(2);
               }}
             >
-              CHAPTER 02 වෙත පිවිසෙන්න (PROCEED TO CHAPTER 02) ▶
+              {lang === "en" ? "PROCEED TO CHAPTER 02 ▶" : "CHAPTER 02 වෙත පිවිසෙන්න (PROCEED TO CHAPTER 02) ▶"}
             </button>
             <button
               className="debrief-btn"
@@ -2073,7 +2091,7 @@ export default function App() {
                 setShowEvidenceBoard(true);
               }}
             >
-              <Icons.Evidence className="tactical-svg-icon" /> සාක්ෂි පුවරුව (EVIDENCE BOARD)
+              <Icons.Evidence className="tactical-svg-icon" /> {lang === "en" ? "EVIDENCE BOARD" : "සාක්ෂි පුවරුව (EVIDENCE BOARD)"}
             </button>
             <button
               className="debrief-btn"
@@ -2082,7 +2100,7 @@ export default function App() {
                 launchChapter(1);
               }}
             >
-              <Icons.Restart className="tactical-svg-icon" /> නැවත සෙල්ලම් කරන්න (REPLAY CH 1)
+              <Icons.Restart className="tactical-svg-icon" /> {lang === "en" ? "REPLAY CHAPTER 01" : "නැවත සෙල්ලම් කරන්න (REPLAY CH 1)"}
             </button>
             <button
               className="debrief-btn secondary"
@@ -2091,7 +2109,7 @@ export default function App() {
                 setCurrentView("chapters");
               }}
             >
-              <Icons.Exit className="tactical-svg-icon" /> පරිච්ඡේද තෝරන්න (CHAPTER SELECT)
+              <Icons.Exit className="tactical-svg-icon" /> {lang === "en" ? "CHAPTER SELECT" : "පරිච්ඡේද තෝරන්න (CHAPTER SELECT)"}
             </button>
           </div>
         </div>
@@ -2171,7 +2189,7 @@ export default function App() {
           <div className="radio-walkie-icon"><Icons.Radio className="tactical-svg-icon" /></div>
           <div className="radio-body">
             <div className="radio-header-strip">
-              <span className="radio-callsign"><Icons.Satellite className="tactical-svg-icon" /> {radioTransmission.callsign}</span>
+              <span className="radio-callsign"><Icons.Satellite className="tactical-svg-icon" /> {radioTransmission.callsign || radioTransmission.speaker || "HQ DISPATCH"}</span>
               <div className="radio-signal-bars">
                 <span className="sig-bar bar-1" />
                 <span className="sig-bar bar-2" />
@@ -2180,7 +2198,7 @@ export default function App() {
               </div>
               <span className="radio-time">LIVE COMM</span>
             </div>
-            <p className="radio-text">{radioTransmission.text}</p>
+            <p className="radio-text">{lang === "en" ? (radioTransmission.textEn || radioTransmission.text) : radioTransmission.text}</p>
           </div>
           <button className="radio-dismiss-btn" onClick={() => setRadioTransmission(null)}>✕</button>
         </div>
@@ -2778,17 +2796,17 @@ export default function App() {
             </div>
             <div className="dialogue-text-wrap">
               <div className="dialogue-speaker-tag">
-                {dialogue.speaker || "ගවේෂණ සටහන // LOG"}
+                {lang === "en" ? (dialogue.speakerEn || dialogue.speaker || "EXPEDITION LOG // 1987") : (dialogue.speaker || "ගවේෂණ සටහන // LOG")}
               </div>
-              <h2 className="dialogue-scene-title">{dialogue.title}</h2>
-              <p className="dialogue-paragraph">{dialogue.text}</p>
+              <h2 className="dialogue-scene-title">{lang === "en" ? (dialogue.titleEn || dialogue.title) : dialogue.title}</h2>
+              <p className="dialogue-paragraph">{lang === "en" ? (dialogue.textEn || dialogue.text) : dialogue.text}</p>
               {dialogue.item && (
                 <div className="dialogue-item-reward">
-                  <Icons.Target className="tactical-svg-icon" /> අයිතමය ලැබුණි: <strong>{dialogue.item}</strong>
+                  <Icons.Target className="tactical-svg-icon" /> {lang === "en" ? "ITEM ACQUIRED: " : "අයිතමය ලැබුණි: "}<strong>{lang === "en" ? (dialogue.itemEn || dialogue.item) : dialogue.item}</strong>
                 </div>
               )}
               <button className="dialogue-advance-btn" onClick={() => setDialogue(null)}>
-                ඉදිරියට යන්න (CONTINUE) [SPACE]
+                {lang === "en" ? "CONTINUE [SPACE / ESC]" : "ඉදිරියට යන්න (CONTINUE) [SPACE]"}
               </button>
             </div>
           </div>
@@ -2801,15 +2819,15 @@ export default function App() {
         <div className="rune-puzzle-overlay">
           <div className="rune-puzzle-card">
             <div className="puzzle-header">
-              <h2><Icons.Target className="tactical-svg-icon" /> පුරාණ සිංහරාජ ගල් ලෙන් දොරටුවේ රහස් කේතය</h2>
+              <h2><Icons.Target className="tactical-svg-icon" /> {lang === "en" ? "Ancient Monolith Rune Dial Lock" : "පුරාණ සිංහරාජ ගල් ලෙන් දොරටුවේ රහස් කේතය"}</h2>
               <button className="close-btn" onClick={() => setRunePuzzleOpen(false)}>✕</button>
             </div>
             <p className="puzzle-hint-text">
-              දිනපොතේ සඳහන් වූ රහස් සංකේත 3 ගලපන්න:<br />
-              <em>“හිරු නැගෙන හෝරාවේ... ගංගාවෙන් එතෙර වී... සිංහයාගේ ලෙනට...”</em>
+              {lang === "en" ? "Align the 3 secret runes noted in Douglas's journal:" : "දිනපොතේ සඳහන් වූ රහස් සංකේත 3 ගලපන්න:"}<br />
+              <em>{lang === "en" ? "“At dawn as the Sun rises... across the River... enter the Lion's sanctuary...”" : "“හිරු නැගෙන හෝරාවේ... ගංගාවෙන් එතෙර වී... සිංහයාගේ ලෙනට...”"}</em>
             </p>
             <div className="puzzle-diary-clue-pill">
-              <Icons.Book className="tactical-svg-icon" /> දිනපොතේ හෝඩුවාව: <strong>1. SUN (සූර්යයා) | 2. RIVER (ගංගාව) | 3. LION (සිංහයා)</strong>
+              <Icons.Book className="tactical-svg-icon" /> {lang === "en" ? "Journal Clue: " : "දිනපොතේ හෝඩුවාව: "}<strong>{lang === "en" ? "1. SUN | 2. RIVER | 3. LION" : "1. SUN (සූර්යයා) | 2. RIVER (ගංගාව) | 3. LION (සිංහයා)"}</strong>
             </div>
 
             <div className="rune-dials-row">
@@ -2865,7 +2883,7 @@ export default function App() {
             {puzzleError && <div className="puzzle-error-alert">{puzzleError}</div>}
 
             <button className="start-btn unlock-gate-btn" onClick={handleRuneSubmit}>
-              <Icons.Unlock className="tactical-svg-icon" /> දොර අගුළු හරින්න (UNLOCK GATE)
+              <Icons.Unlock className="tactical-svg-icon" /> {lang === "en" ? "UNLOCK MONOLITH GATE" : "දොර අගුළු හරින්න (UNLOCK GATE)"}
             </button>
           </div>
         </div>

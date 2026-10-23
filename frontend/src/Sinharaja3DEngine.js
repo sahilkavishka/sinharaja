@@ -11,6 +11,8 @@ export class Sinharaja3DEngine {
     this.canvas = canvas;
     this.cb = callbacks || {};
     this.chapter = this.cb.chapter || 1;
+    this.lang = this.cb.lang || "si";
+    window.sinharaja3D = this;
 
     // World state & survival metrics
     this.health = 100;
@@ -165,6 +167,48 @@ export class Sinharaja3DEngine {
     this.initThree();
     this.build3DWorld();
     this.setupInputs();
+
+    // Broadcast immediate 0-frame stats to React HUD for instant exact telemetry
+    if (this.cb.onStatsUpdate) {
+      this.cb.onStatsUpdate({
+        health: Math.round(this.health),
+        sanity: Math.round(this.sanity),
+        battery: Math.round(this.battery),
+        stamina: Math.round(this.player.stamina),
+        torchOn: this.torchOn,
+        torchIntensity: this.torchIntensity,
+        saltCount: this.saltCount,
+        herbCount: this.herbCount,
+        balmCount: this.balmCount,
+        repellentTimer: Math.round(this.repellentTimer),
+        uvUnlocked: this.uvUnlocked,
+        uvMode: this.uvMode,
+        stormActive: this.stormActive,
+        feathersCollected: this.feathersCollected,
+        magpieCharmActive: this.magpieCharmActive,
+        flareGunFound: this.flareGunFound,
+        flareFired: this.flareFired,
+        nearCampfire: false,
+        nearInteractable: null,
+        hasKey: this.hasKey,
+        hasSample: this.hasSample,
+        bleeding: this.bleeding,
+        teaBuffTimer: Math.round(this.teaBuffTimer),
+        chapter: this.chapter,
+        zoom: this.zoom,
+        playerX: Math.round(this.player.x),
+        playerY: Math.round(this.player.z),
+        playerAngle: this.player.yaw,
+        elapsedTime: 0,
+        inShelter: !!this.player.inShelter,
+        inCave: false,
+        inMud: false,
+        temperature: 100,
+        gingerTeaCount: this.gingerTeaCount,
+        tasks: { ...this.tasks },
+        quality: this.quality,
+      });
+    }
 
     this.running = true;
     this.lastTime = performance.now();
@@ -1103,7 +1147,9 @@ export class Sinharaja3DEngine {
     doorMesh.userData = {
       isDoor: true,
       title: "කුඩව මුරපොළ දොරටුව (Outpost Door)",
+      titleEn: "Kudawa Outpost Door",
       prompt: "[E] දොර අරින්න / වහන්න (Toggle Door)",
+      promptEn: "[E] Open / Close Door",
       action: () => this.toggleCabinDoor(),
     };
     this.interactableMeshes.push(doorMesh);
@@ -1173,13 +1219,18 @@ export class Sinharaja3DEngine {
     radioMesh.userData = {
       id: "outpost_radio",
       title: "සන්නිවේදන ගුවන්විදුලි යන්ත්‍රය (Radio Dispatch)",
+      titleEn: "Tactical Radio Dispatch (1987)",
       prompt: "[E] සංඥාවට සවන් දෙන්න",
+      promptEn: "[E] Listen to Transmission",
       action: () => {
         this.playSfx("radio_static");
         this.cb.onTriggerStory({
           title: "1987 නොවැම්බර් 14 රේන්ජර් පණිවිඩ සටහන",
+          titleEn: "November 14, 1987 Ranger Dispatch",
           text: "'(ස්ටැටික් හඬ... අකුණු ගසන හඬ...) HQ... මෙහෙ කුඩව මුරපොළ 01... මහා වැස්ස සහ සුළඟ නිසා ගඟ පිටාර ගලලා. මහාචාර්ය ඩග්ලස් ලෙන් දොරටුව දෙසට ගියා. ආපසු ආවේ නෑ... (සංඥාව ඇනහිටී)'",
+          textEn: "'(Static crackle... Heavy thunderclap...) HQ... This is Kudawa Outpost 01... Flash flood conditions along the valley river. Professor Douglas has departed toward the monolith cave portal. He has not returned... (Transmission lost)'",
           speaker: "1987 RANGER DISPATCH",
+          speakerEn: "1987 RANGER DISPATCH",
           avatar: "radio",
         });
       },
@@ -1197,7 +1248,9 @@ export class Sinharaja3DEngine {
     reelMesh.userData = {
       id: "outpost_douglas_reel",
       title: "මහාචාර්ය ඩග්ලස්ගේ හඬ පටය (Douglas Voice Reel)",
+      titleEn: "Prof. Douglas Voice Reel (1987)",
       prompt: "[E] හඬ පටය පරීක්ෂා කරන්න",
+      promptEn: "[E] Play Audio Reel",
       action: () => {
         this.playSfx("pickup");
         if (this.cb.onOpenDouglasTape) {
@@ -1205,8 +1258,11 @@ export class Sinharaja3DEngine {
         } else {
           this.cb.onTriggerStory({
             title: "මහාචාර්ය ඩග්ලස්ගේ හඬ පටය (1987)",
+            titleEn: "Professor Douglas Voice Reel (1987)",
             text: "'මම මහාචාර්ය ඩග්ලස්... ලෙන් දොරටුවේ රහස් කේතය [හිරු, ගඟ, සිංහයා]. ගඟේ ජල මට්ටම ඉහළ යාමට පෙර ගලවා ගැනීමේ හෙලිපෑඩ් වෙත ළඟා විය යුතුයි...'",
+            textEn: "'This is Professor Douglas... The subterranean monolith cipher is [SUN, RIVER, LION]. The river is rising fast; we must secure the bioluminescent flora sample and rendezvous at the summit helipad before flash flooding traps us...'",
             speaker: "PROF. DOUGLAS (1987)",
+            speakerEn: "PROF. DOUGLAS (1987)",
             avatar: "radio",
           });
         }
@@ -1225,7 +1281,9 @@ export class Sinharaja3DEngine {
     balmMesh.userData = {
       id: "outpost_balm_bottle",
       title: "ඖෂධීය ලේ මැක්කන් විකර්ෂක තෙල් (Leech Balm)",
+      titleEn: "Herbal Leech Repellent Balm",
       prompt: "[E] අහුලාගන්න (Pick Up)",
+      promptEn: "[E] Pick Up (+2 Leech Balm)",
       action: (obj) => {
         if (!obj.userData.picked) {
           obj.userData.picked = true;
@@ -1234,7 +1292,11 @@ export class Sinharaja3DEngine {
           this.scene.remove(balmMesh);
           const idx = this.interactableMeshes.indexOf(balmMesh);
           if (idx >= 0) this.interactableMeshes.splice(idx, 1);
-          this.cb.onNotify("🌿 ලේ මැක්කන් විකර්ෂක තෙල් බෝතලය ලබාගත්තා! [B] මඟින් ආලේප කරන්න.");
+          this.cb.onNotify(
+            this.lang === "en"
+              ? "🌿 Picked up Herbal Leech Repellent Balm! Apply with [B] for 90s protection."
+              : "🌿 ලේ මැක්කන් විකර්ෂක තෙල් බෝතලය ලබාගත්තා! [B] මඟින් ආලේප කරන්න."
+          );
           if (this.cb.onAutosave) this.cb.onAutosave();
         }
       },
@@ -1256,7 +1318,9 @@ export class Sinharaja3DEngine {
     diaryMesh.userData = {
       id: "ranger_diary",
       title: "මහාචාර්ය ඩග්ලස්ගේ ක්ෂේත්‍ර දිනපොත (Douglas Field Journal - Evidence 01)",
+      titleEn: "Professor Douglas Field Journal (Evidence 01)",
       prompt: "[E] කියවන්න / සාක්ෂිය ලබාගන්න",
+      promptEn: "[E] Read / Secure Evidence 01",
       action: (obj) => {
         if (!obj.userData.picked) {
           obj.userData.picked = true;
@@ -1269,19 +1333,30 @@ export class Sinharaja3DEngine {
             this.cb.onRadioTransmission({
               id: "hq_diary_dispatch",
               speaker: "HQ DISPATCH",
+              callsign: "HQ DISPATCH",
               text: "දිනපොතේ හෝඩුවාව ලැබුණා! ඩග්ලස්ගේ කණ්ඩායම ලෙන දෙසට ගොස් ඇත. ගංගා ඉවුරේ සඟවා ඇති පිත්තල යතුර සොයාගන්න. කූඩැලි රැළිවලින් ප්‍රවේශම් වන්න!",
+              textEn: "Field Journal logged! Douglas's team crossed toward the monolith cave portal. Locate the antique brass key resting on the river boulder. Beware of leeches in the damp mud!",
             });
           }
           this.cb.onTriggerStory({
             title: "දිනපොතේ අභිරහස (සාක්ෂි අංක 01)",
+            titleEn: "Field Journal Secrets (Evidence 01)",
             text: "'1987 නොවැම්බර් 14: ඔවුන් ගල් ලෙන තුළට ගියා. ලෙන් දොරටුවේ රහස් සංකේත තුන: [සූර්යයා, ගංගාව, සිංහයා]. දොර විවෘත කිරීමට ගංගා ඉවුරේ සැඟවූ පිත්තල යතුර අවශ්‍යයි!'",
+            textEn: "'November 14, 1987: They moved into the subterranean sanctuary. Three ancient dials lock the portal: [SUN, RIVER, LION]. The portal gate mechanism requires the heavy brass key left on the river boulder!'",
             item: "ලෙයින් පෙඟුණු දිනපොත (Evidence 1)",
+            itemEn: "Blood-Stained Field Journal (Evidence 01)",
             lore: {
               title: "සිංහරාජයේ රහස් දිනපොත",
+              titleEn: "Sinharaja Expedition Field Journal",
               desc: "අතුරුදහන් වූ කණ්ඩායමේ ගමන් මාර්ගය හෙළි කරන වැදගත් සාක්ෂියකි.",
+              descEn: "Vital field notes mapping Douglas's expedition path and the rune cipher.",
             },
           });
-          this.cb.onNotify("📖 මහාචාර්ය ඩග්ලස්ගේ දිනපොත ලබාගත්තා! (සාක්ෂි 01/03)");
+          this.cb.onNotify(
+            this.lang === "en"
+              ? "📖 Secured Professor Douglas's Field Journal! (Evidence 01/03)"
+              : "📖 මහාචාර්ය ඩග්ලස්ගේ දිනපොත ලබාගත්තා! (සාක්ෂි 01/03)"
+          );
           if (this.cb.onAutosave) this.cb.onAutosave();
         }
       },
@@ -1302,7 +1377,9 @@ export class Sinharaja3DEngine {
     uvMesh.userData = {
       id: "uv_lens_item",
       title: "අධෝරක්ත/UV රාත්‍රී පෙරහන (Tactical UV Lens)",
+      titleEn: "Tactical UV Night Filter Lens",
       prompt: "[E] අහුලාගන්න (Pick Up)",
+      promptEn: "[E] Pick Up Tactical UV Lens",
       action: (obj) => {
         if (!obj.userData.picked) {
           obj.userData.picked = true;
@@ -1311,7 +1388,11 @@ export class Sinharaja3DEngine {
           this.scene.remove(uvMesh);
           const idx = this.interactableMeshes.indexOf(uvMesh);
           if (idx >= 0) this.interactableMeshes.splice(idx, 1);
-          this.cb.onNotify("🟣 UV පෙරහන ලබාගත්තා! [U] මඟින් UV Blacklight සක්‍රිය කළ හැක.");
+          this.cb.onNotify(
+            this.lang === "en"
+              ? "🟣 Acquired Tactical UV Filter! Press [U] to toggle UV Blacklight for hidden runes."
+              : "🟣 UV පෙරහන ලබාගත්තා! [U] මඟින් UV Blacklight සක්‍රිය කළ හැක."
+          );
           if (this.cb.onAutosave) this.cb.onAutosave();
         }
       },
@@ -1331,7 +1412,9 @@ export class Sinharaja3DEngine {
     teaMesh.userData = {
       id: "ginger_tea_mug",
       title: "උණුසුම් ඉඟුරු තේ (Hot Ceylon Ginger Tea)",
+      titleEn: "Hot Ceylon Ginger Tea Mug",
       prompt: "[E] පානය කරන්න (Drink)",
+      promptEn: "[E] Drink Tea (Sanity +30%)",
       action: (obj) => {
         if (!obj.userData.drank) {
           obj.userData.drank = true;
@@ -1342,7 +1425,11 @@ export class Sinharaja3DEngine {
           this.scene.remove(teaMesh);
           const idx = this.interactableMeshes.indexOf(teaMesh);
           if (idx >= 0) this.interactableMeshes.splice(idx, 1);
-          this.cb.onNotify("☕ උණුසුම් ඉඟුරු තේ පානය කළා! Sanity +30 & සීතල දුරු විය.");
+          this.cb.onNotify(
+            this.lang === "en"
+              ? "☕ Drank Hot Ceylon Ginger Tea! Sanity +30% & hypothermia cured."
+              : "☕ උණුසුම් ඉඟුරු තේ පානය කළා! Sanity +30 & සීතල දුරු විය."
+          );
         }
       },
     };
@@ -1361,7 +1448,9 @@ export class Sinharaja3DEngine {
     saltMesh.userData = {
       id: "salt_pouch_outpost",
       title: "ලුණු කුඩු පැකට්ටුව (Salt Pouch for Leeches)",
+      titleEn: "Emergency Salt Pouch",
       prompt: "[E] අහුලාගන්න (Pick Up)",
+      promptEn: "[E] Pick Up (+4 Salt)",
       action: (obj) => {
         if (!obj.userData.picked) {
           obj.userData.picked = true;
@@ -1370,7 +1459,11 @@ export class Sinharaja3DEngine {
           this.scene.remove(saltMesh);
           const idx = this.interactableMeshes.indexOf(saltMesh);
           if (idx >= 0) this.interactableMeshes.splice(idx, 1);
-          this.cb.onNotify("🧂 ලුණු කුඩු ලබාගත්තා! (+4 ලුණු) [1] මඟින් කූඩැල්ලන් ඉවත් කරන්න.");
+          this.cb.onNotify(
+            this.lang === "en"
+              ? "🧂 Picked up Salt Pouch! (+4 Salt) Press [1] or Space to purge attached leeches."
+              : "🧂 ලුණු කුඩු ලබාගත්තා! (+4 ලුණු) [1] මඟින් කූඩැල්ලන් ඉවත් කරන්න."
+          );
           if (this.cb.onAutosave) this.cb.onAutosave();
         }
       },
@@ -1427,7 +1520,9 @@ export class Sinharaja3DEngine {
     npcBody.userData = {
       id: "gunadasa_npc",
       title: "ගුණදාස මාමා (Old Ranger Gunadasa)",
+      titleEn: "Veteran Ranger Gunadasa",
       prompt: "[E] කතා කරන්න (Talk)",
+      promptEn: "[E] Talk to Gunadasa",
       action: () => {
         if (!this.npc.helped) {
           this.npc.helped = true;
@@ -1437,12 +1532,19 @@ export class Sinharaja3DEngine {
           this.playSfx("pickup");
           this.cb.onTriggerStory({
             title: "ප්‍රවීණ වන නිලධාරී ගුණදාස මාමා",
+            titleEn: "Veteran Ranger Gunadasa",
             text: "'ආයුබෝවන් මහත්තයා! මම මේ අවුරුදු 40ක් තිස්සේ සිංහරාජයේ රස්සාව කරපු ගුණදාස. 1987 මහා වැස්සේ මහාචාර්ය ඩග්ලස් මේ කැබින් එකෙන් පිටත් වුණේ ලෙන් දොරටුව දෙසට. මම ලුණු කුඩුයි, බෙහෙත් තෙලුයි, ඖෂධ පැළෑටියි දුන්නා. කූඩැල්ලන්ගෙන් පරිස්සම් වෙන්න!'",
+            textEn: "'Greetings officer! I am Gunadasa, 40 years guarding Sinharaja forest. Back in the torrential tempest of 1987, Professor Douglas set out from this outpost toward the monolith cave portal. Take this salt pouch, herbal balm, and wild medicinal herbs. Beware the leeches in the muddy hollows!'",
             speaker: "OLD RANGER GUNADASA",
+            speakerEn: "OLD RANGER GUNADASA",
             avatar: "ranger",
           });
         } else {
-          this.cb.onNotify("🧙‍♂️ ගුණදාස මාමා: 'මහත්තයා, මහාචාර්යවරයාගේ හඬ පටය මේසේ උඩ තියෙනවා. ඒක පරීක්ෂා කරලා කැලේට බහින්න!'");
+          this.cb.onNotify(
+            this.lang === "en"
+              ? "🧙‍♂️ Ranger Gunadasa: 'Officer, study Douglas's tape reel on the workbench, take the supplies, and head for the river!'"
+              : "🧙‍♂️ ගුණදාස මාමා: 'මහත්තයා, මහාචාර්යවරයාගේ හඬ පටය මේසේ උඩ තියෙනවා. ඒක පරීක්ෂා කරලා කැලේට බහින්න!'"
+          );
         }
       },
     };
@@ -1637,7 +1739,9 @@ export class Sinharaja3DEngine {
     keyStem.userData = {
       id: "glowing_brass_key",
       title: "දිදුලන පිත්තල යතුර (Antique Brass Key - Evidence 02)",
+      titleEn: "Antique Brass Monolith Key (Evidence 02)",
       prompt: "[E] අහුලාගන්න (Pick Up)",
+      promptEn: "[E] Pick Up Key",
       action: () => {
         if (!this.tasks.keyFound) {
           this.hasKey = true;
@@ -1653,15 +1757,24 @@ export class Sinharaja3DEngine {
             this.cb.onRadioTransmission({
               id: "storm_emergency_dispatch",
               speaker: "HQ EMERGENCY",
+              callsign: "HQ EMERGENCY",
               text: "හදිසි කාලගුණ අනතුරු ඇඟවීමක්! ගංගා නිම්නය පිටාර ගලමින් පවතී. වතුරට නොබැස යෝධ ගස් කොටන් පාලම (Log Bridge) ඔස්සේ එතෙර වී ලෙන් දොරටුව විවෘත කරන්න!",
+              textEn: "Emergency weather warning! Torrential flash flooding along the riverbed. Cross via the massive fallen log bridge and breach the monolith cave gate!",
             });
           }
           this.cb.onTriggerStory({
             title: "පුරාණ පිත්තල යතුර (සාක්ෂි අංක 02)",
+            titleEn: "Antique Brass Key (Evidence 02)",
             text: "ඔබට ගල් ලෙනේ දොරටුව විවෘත කළ හැකි පුරාණ පිත්තල යතුර හමුවිය! ඒ සමඟම ගංගා නිම්නයට මහ කුණාටුවක් කඩා වැටුණි. මඩ වගුර මඟහැර යෝධ ගස් කොටන් පාලම (Log Bridge) ඔස්සේ ආරක්ෂිතව එතෙර වන්න!",
+            textEn: "You recovered the antique brass key required to breach the monolith cave entrance! Simultaneously, a torrential tropical gale has struck the valley. Cross safely over the fallen timber bridge!",
             item: "පුරාණ පිත්තල යතුර (Evidence 2)",
+            itemEn: "Antique Brass Key (Evidence 02)",
           });
-          this.cb.onNotify("🔑 පුරාණ පිත්තල යතුර ලබාගත්තා! (සාක්ෂි 02/03)");
+          this.cb.onNotify(
+            this.lang === "en"
+              ? "🔑 Secured Antique Brass Key! (Evidence 02/03)"
+              : "🔑 පුරාණ පිත්තල යතුර ලබාගත්තා! (සාක්ෂි 02/03)"
+          );
           if (this.cb.onAutosave) this.cb.onAutosave();
         }
       },
@@ -1733,15 +1846,25 @@ export class Sinharaja3DEngine {
     gateLeftMesh.userData = {
       id: "cave_gate",
       title: "පුරාණ භූගත ලෙන් දොරටුව (Ancient Monolith Cave Portal)",
+      titleEn: "Ancient Monolith Cave Portal",
       prompt: "[E] අගුළු හරින්න / විවෘත කරන්න",
+      promptEn: "[E] Unlock Rune Portal",
       action: () => {
         if (this.caveGateUnlocked) {
-          this.cb.onNotify("⛩️ ලෙන් දොරටුව දැනටමත් විවෘතව පවතී.");
+          this.cb.onNotify(
+            this.lang === "en"
+              ? "⛩️ Monolith cave portal is already unsealed."
+              : "⛩️ ලෙන් දොරටුව දැනටමත් විවෘතව පවතී."
+          );
           return;
         }
         if (!this.hasKey) {
           this.playSfx("hurt");
-          this.cb.onNotify("⚠️ දොරටුව අගුළු දමා ඇත! ගංගා ඉවුරේ ගල් පර්වතය මත ඇති පිත්තල යතුර සොයාගන්න.");
+          this.cb.onNotify(
+            this.lang === "en"
+              ? "⚠️ The monolith gate is locked! Find the antique brass key resting atop the river boulder."
+              : "⚠️ දොරටුව අගුළු දමා ඇත! ගංගා ඉවුරේ ගල් පර්වතය මත ඇති පිත්තල යතුර සොයාගන්න."
+          );
           return;
         }
 
@@ -1755,12 +1878,16 @@ export class Sinharaja3DEngine {
               this.cb.onRadioTransmission({
                 id: "cave_gate_unlocked_radio",
                 speaker: "SINHA-BASE // 01",
+                callsign: "SINHA-BASE",
                 text: "ලෙන් දොරටුව විවෘතයි! අභ්‍යන්තරයේ නිල් ආලෝකය විහිදෙන දිලීර සාම්පලය (Research Sample) සොයාගන්න!",
+                textEn: "Monolith portal breached! Enter the subterranean cavern and extract the bioluminescent research vial!",
               });
             }
             this.cb.onTriggerStory({
               title: "ලෙන් දොරටුව විවෘත විය!",
+              titleEn: "Monolith Cave Portal Unsealed!",
               text: "රහස් සංකේත ගැලපීමෙන් පසු පැරණි ගල් දොර සෙලවෙමින් දෙපසට විවෘත විය. ඇතුළතින් නිල් පැහැති විද්‍යාගාර ආලෝකයක් දිස්වේ!",
+              textEn: "The heavy stone monolith groaned open in response to the ancient cipher. An eerie cyan bioluminescent glow radiates from within the cavern sanctuary!",
             });
             if (this.cb.onAutosave) this.cb.onAutosave();
           });
@@ -1802,7 +1929,9 @@ export class Sinharaja3DEngine {
     sampleVial.userData = {
       id: "cave_samples",
       title: "අතුරුදහන් වූ පර්යේෂණ සාම්පල (Lost Research Sample - Evidence 03)",
+      titleEn: "Bioluminescent Flora Sample (Evidence 03)",
       prompt: "[E] අහුලාගන්න (Pick Up)",
+      promptEn: "[E] Collect Research Sample",
       action: () => {
         if (!this.tasks.sampleFound) {
           this.hasSample = true;
@@ -1816,19 +1945,30 @@ export class Sinharaja3DEngine {
             this.cb.onRadioTransmission({
               id: "all_evidence_collected_dispatch",
               speaker: "HQ DISPATCH",
+              callsign: "HQ DISPATCH",
               text: "සාක්ෂි 3ම සම්පූර්ණයි! දැන් වහාම කඳු මුදුනේ හෙලිපෑඩ් (Helipad) වෙත යන්න. Chopper-01 ගලවා ගැනීමේ යානය සීරුවෙන් තබා ඇත!",
+              textEn: "All 3 critical expedition clues recovered! Proceed immediately to the ridge extraction helipad at [545, 855]. Chopper-01 standing by!",
             });
           }
           this.cb.onTriggerStory({
             title: "අභිරහස හෙළි විය! (සාක්ෂි අංක 03)",
+            titleEn: "Expedition Secrets Secured! (Evidence 03)",
             text: "වසර 30ක් අතුරුදහන් වූ ගවේෂකයන්ගේ පර්යේෂණ සාම්පල බඳුන ඔබට හමුවිය! දැන් කඳු මුදුනේ ඇති හෙලිපෑඩ් වෙත ගොස් සංඥා කරන්න!",
+            textEn: "You secured Professor Douglas's rare bioluminescent Sinharaja flora vial! All Chapter 1 evidence is accounted for. Climb to the summit extraction helipad to signal the rescue chopper!",
             item: "පර්යේෂණ සාම්පල (Evidence 3)",
+            itemEn: "Bioluminescent Flora Sample (Evidence 03)",
             lore: {
               title: "සිංහරාජයේ දුර්ලභ ශාක සාම්පලය",
+              titleEn: "Sinharaja Bioluminescent Flora Sample",
               desc: "මහාචාර්ය ඩග්ලස් විසින් රැස් කළ අතිශය දුර්ලභ ජෛව සාම්පලයකි.",
+              descEn: "Ultra-rare bioluminescent specimen collected by Professor Douglas's 1987 lost expedition.",
             },
           });
-          this.cb.onNotify("🧪 පර්යේෂණ සාම්පලය ලබාගත්තා! (සාක්ෂි 03/03 - සියල්ල සම්පූර්ණයි!)");
+          this.cb.onNotify(
+            this.lang === "en"
+              ? "🧪 Secured Bioluminescent Flora Sample! (Evidence 03/03 - All Evidence Recovered!)"
+              : "🧪 පර්යේෂණ සාම්පලය ලබාගත්තා! (සාක්ෂි 03/03 - සියල්ල සම්පූර්ණයි!)"
+          );
           if (this.cb.onAutosave) this.cb.onAutosave();
         }
       },
@@ -1881,13 +2021,19 @@ export class Sinharaja3DEngine {
     crateMesh.userData = {
       id: "kudawa_helipad_flare",
       title: "ගලවා ගැනීමේ හෙලිපෑඩ් සංඥා පද්ධතිය (Extraction Flare Crate)",
+      titleEn: "Extraction Helipad Distress Flare Launcher",
       prompt: "[E] පරීක්ෂා කරන්න / සංඥා දල්වන්න",
+      promptEn: "[E] Fire Extraction Signal Flare",
       action: () => {
         const hasAllEvidence = Boolean(
           this.tasks.diaryFound && this.tasks.keyFound && this.tasks.sampleFound
         );
         if (!hasAllEvidence) {
-          this.cb.onNotify("⚠️ මෙහෙයුම අවසන් කිරීමට සාක්ෂි 3ම (දිනපොත, යතුර, සාම්පලය) ලබාගෙන තිබිය යුතුය!");
+          this.cb.onNotify(
+            this.lang === "en"
+              ? "⚠️ Must collect all 3 evidence items (Journal, Key, Specimen) before calling extraction chopper!"
+              : "⚠️ මෙහෙයුම අවසන් කිරීමට සාක්ෂි 3ම (දිනපොත, යතුර, සාම්පලය) ලබාගෙන තිබිය යුතුය!"
+          );
           return;
         }
 
@@ -1907,13 +2053,19 @@ export class Sinharaja3DEngine {
           this.signalRocketActive = true;
           this.signalRocketY = heliY + 1.2;
 
-          this.cb.onNotify("🚀 සංඥා රොකට්ටුව අහසට මුදා හැරියා! Chopper-01 ගලවා ගැනීමේ හෙලිකොප්ටරය පැමිණේ!");
+          this.cb.onNotify(
+            this.lang === "en"
+              ? "🚀 Distress rocket fired high into the storm! Chopper-01 extraction inbound!"
+              : "🚀 සංඥා රොකට්ටුව අහසට මුදා හැරියා! Chopper-01 ගලවා ගැනීමේ හෙලිකොප්ටරය පැමිණේ!"
+          );
 
           if (this.cb.onRadioTransmission) {
             this.cb.onRadioTransmission({
               id: "chopper_incoming",
               speaker: "CHOPPER-01 PILOT",
+              callsign: "CHOPPER-01",
               text: "රතු සංඥාව දුටුවා! කුණාටුව මැදින් අපි ගොඩබසිනවා... මහාචාර්ය ඩග්ලස්ගේ සියලු සාක්ෂි සුරක්ෂිතයි! විශිෂ්ට මෙහෙයුමක්!",
+              textEn: "Red flare sighted through the storm! Descending on Kudawa ridge now... All of Douglas's expedition evidence secured! Outstanding mission, officer!",
             });
           }
 
@@ -1946,16 +2098,22 @@ export class Sinharaja3DEngine {
     viperMesh.userData = {
       id: "viper_encounter",
       title: "පළා පොළඟා (Green Pit Viper)",
+      titleEn: "Sri Lankan Green Pit Viper",
       prompt: "[E] පරීක්ෂා කරන්න",
+      promptEn: "[E] Repel with Torch Beam",
       action: () => {
         if (this.torchOn) {
           this.playSfx("pickup");
           this.cb.onTriggerStory({
             title: "පළා පොළඟා පසුබැසීම",
+            titleEn: "Green Pit Viper Repelled",
             text: "ඔබේ විදුලි පන්දමේ දීප්තිමත් ආලෝකයට බිය වූ පළා පොළඟා ගස් අතු අතරින් පසුබැස ගියා! මාවත දැන් ආරක්ෂිතයි.",
+            textEn: "Blinded by the intense beam of your tactical flashlight, the venomous viper slithered back into the high canopy! The jungle trail is clear.",
             lore: {
               title: "පළා පොළඟා (Trimeresurus trigonocephalus)",
+              titleEn: "Sri Lankan Green Pit Viper (Trimeresurus trigonocephalus)",
               desc: "ශ්‍රී ලංකාවට ආවේණික තුරුලතා ආශ්‍රිත වෙසෙන විෂ සහිත අලංකාර සර්පයෙකි.",
+              descEn: "Endemic arboreal pit viper inhabiting the moist lowland rainforests of Sri Lanka.",
             },
           });
           if (this.cb.onAchievementUnlocked) {
@@ -1969,7 +2127,11 @@ export class Sinharaja3DEngine {
           this.sanity = Math.max(0, this.sanity - 20);
           this.bleeding = true;
           this.playSfx("hurt");
-          this.cb.onNotify("🐍 අඳුරේ සිටි පළා පොළඟා දෂ්ට කළා! (Health -25). විදුලි පන්දම දල්වන්න!");
+          this.cb.onNotify(
+            this.lang === "en"
+              ? "🐍 The viper struck in the pitch black! (Health -25). Keep your flashlight ON!"
+              : "🐍 අඳුරේ සිටි පළා පොළඟා දෂ්ට කළා! (Health -25). විදුලි පන්දම දල්වන්න!"
+          );
         }
       },
     };
@@ -1992,7 +2154,9 @@ export class Sinharaja3DEngine {
     featherMesh.userData = {
       id: "magpie_feather",
       title: "කහබිලියා පිහාටුව (Ceylon Blue Magpie Feather)",
+      titleEn: "Ceylon Blue Magpie Feather",
       prompt: "[E] අහුලාගන්න (Pick Up)",
+      promptEn: "[E] Pick Up Feather (+25% Speed)",
       action: () => {
         this.feathersCollected++;
         this.magpieCharmActive = true;
@@ -2001,7 +2165,11 @@ export class Sinharaja3DEngine {
         this.scene.remove(featherMesh);
         const idx = this.interactableMeshes.indexOf(featherMesh);
         if (idx >= 0) this.interactableMeshes.splice(idx, 1);
-        this.cb.onNotify("🪶 දුර්ලභ කහබිලියා පිහාටුව ලබාගත්තා! වේගය වැඩි විය (+25%).");
+        this.cb.onNotify(
+          this.lang === "en"
+            ? "🪶 Collected Ceylon Blue Magpie Feather! Movement speed boosted (+25%)."
+            : "🪶 දුර්ලභ කහබිලියා පිහාටුව ලබාගත්තා! වේගය වැඩි විය (+25%)."
+        );
         if (this.cb.onAchievementUnlocked) {
           this.cb.onAchievementUnlocked("feather_collector", "වන පක්ෂියාගේ ආශිර්වාදය", "🪶");
         }
@@ -2066,9 +2234,19 @@ export class Sinharaja3DEngine {
       this.cycleTorchIntensity();
     }
 
-    // E -> Interact with Raycasted Object
+    // E -> Interact with Raycasted Object / Nearest Object
     if (e.key.toLowerCase() === "e") {
-      this.interactTarget();
+      this.interactNearest();
+    }
+
+    // P -> Field Photo Capture
+    if (e.key.toLowerCase() === "p") {
+      this.takePhoto();
+    }
+
+    // J -> Drink Ceylon Ginger Tea
+    if (e.key.toLowerCase() === "j") {
+      this.drinkGingerTea();
     }
 
     // H -> Heal Herb
@@ -2080,7 +2258,7 @@ export class Sinharaja3DEngine {
     if (e.key === "1") this.throwSalt();
     if (e.key === "2") this.useHerb();
     if (e.key === "3") this.toggleTorch();
-    if (e.key === "4") this.interactTarget();
+    if (e.key === "4") this.interactNearest();
     // B -> Balm
     if (e.key.toLowerCase() === "b") this.useBalm();
     // R -> Crank Dynamo
@@ -2154,14 +2332,26 @@ export class Sinharaja3DEngine {
   }
 
   // ── Survival Mechanics & Gameplay Actions ─────────────────────────────────
+  setLang(lang) {
+    this.lang = lang;
+  }
+
   toggleCabinDoor() {
     this.kudawaDoorOpen = !this.kudawaDoorOpen;
     if (this.kudawaDoorOpen) {
       this.playSfx("door_open");
-      this.cb.onNotify("🚪 කුඩව මුරපොළේ දොර විවෘත කළා. වර්ෂාව ඇතුළට ඇසෙයි.");
+      this.cb.onNotify(
+        this.lang === "en"
+          ? "🚪 Opened Kudawa Outpost door. Rain echoes outside."
+          : "🚪 කුඩව මුරපොළේ දොර විවෘත කළා. වර්ෂාව ඇතුළට ඇසෙයි."
+      );
     } else {
       this.playSfx("door_close");
-      this.cb.onNotify("🚪 කුඩව මුරපොළේ දොර වැසුවා.");
+      this.cb.onNotify(
+        this.lang === "en"
+          ? "🚪 Closed Kudawa Outpost door."
+          : "🚪 කුඩව මුරපොළේ දොර වැසුවා."
+      );
     }
   }
 
@@ -2169,7 +2359,11 @@ export class Sinharaja3DEngine {
     this.torchOn = !this.torchOn;
     this.updateFlashlight();
     this.playSfx("click");
-    this.cb.onNotify(this.torchOn ? "💡 විදුලි පන්දම දැල්වීය (Flashlight ON)" : "🌑 විදුලි පන්දම නිවා දැමීය (Flashlight OFF)");
+    this.cb.onNotify(
+      this.lang === "en"
+        ? (this.torchOn ? "💡 Tactical Flashlight ON" : "🌑 Tactical Flashlight OFF")
+        : (this.torchOn ? "💡 විදුලි පන්දම දැල්වීය (Flashlight ON)" : "🌑 විදුලි පන්දම නිවා දැමීය (Flashlight OFF)")
+    );
   }
 
   cycleTorchIntensity() {
@@ -2185,8 +2379,14 @@ export class Sinharaja3DEngine {
     }
     this.updateFlashlight();
     this.playSfx("click");
-    const label = this.torchIntensity === 0.5 ? "අඩු (Low)" : (this.torchIntensity === 1.0 ? "මධ්‍යම (Medium)" : "උපරිම (High / Turbo)");
-    this.cb.onNotify(`🔦 විදුලි පන්දමේ දීප්තිය: ${label}`);
+    const label = this.lang === "en"
+      ? (this.torchIntensity === 0.5 ? "Low (Conserve)" : this.torchIntensity === 1.0 ? "Medium (Tactical)" : "High (Turbo Beam)")
+      : (this.torchIntensity === 0.5 ? "අඩු (Low)" : this.torchIntensity === 1.0 ? "මධ්‍යම (Medium)" : "උපරිම (High / Turbo)");
+    this.cb.onNotify(
+      this.lang === "en"
+        ? `🔦 Flashlight Beam Intensity: ${label}`
+        : `🔦 විදුලි පන්දමේ දීප්තිය: ${label}`
+    );
   }
 
   updateFlashlight() {
@@ -2215,47 +2415,217 @@ export class Sinharaja3DEngine {
     return false;
   }
 
+  interactNearest() {
+    if (this.interactTarget()) {
+      return true;
+    }
+    let closest = null;
+    let closestDist = 4.2;
+    const pPos = new THREE.Vector3(this.player.x, this.player.y, this.player.z);
+    for (const mesh of this.interactableMeshes) {
+      const wPos = new THREE.Vector3();
+      mesh.getWorldPosition(wPos);
+      const d = pPos.distanceTo(wPos);
+      if (d < closestDist) {
+        closestDist = d;
+        closest = mesh;
+      }
+    }
+    if (closest && closest.userData && closest.userData.action) {
+      closest.userData.action(closest);
+      return true;
+    }
+    return false;
+  }
+
+  drinkGingerTea() {
+    if (this.gingerTeaCount <= 0) {
+      this.cb.onNotify(
+        this.lang === "en"
+          ? "⚠️ No Ginger Tea available!"
+          : "⚠️ උණුසුම් ඉඟුරු තේ නොමැත!"
+      );
+      return;
+    }
+    this.gingerTeaCount--;
+    this.teaBuffTimer = 120;
+    this.sanity = Math.min(100, this.sanity + 30);
+    this.health = Math.min(100, this.health + 15);
+    this.player.stamina = 100;
+    this.playSfx("heal");
+    this.cb.onNotify(
+      this.lang === "en"
+        ? "☕ Drank Hot Ceylon Ginger Tea! Body warmed, sanity +30%!"
+        : "☕ උණුසුම් ලංකා ඉඟුරු තේ පානය කළා! සිරුර උණුසුම් විය, Sanity +30%!"
+    );
+  }
+
+  brewHerbalTea() {
+    if (this.herbCount < 2) {
+      this.cb.onNotify(
+        this.lang === "en"
+          ? "⚠️ Need at least 2 medicinal herbs to brew herbal tea!"
+          : "⚠️ ඖෂධීය තේ සෑදීමට පැළෑටි අවම වශයෙන් 2ක් අවශ්‍යයි!"
+      );
+      return;
+    }
+    this.herbCount -= 2;
+    this.gingerTeaCount = (this.gingerTeaCount || 0) + 1;
+    this.playSfx("pickup");
+    this.cb.onNotify(
+      this.lang === "en"
+        ? "🍵 Brewed herbal remedy tea! Added 1 Herbal Tea to supplies."
+        : "🍵 ඖෂධීය පැළෑටි තම්බා තේ පිළියෙළ කළා! ඉඟුරු/ඖෂධීය තේ 1ක් එකතු විය."
+    );
+  }
+
+  takePhoto() {
+    this.playSfx("camera");
+    if (this.cb.onPhotoCaptured) {
+      const pPos = new THREE.Vector3(this.player.x, 0, this.player.z);
+      let photoId = null;
+      let photoTitle = null;
+      let photoTitleEn = null;
+      let photoDesc = null;
+      let photoDescEn = null;
+
+      const distViper = pPos.distanceTo(new THREE.Vector3(480, 0, 750));
+      const distMagpie = pPos.distanceTo(new THREE.Vector3(515, 0, 780));
+      const distCave = pPos.distanceTo(new THREE.Vector3(495, 0, 840));
+      const distOutpost = pPos.distanceTo(new THREE.Vector3(520, 0, 720));
+
+      if (distViper < 15) {
+        photoId = "viper_photo";
+        photoTitle = "පළා පොළඟා (Green Pit Viper)";
+        photoTitleEn = "Sri Lankan Green Pit Viper (Craspedocephalus trigonocephalus)";
+        photoDesc = "ගස් අත්තක දවටී සිටි විෂකුරු පළා පොළඟාගේ පැහැදිලි ඡායාරූපයකි.";
+        photoDescEn = "Rare close-up photograph of the endemic pit viper coiled on a branch.";
+      } else if (distMagpie < 18) {
+        photoId = "magpie_photo";
+        photoTitle = "ශ්‍රී ලංකා කැහිබෙල්ලා (Ceylon Blue Magpie)";
+        photoTitleEn = "Sri Lanka Blue Magpie (Urocissa ornata)";
+        photoDesc = "සිංහරාජ වැසි වනාන්තර වියනේ සැරිසරන ආවේණික නිල් කැහිබෙල්ලා.";
+        photoDescEn = "Magnificent plumage of the endangered endemic blue magpie in the canopy.";
+      } else if (distCave < 20) {
+        photoId = "cave_monolith_photo";
+        photoTitle = "පුරාණ ලෙන් දොරටුව (Monolith Portal)";
+        photoTitleEn = "Ancient Monolith Cavern Portal";
+        photoDesc = "පුරාණ සංකේත කැටයම් සහිත දැවැන්ත කළුගල් දොරටුව.";
+        photoDescEn = "Subterranean megalithic portal carved with forgotten ancient runes.";
+      } else if (distOutpost < 25) {
+        photoId = "kudawa_cabin_photo";
+        photoTitle = "කුඩව මුරපොළ (Kudawa Outpost 01)";
+        photoTitleEn = "Kudawa Forest Outpost Cabin";
+        photoDesc = "1987 ගවේෂණ කණ්ඩායමේ අවසාන කඳවුර.";
+        photoDescEn = "The last known civilian ranger shelter before deep uncharted rainforest.";
+      } else {
+        photoId = `wildlife_photo_${Date.now()}`;
+        photoTitle = "සිංහරාජ වැසි වනාන්තර පරිසරය (Rainforest Biome)";
+        photoTitleEn = "Sinharaja Virgin Forest Biome";
+        photoDesc = "ඝන සදාහරිත වැසි වනාන්තර වියන සහ මීදුම් නිම්නය.";
+        photoDescEn = "Dense primary rainforest undergrowth shrouded in tropical storm mist.";
+      }
+
+      this.cb.onPhotoCaptured({
+        id: photoId,
+        title: this.lang === "en" ? photoTitleEn : photoTitle,
+        titleEn: photoTitleEn,
+        desc: this.lang === "en" ? photoDescEn : photoDesc,
+        descEn: photoDescEn,
+        date: "1987.11.14 // EXPEDITION",
+      });
+    }
+    this.cb.onNotify(
+      this.lang === "en"
+        ? "📸 Tactical photo captured and logged to expedition dossier!"
+        : "📸 ඡායාරූපය ලබාගෙන ක්ෂේත්‍ර සාක්ෂි පොතට ඇතුළත් කළා!"
+    );
+  }
+
+  toggleViewMode() {
+    this.viewModeCinematic = !this.viewModeCinematic;
+    this.camera.fov = this.viewModeCinematic ? 65 : 75;
+    this.camera.updateProjectionMatrix();
+    this.cb.onNotify(
+      this.lang === "en"
+        ? (this.viewModeCinematic ? "🎥 View Mode: Cinematic (65° FOV)" : "👁️ View Mode: Tactical Wide (75° FOV)")
+        : (this.viewModeCinematic ? "🎥 දර්ශන මාදිලිය: සිනමාත්මක (65°)" : "👁️ දර්ශන මාදිලිය: පුළුල් (75°)")
+    );
+  }
+
   throwSalt() {
     if (this.saltCount <= 0) {
-      this.cb.onNotify("⚠️ ලුණු කුඩු අවසන්! කඳවුරෙන් සොයාගන්න.");
+      this.cb.onNotify(
+        this.lang === "en"
+          ? "⚠️ Out of Salt! Search the Kudawa Outpost."
+          : "⚠️ ලුණු කුඩු අවසන්! කඳවුරෙන් සොයාගන්න."
+      );
       return;
     }
     this.saltCount--;
     this.playSfx("salt");
     if (this.attachedLeeches > 0) {
       this.attachedLeeches = 0;
-      this.cb.onNotify("🧂 ලුණු කුඩු ඉසීමෙන් ලේ මැක්කන් ගැලවී ගියා!");
+      this.cb.onNotify(
+        this.lang === "en"
+          ? "🧂 Sprinkled salt: Leeches detached and dropped off!"
+          : "🧂 ලුණු කුඩු ඉසීමෙන් ලේ මැක්කන් ගැලවී ගියා!"
+      );
     } else {
-      this.cb.onNotify("🧂 ලුණු කුඩු අවට භූමියට ඉස්සා.");
+      this.cb.onNotify(
+        this.lang === "en"
+          ? "🧂 Dispersed defensive salt perimeter on muddy ground."
+          : "🧂 ලුණු කුඩු අවට භූමියට ඉස්සා."
+      );
     }
   }
 
   useHerb() {
     if (this.herbCount <= 0) {
-      this.cb.onNotify("⚠️ ඖෂධීය පැළෑටි නොමැත!");
+      this.cb.onNotify(
+        this.lang === "en"
+          ? "⚠️ No medicinal herbs remaining!"
+          : "⚠️ ඖෂධීය පැළෑටි නොමැත!"
+      );
       return;
     }
     this.herbCount--;
     this.health = Math.min(100, this.health + 25);
     this.playSfx("heal");
-    this.cb.onNotify(`🌿 ඖෂධය භාවිතයෙන් සුවපත් විය! Health: ${this.health}%`);
+    this.cb.onNotify(
+      this.lang === "en"
+        ? `🌿 Applied medicinal rainforest herb! Health: ${this.health}%`
+        : `🌿 ඖෂධය භාවිතයෙන් සුවපත් විය! Health: ${this.health}%`
+    );
   }
 
   useBalm() {
     if (this.balmCount <= 0) {
-      this.cb.onNotify("⚠️ ලේ මැක්කන් විකර්ෂක තෙල් අවසන්!");
+      this.cb.onNotify(
+        this.lang === "en"
+          ? "⚠️ Out of Leech Repellent Balm!"
+          : "⚠️ ලේ මැක්කන් විකර්ෂක තෙල් අවසන්!"
+      );
       return;
     }
     this.balmCount--;
     this.repellentTimer = 90;
     this.bleeding = false;
     this.playSfx("balm");
-    this.cb.onNotify("🛡️ ලේ මැක්කන් විකර්ෂක තෙල් ආලේප කළා! (තත්පර 90ක් ආරක්ෂිතයි)");
+    this.cb.onNotify(
+      this.lang === "en"
+        ? "🛡️ Applied Herbal Leech Repellent Balm! (Protected for 90s)"
+        : "🛡️ ලේ මැක්කන් විකර්ෂක තෙල් ආලේප කළා! (තත්පර 90ක් ආරක්ෂිතයි)"
+    );
   }
 
   crankDynamo() {
     if (this.battery >= 100) {
-      this.cb.onNotify("🔋 බැටරිය උපරිම මට්ටමේ පවතී (100%).");
+      this.cb.onNotify(
+        this.lang === "en"
+          ? "🔋 Flashlight battery fully charged (100%)."
+          : "🔋 බැටරිය උපරිම මට්ටමේ පවතී (100%)."
+      );
       return;
     }
     if (this.crankCooldown > 0) return;
@@ -2264,22 +2634,38 @@ export class Sinharaja3DEngine {
     this.playSfx("step");
     this.noiseLevel = 75;
     this.updateFlashlight();
-    this.cb.onNotify("⚙️ ඩයිනමෝ කරකවා බැටරිය ආරෝපණය කළා! (+16%)");
+    this.cb.onNotify(
+      this.lang === "en"
+        ? "⚙️ Hand cranked dynamo: Battery recharged (+16%)!"
+        : "⚙️ ඩයිනමෝ කරකවා බැටරිය ආරෝපණය කළා! (+16%)"
+    );
   }
 
   toggleUv() {
     if (!this.uvUnlocked) {
-      this.cb.onNotify("⚠️ UV පෙරහන තවමත් සොයාගෙන නැත! (කැබින් එක පරීක්ෂා කරන්න)");
+      this.cb.onNotify(
+        this.lang === "en"
+          ? "⚠️ UV Lens Filter not yet found! (Inspect Kudawa workbench)"
+          : "⚠️ UV පෙරහන තවමත් සොයාගෙන නැත! (කැබින් එක පරීක්ෂා කරන්න)"
+      );
       return;
     }
     this.uvMode = !this.uvMode;
     this.playSfx("uv_toggle");
     if (this.uvMode) {
       this.flashlight.color.setHex(0xa855f7); // Ultraviolet phosphorescence
-      this.cb.onNotify("🟣 UV Blacklight සක්‍රියයි: සැඟවුණු සලකුණු පෙනෙනු ඇත.");
+      this.cb.onNotify(
+        this.lang === "en"
+          ? "🟣 UV Blacklight Active: Hidden runes and bioluminescence visible."
+          : "🟣 UV Blacklight සක්‍රියයි: සැඟවුණු සලකුණු පෙනෙනු ඇත."
+      );
     } else {
       this.flashlight.color.setHex(0xfff8db); // Warm incandescent
-      this.cb.onNotify("💡 සාමාන්‍ය විදුලි පන්දම සක්‍රියයි.");
+      this.cb.onNotify(
+        this.lang === "en"
+          ? "💡 Standard incandescent torch beam active."
+          : "💡 සාමාන්‍ය විදුලි පන්දම සක්‍රියයි."
+      );
     }
     this.updateFlashlight();
   }
@@ -2598,7 +2984,13 @@ export class Sinharaja3DEngine {
     const intersects = this.raycaster.intersectObjects(this.interactableMeshes, false);
     if (intersects.length > 0 && intersects[0].distance < 4.5) {
       const hitObj = intersects[0].object;
-      this.activeCrosshairTarget = hitObj.userData;
+      const ud = hitObj.userData;
+      this.activeCrosshairTarget = {
+        ...ud,
+        title: this.lang === "en" ? (ud.titleEn || ud.title) : ud.title,
+        prompt: this.lang === "en" ? (ud.promptEn || ud.prompt) : ud.prompt,
+        action: ud.action,
+      };
     } else {
       this.activeCrosshairTarget = null;
     }
@@ -2670,6 +3062,7 @@ export class Sinharaja3DEngine {
   destroy() {
     this.running = false;
     if (this.animId) cancelAnimationFrame(this.animId);
+    if (window.sinharaja3D === this) delete window.sinharaja3D;
 
     // Clean up all DOM and Window Listeners
     window.removeEventListener("keydown", this._onKeyDown);
