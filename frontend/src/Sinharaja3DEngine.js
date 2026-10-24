@@ -129,6 +129,9 @@ export class Sinharaja3DEngine {
     this.flashlightSpill = null;
     this.volumetricBeam = null;
     this.volumetricUniforms = null;
+    this.keyGroup = null;
+    this.keyLight = null;
+    this.keyBaseY = 0;
     this.gameTextures = {};
     this.broadleafMesh = null;
 
@@ -1995,13 +1998,15 @@ export class Sinharaja3DEngine {
     ];
     boulderCoords.forEach(([bx, bz, bScale]) => {
       const bMesh = new THREE.Mesh(boulderGeo, boulderMat);
-      const by = this.getTerrainHeight(bx, bz) + bScale * 0.8;
+      const isKeyBoulder = (bx === 512 && bz === 735);
+      const scaleY = isKeyBoulder ? 0.45 : (bScale * 0.85);
+      const by = this.getTerrainHeight(bx, bz) + (isKeyBoulder ? 0.4 : (bScale * 0.8));
       bMesh.position.set(bx, by, bz);
-      bMesh.scale.set(bScale, bScale * 0.85, bScale * 1.1);
+      bMesh.scale.set(bScale * (isKeyBoulder ? 1.25 : 1), scaleY, bScale * 1.1);
       bMesh.castShadow = true;
       bMesh.receiveShadow = true;
       this.scene.add(bMesh);
-      this.colliders.push({ type: "circle", x: bx, z: bz, radius: bScale * 1.05 });
+      this.colliders.push({ type: "circle", x: bx, z: bz, radius: bScale * (isKeyBoulder ? 0.85 : 1.05) });
     });
 
     // ── J. Instanced Undergrowth Foliage (Feathered Ferns & Broadleaf Tropical Shrubs) ──
@@ -2126,80 +2131,122 @@ export class Sinharaja3DEngine {
 
     // ── L. Evidence 2: Antique Brass Key on River Boulder [512, 735] ──
     const keyGroup = new THREE.Group();
+    const keyMat = new THREE.MeshStandardMaterial({
+      color: 0xf59e0b,
+      metalness: 0.95,
+      roughness: 0.15,
+      emissive: 0xd97706,
+      emissiveIntensity: 0.45,
+    });
+
     const keyStem = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.025, 0.025, 0.45, 8),
-      new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.95, roughness: 0.2 })
+      new THREE.CylinderGeometry(0.035, 0.035, 0.55, 8),
+      keyMat
     );
     keyStem.rotation.x = Math.PI / 2;
     keyGroup.add(keyStem);
 
     const keyRing = new THREE.Mesh(
-      new THREE.TorusGeometry(0.08, 0.025, 8, 16),
-      new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.95, roughness: 0.2 })
+      new THREE.TorusGeometry(0.12, 0.035, 8, 16),
+      keyMat
     );
-    keyRing.position.z = -0.22;
+    keyRing.position.z = -0.28;
     keyGroup.add(keyRing);
 
     const keyBit = new THREE.Mesh(
-      new THREE.BoxGeometry(0.08, 0.12, 0.03),
-      new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.95, roughness: 0.2 })
+      new THREE.BoxGeometry(0.12, 0.16, 0.04),
+      keyMat
     );
-    keyBit.position.set(0.04, 0.05, 0.18);
+    keyBit.position.set(0.05, 0.07, 0.22);
     keyGroup.add(keyBit);
 
-    const keyBouldY = this.getTerrainHeight(512, 735) + 1.2 * 0.8 + 0.35;
+    // Glowing Golden Beacon Shaft rising from the boulder into the mist
+    const beaconGeo = new THREE.CylinderGeometry(0.06, 0.38, 3.2, 16, 1, true);
+    beaconGeo.translate(0, 1.6, 0);
+    const beaconMat = new THREE.MeshBasicMaterial({
+      color: 0xfbbf24,
+      transparent: true,
+      opacity: 0.35,
+      blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    });
+    const beaconMesh = new THREE.Mesh(beaconGeo, beaconMat);
+    keyGroup.add(beaconMesh);
+
+    // Generous Interaction Hit Sphere around the key & boulder top
+    const hitSphere = new THREE.Mesh(
+      new THREE.SphereGeometry(0.85, 12, 12),
+      new THREE.MeshBasicMaterial({ visible: false })
+    );
+    keyGroup.add(hitSphere);
+
+    const keyBouldY = this.getTerrainHeight(512, 735) + 0.4 + (1.4 * 0.45) + 0.18;
+    this.keyBaseY = keyBouldY;
     keyGroup.position.set(512, keyBouldY, 735);
     keyGroup.castShadow = true;
 
-    const keyLight = new THREE.PointLight(0xf59e0b, 1.2, 4.0);
-    keyLight.position.set(512, keyBouldY + 0.3, 735);
+    const keyLight = new THREE.PointLight(0xf59e0b, 2.6, 8.0);
+    keyLight.position.set(512, keyBouldY + 0.45, 735);
     this.scene.add(keyLight);
 
-    keyStem.userData = {
+    this.keyGroup = keyGroup;
+    this.keyLight = keyLight;
+
+    const keyAction = () => {
+      if (!this.tasks.keyFound) {
+        this.hasKey = true;
+        this.tasks.keyFound = true;
+        this.stormActive = true;
+        this.playSfx("pickup");
+        this.playSfx("thunder");
+        this.scene.remove(keyGroup);
+        this.scene.remove(keyLight);
+        this.keyGroup = null;
+        this.keyLight = null;
+        const idx1 = this.interactableMeshes.indexOf(hitSphere);
+        if (idx1 >= 0) this.interactableMeshes.splice(idx1, 1);
+        const idx2 = this.interactableMeshes.indexOf(keyStem);
+        if (idx2 >= 0) this.interactableMeshes.splice(idx2, 1);
+        this.activeCrosshairTarget = null;
+        if (this.cb.onRadioTransmission) {
+          this.cb.onRadioTransmission({
+            id: "storm_emergency_dispatch",
+            speaker: "HQ EMERGENCY",
+            callsign: "HQ EMERGENCY",
+            text: "හදිසි කාලගුණ අනතුරු ඇඟවීමක්! ගංගා නිම්නය පිටාර ගලමින් පවතී. වතුරට නොබැස යෝධ ගස් කොටන් පාලම (Log Bridge) ඔස්සේ එතෙර වී ලෙන් දොරටුව විවෘත කරන්න!",
+            textEn: "Emergency weather warning! Torrential flash flooding along the riverbed. Cross via the massive fallen log bridge and breach the monolith cave gate!",
+          });
+        }
+        this.cb.onTriggerStory({
+          title: "පුරාණ පිත්තල යතුර (සාක්ෂි අංක 02)",
+          titleEn: "Antique Brass Key (Evidence 02)",
+          text: "ඔබට ගල් ලෙනේ දොරටුව විවෘත කළ හැකි පුරාණ පිත්තල යතුර හමුවිය! ඒ සමඟම ගංගා නිම්නයට මහ කුණාටුවක් කඩා වැටුණි. මඩ වගුර මඟහැර යෝධ ගස් කොටන් පාලම (Log Bridge) ඔස්සේ ආරක්ෂිතව එතෙර වන්න!",
+          textEn: "You recovered the antique brass key required to breach the monolith cave entrance! Simultaneously, a torrential tropical gale has struck the valley. Cross safely over the fallen timber bridge!",
+          item: "පුරාණ පිත්තල යතුර (Evidence 2)",
+          itemEn: "Antique Brass Key (Evidence 02)",
+        });
+        this.cb.onNotify(
+          this.lang === "en"
+            ? "🔑 Secured Antique Brass Key! (Evidence 02/03)"
+            : "🔑 පුරාණ පිත්තල යතුර ලබාගත්තා! (සාක්ෂි 02/03)"
+        );
+        if (this.cb.onAutosave) this.cb.onAutosave();
+      }
+    };
+
+    hitSphere.userData = {
       id: "glowing_brass_key",
       title: "දිදුලන පිත්තල යතුර (Antique Brass Key - Evidence 02)",
       titleEn: "Antique Brass Monolith Key (Evidence 02)",
       prompt: "[E] අහුලාගන්න (Pick Up)",
       promptEn: "[E] Pick Up Key",
-      action: () => {
-        if (!this.tasks.keyFound) {
-          this.hasKey = true;
-          this.tasks.keyFound = true;
-          this.stormActive = true;
-          this.playSfx("pickup");
-          this.playSfx("thunder");
-          this.scene.remove(keyGroup);
-          this.scene.remove(keyLight);
-          const idx = this.interactableMeshes.indexOf(keyStem);
-          if (idx >= 0) this.interactableMeshes.splice(idx, 1);
-          this.activeCrosshairTarget = null;
-          if (this.cb.onRadioTransmission) {
-            this.cb.onRadioTransmission({
-              id: "storm_emergency_dispatch",
-              speaker: "HQ EMERGENCY",
-              callsign: "HQ EMERGENCY",
-              text: "හදිසි කාලගුණ අනතුරු ඇඟවීමක්! ගංගා නිම්නය පිටාර ගලමින් පවතී. වතුරට නොබැස යෝධ ගස් කොටන් පාලම (Log Bridge) ඔස්සේ එතෙර වී ලෙන් දොරටුව විවෘත කරන්න!",
-              textEn: "Emergency weather warning! Torrential flash flooding along the riverbed. Cross via the massive fallen log bridge and breach the monolith cave gate!",
-            });
-          }
-          this.cb.onTriggerStory({
-            title: "පුරාණ පිත්තල යතුර (සාක්ෂි අංක 02)",
-            titleEn: "Antique Brass Key (Evidence 02)",
-            text: "ඔබට ගල් ලෙනේ දොරටුව විවෘත කළ හැකි පුරාණ පිත්තල යතුර හමුවිය! ඒ සමඟම ගංගා නිම්නයට මහ කුණාටුවක් කඩා වැටුණි. මඩ වගුර මඟහැර යෝධ ගස් කොටන් පාලම (Log Bridge) ඔස්සේ ආරක්ෂිතව එතෙර වන්න!",
-            textEn: "You recovered the antique brass key required to breach the monolith cave entrance! Simultaneously, a torrential tropical gale has struck the valley. Cross safely over the fallen timber bridge!",
-            item: "පුරාණ පිත්තල යතුර (Evidence 2)",
-            itemEn: "Antique Brass Key (Evidence 02)",
-          });
-          this.cb.onNotify(
-            this.lang === "en"
-              ? "🔑 Secured Antique Brass Key! (Evidence 02/03)"
-              : "🔑 පුරාණ පිත්තල යතුර ලබාගත්තා! (සාක්ෂි 02/03)"
-          );
-          if (this.cb.onAutosave) this.cb.onAutosave();
-        }
-      },
+      action: keyAction,
     };
+    keyStem.userData = hitSphere.userData;
+
     this.scene.add(keyGroup);
+    this.interactableMeshes.push(hitSphere);
     this.interactableMeshes.push(keyStem);
 
     // ── M. Ancient Monolith Cave Portal at [495, 840] ──
@@ -2625,7 +2672,8 @@ export class Sinharaja3DEngine {
       this.startContinuousAmbience();
     }
 
-    this.keys[e.key.toLowerCase()] = true;
+    if (e.key) this.keys[e.key.toLowerCase()] = true;
+    if (e.code) this.keys[e.code] = true;
 
     // Space -> Leech removal if leeches/bleeding active; otherwise Jump
     if (e.code === "Space") {
@@ -2711,7 +2759,8 @@ export class Sinharaja3DEngine {
   }
 
   _onKeyUp(e) {
-    this.keys[e.key.toLowerCase()] = false;
+    if (e.key) this.keys[e.key.toLowerCase()] = false;
+    if (e.code) this.keys[e.code] = false;
   }
 
   _onCanvasClick(e) {
@@ -3221,16 +3270,16 @@ export class Sinharaja3DEngine {
     // Movement Vector Calculation
     let moveFwd = 0;
     let moveRgt = 0;
-    if (this.keys["w"] || this.keys["arrowup"]) moveFwd += 1;
-    if (this.keys["s"] || this.keys["arrowdown"]) moveFwd -= 1;
-    if (this.keys["d"] || this.keys["arrowright"]) moveRgt += 1;
-    if (this.keys["a"] || this.keys["arrowleft"]) moveRgt -= 1;
+    if (this.keys["w"] || this.keys["arrowup"] || this.keys["KeyW"] || this.keys["ArrowUp"]) moveFwd += 1;
+    if (this.keys["s"] || this.keys["arrowdown"] || this.keys["KeyS"] || this.keys["ArrowDown"]) moveFwd -= 1;
+    if (this.keys["d"] || this.keys["arrowright"] || this.keys["KeyD"] || this.keys["ArrowRight"]) moveRgt += 1;
+    if (this.keys["a"] || this.keys["arrowleft"] || this.keys["KeyA"] || this.keys["ArrowLeft"]) moveRgt -= 1;
 
     const isMoving = moveFwd !== 0 || moveRgt !== 0;
     this.player.isMoving = isMoving;
 
     // Sprinting handling with stamina drain
-    const isSprint = this.keys["shift"] && !this.player.isCrouching && this.player.stamina > 10;
+    const isSprint = (this.keys["shift"] || this.keys["ShiftLeft"] || this.keys["ShiftRight"]) && !this.player.isCrouching && this.player.stamina > 10;
     this.player.isSprinting = isSprint;
     if (isSprint && isMoving) {
       this.player.stamina = Math.max(0, this.player.stamina - dt * 16);
@@ -3247,14 +3296,20 @@ export class Sinharaja3DEngine {
 
     if (isMoving) {
       const len = Math.hypot(moveFwd, moveRgt);
-      const nx = moveRgt / len;
-      const nz = -moveFwd / len;
+      const fwdNorm = moveFwd / len;
+      const rgtNorm = moveRgt / len;
 
       // Transform by Player Yaw
+      // In Three.js: Forward direction is (-sin(yaw), 0, -cos(yaw)), Right is (cos(yaw), 0, -sin(yaw))
       const sinY = Math.sin(this.player.yaw);
       const cosY = Math.cos(this.player.yaw);
-      const worldDx = (nx * cosY - nz * sinY) * curSpeed * dt;
-      const worldDz = (nx * sinY + nz * cosY) * curSpeed * dt;
+      const fwdX = -sinY;
+      const fwdZ = -cosY;
+      const rgtX = cosY;
+      const rgtZ = -sinY;
+
+      const worldDx = (fwdX * fwdNorm + rgtX * rgtNorm) * curSpeed * dt;
+      const worldDz = (fwdZ * fwdNorm + rgtZ * rgtNorm) * curSpeed * dt;
 
       // Proposed horizontal positions
       let nextX = this.player.x + worldDx;
@@ -3360,6 +3415,15 @@ export class Sinharaja3DEngine {
         if (p.material) {
           p.material.roughness = 0.04 + Math.sin(this.gameClock * 3.5 + i * 1.5) * 0.02;
         }
+      }
+    }
+
+    // Dynamic Antique Brass Key Floating & Beacon Glow Pulse
+    if (this.keyGroup && !this.tasks.keyFound) {
+      this.keyGroup.rotation.y += dt * 1.5;
+      this.keyGroup.position.y = this.keyBaseY + Math.sin(this.gameClock * 2.5) * 0.08;
+      if (this.keyLight) {
+        this.keyLight.intensity = 2.4 + Math.sin(this.gameClock * 3.2) * 0.6;
       }
     }
 

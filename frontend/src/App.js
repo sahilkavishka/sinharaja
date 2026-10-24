@@ -2240,6 +2240,39 @@ export default function App() {
     }
   }, []);
 
+  // Dismiss story dialogue and seamlessly restore first-person pointer lock
+  const handleCloseDialogue = useCallback(() => {
+    setDialogue(null);
+    if (engineRef.current) {
+      engineRef.current.requestPointerLock();
+    }
+  }, []);
+
+  // Global keydown capture listener to dismiss dialogue instantly on SPACE, ENTER, E, or ESC
+  useEffect(() => {
+    if (!dialogue) return;
+    const handleDialogueKeyDown = (e) => {
+      const code = e.code;
+      const key = e.key ? e.key.toLowerCase() : "";
+      if (
+        code === "Space" ||
+        code === "Enter" ||
+        code === "KeyE" ||
+        code === "Escape" ||
+        key === " " ||
+        key === "enter" ||
+        key === "e" ||
+        key === "escape"
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+        handleCloseDialogue();
+      }
+    };
+    window.addEventListener("keydown", handleDialogueKeyDown, true);
+    return () => window.removeEventListener("keydown", handleDialogueKeyDown, true);
+  }, [dialogue, handleCloseDialogue]);
+
   // Auto-release Pointer Lock whenever any interactive modal or dialogue is active
   useEffect(() => {
     const isModalActive = Boolean(
@@ -4143,7 +4176,7 @@ export default function App() {
 
       {/* ── Cinematic Letterbox Dialogue Box with Character Portrait ── */}
       {dialogue && (
-        <div className="cinematic-dialogue-screen" onClick={() => setDialogue(null)}>
+        <div className="cinematic-dialogue-screen" onClick={handleCloseDialogue}>
           <div className="letterbox-bar top-bar" />
           <div className="cinematic-dialogue-modal" onClick={(e) => e.stopPropagation()}>
             <div className="dialogue-avatar-frame">
@@ -4162,8 +4195,8 @@ export default function App() {
                   <Icons.Target className="tactical-svg-icon" /> {lang === "en" ? "ITEM ACQUIRED: " : "අයිතමය ලැබුණි: "}<strong>{lang === "en" ? (dialogue.itemEn || dialogue.item) : dialogue.item}</strong>
                 </div>
               )}
-              <button className="dialogue-advance-btn" onClick={() => setDialogue(null)}>
-                {lang === "en" ? "CONTINUE [SPACE / ESC]" : "ඉදිරියට යන්න (CONTINUE) [SPACE]"}
+              <button className="dialogue-advance-btn" onClick={handleCloseDialogue}>
+                {lang === "en" ? "CONTINUE [SPACE / ENTER / E]" : "ඉදිරියට යන්න (CONTINUE) [SPACE / ENTER / E]"}
               </button>
             </div>
           </div>
