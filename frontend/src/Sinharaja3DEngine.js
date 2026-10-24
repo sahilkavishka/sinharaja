@@ -795,7 +795,8 @@ export class Sinharaja3DEngine {
         this.flashlight.castShadow = true;
         this.flashlight.shadow.mapSize.set(1024, 1024);
       }
-      this.cb.onNotify("⚙️ ග්‍රැෆික් මට්ටම: HIGH (Full Shadows, PBR Materials & Lush Foliage)");
+      if (this.volumetricUniforms) this.volumetricUniforms.uIntensity.value = 0.16;
+      this.cb.onNotify("⚙️ ග්‍රැෆික් මට්ටම: HIGH (Full Shadows, Volumetric Shafts & PBR)");
     } else if (mode === "medium") {
       this.renderer.shadowMap.enabled = true;
       this.renderer.shadowMap.type = THREE.PCFShadowMap;
@@ -803,13 +804,15 @@ export class Sinharaja3DEngine {
         this.flashlight.castShadow = true;
         this.flashlight.shadow.mapSize.set(512, 512);
       }
-      this.cb.onNotify("⚙️ ග්‍රැෆික් මට්ටම: MEDIUM (Optimized Shadows & Mist)");
+      if (this.volumetricUniforms) this.volumetricUniforms.uIntensity.value = 0.10;
+      this.cb.onNotify("⚙️ ග්‍රැෆික් මට්ටම: MEDIUM (Optimized Shadows & Mist Shafts)");
     } else {
       this.renderer.shadowMap.enabled = false;
       if (this.flashlight) {
         this.flashlight.castShadow = false;
       }
-      this.cb.onNotify("⚙️ ග්‍රැෆික් මට්ටම: LOW (Max Performance, Shadows Disabled)");
+      if (this.volumetricBeam) this.volumetricBeam.visible = false;
+      this.cb.onNotify("⚙️ ග්‍රැෆික් මට්ටම: LOW (Max Performance, Minimal Effects)");
     }
 
     if (this.renderer.shadowMap.needsUpdate !== undefined) {
@@ -910,6 +913,52 @@ export class Sinharaja3DEngine {
     this.flashlightSpill.position.set(0, 0, 0);
     this.flashlightSpill.target = this.flashlightTarget;
     this.torchGroup.add(this.flashlightSpill);
+
+    // 6b. Volumetric Atmospheric Rain/Mist Beam (Soft Additive Cone)
+    const beamLength = 25.0;
+    const beamGeo = new THREE.CylinderGeometry(0.08, 4.2, beamLength, 24, 1, true);
+    beamGeo.rotateX(-Math.PI / 2);
+    beamGeo.translate(0, 0, -beamLength / 2);
+
+    this.volumetricUniforms = {
+      uColor: { value: new THREE.Color(0xfffae6) },
+      uIntensity: { value: 0.16 },
+    };
+    this.volumetricMat = new THREE.ShaderMaterial({
+      uniforms: this.volumetricUniforms,
+      vertexShader: `
+        varying vec3 vNormal;
+        varying vec3 vViewDir;
+        varying float vDistance;
+        void main() {
+          vNormal = normalize(normalMatrix * normal);
+          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+          vViewDir = normalize(-mvPosition.xyz);
+          vDistance = -mvPosition.z;
+          gl_Position = projectionMatrix * mvPosition;
+        }
+      `,
+      fragmentShader: `
+        uniform vec3 uColor;
+        uniform float uIntensity;
+        varying vec3 vNormal;
+        varying vec3 vViewDir;
+        varying float vDistance;
+        void main() {
+          float rim = 1.0 - abs(dot(vNormal, vViewDir));
+          float depthFade = clamp(vDistance / 24.0, 0.0, 1.0);
+          float alpha = pow(rim, 1.6) * (1.0 - depthFade * 0.7) * uIntensity;
+          gl_FragColor = vec4(uColor, clamp(alpha, 0.0, 0.35));
+        }
+      `,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    this.volumetricBeam = new THREE.Mesh(beamGeo, this.volumetricMat);
+    this.volumetricBeam.renderOrder = 999;
+    this.torchGroup.add(this.volumetricBeam);
 
     this.scene.add(this.torchGroup);
 
@@ -1291,26 +1340,30 @@ export class Sinharaja3DEngine {
     // ── C. Reflective Rain Puddles along the Muddy Trail ──
     const puddleGeo = new THREE.CircleGeometry(1.6, 24);
     puddleGeo.rotateX(-Math.PI / 2);
-    const puddleMat = new THREE.MeshStandardMaterial({
-      color: 0x07151a,
-      roughness: 0.08,
-      metalness: 0.85,
-      transparent: true,
-      opacity: 0.88,
-    });
+    this.puddles = [];
     const puddlePositions = [
       [517, 738, 1.4, 1.1],
       [507, 762, 2.1, 1.5],
       [498, 795, 1.8, 1.2],
       [483, 835, 2.3, 1.6],
       [532, 736, 1.2, 0.9],
+      [502, 780, 1.9, 1.3],
+      [490, 850, 2.0, 1.4],
     ];
     puddlePositions.forEach(([px, pz, sx, sz]) => {
+      const puddleMat = new THREE.MeshStandardMaterial({
+        color: 0x07151a,
+        roughness: 0.05,
+        metalness: 0.9,
+        transparent: true,
+        opacity: 0.88,
+      });
       const puddle = new THREE.Mesh(puddleGeo, puddleMat);
       puddle.position.set(px, this.getTerrainHeight(px, pz) + 0.04, pz);
       puddle.scale.set(sx, 1, sz);
       puddle.receiveShadow = true;
       this.scene.add(puddle);
+      this.puddles.push(puddle);
     });
 
     // ── D. Kudawa Outpost 3D Cabin Architecture ──
@@ -1564,13 +1617,15 @@ export class Sinharaja3DEngine {
       prompt: "[E] අහුලාගන්න (Pick Up)",
       promptEn: "[E] Pick Up (+2 Leech Balm)",
       action: (obj) => {
-        if (!obj.userData.picked) {
-          obj.userData.picked = true;
+        const ud = (obj && obj.userData) ? obj.userData : (obj || {});
+        if (!ud.picked) {
+          ud.picked = true;
           this.balmCount += 2;
           this.playSfx("pickup");
           this.scene.remove(balmMesh);
           const idx = this.interactableMeshes.indexOf(balmMesh);
           if (idx >= 0) this.interactableMeshes.splice(idx, 1);
+          this.activeCrosshairTarget = null;
           this.cb.onNotify(
             this.lang === "en"
               ? "🌿 Picked up Herbal Leech Repellent Balm! Apply with [B] for 90s protection."
@@ -1601,13 +1656,15 @@ export class Sinharaja3DEngine {
       prompt: "[E] කියවන්න / සාක්ෂිය ලබාගන්න",
       promptEn: "[E] Read / Secure Evidence 01",
       action: (obj) => {
-        if (!obj.userData.picked) {
-          obj.userData.picked = true;
+        const ud = (obj && obj.userData) ? obj.userData : (obj || {});
+        if (!ud.picked) {
+          ud.picked = true;
           this.tasks.diaryFound = true;
           this.playSfx("pickup");
           this.scene.remove(diaryMesh);
           const idx = this.interactableMeshes.indexOf(diaryMesh);
           if (idx >= 0) this.interactableMeshes.splice(idx, 1);
+          this.activeCrosshairTarget = null;
           if (this.cb.onRadioTransmission) {
             this.cb.onRadioTransmission({
               id: "hq_diary_dispatch",
@@ -1660,13 +1717,15 @@ export class Sinharaja3DEngine {
       prompt: "[E] අහුලාගන්න (Pick Up)",
       promptEn: "[E] Pick Up Tactical UV Lens",
       action: (obj) => {
-        if (!obj.userData.picked) {
-          obj.userData.picked = true;
+        const ud = (obj && obj.userData) ? obj.userData : (obj || {});
+        if (!ud.picked) {
+          ud.picked = true;
           this.uvUnlocked = true;
           this.playSfx("pickup");
           this.scene.remove(uvMesh);
           const idx = this.interactableMeshes.indexOf(uvMesh);
           if (idx >= 0) this.interactableMeshes.splice(idx, 1);
+          this.activeCrosshairTarget = null;
           this.cb.onNotify(
             this.lang === "en"
               ? "🟣 Acquired Tactical UV Filter! Press [U] to toggle UV Blacklight for hidden runes."
@@ -1695,8 +1754,9 @@ export class Sinharaja3DEngine {
       prompt: "[E] පානය කරන්න (Drink)",
       promptEn: "[E] Drink Tea (Sanity +30%)",
       action: (obj) => {
-        if (!obj.userData.drank) {
-          obj.userData.drank = true;
+        const ud = (obj && obj.userData) ? obj.userData : (obj || {});
+        if (!ud.drank) {
+          ud.drank = true;
           this.sanity = Math.min(100, this.sanity + 30);
           this.player.stamina = 100;
           this.teaBuffTimer = 120;
@@ -1704,6 +1764,7 @@ export class Sinharaja3DEngine {
           this.scene.remove(teaMesh);
           const idx = this.interactableMeshes.indexOf(teaMesh);
           if (idx >= 0) this.interactableMeshes.splice(idx, 1);
+          this.activeCrosshairTarget = null;
           this.cb.onNotify(
             this.lang === "en"
               ? "☕ Drank Hot Ceylon Ginger Tea! Sanity +30% & hypothermia cured."
@@ -1731,13 +1792,15 @@ export class Sinharaja3DEngine {
       prompt: "[E] අහුලාගන්න (Pick Up)",
       promptEn: "[E] Pick Up (+4 Salt)",
       action: (obj) => {
-        if (!obj.userData.picked) {
-          obj.userData.picked = true;
+        const ud = (obj && obj.userData) ? obj.userData : (obj || {});
+        if (!ud.picked) {
+          ud.picked = true;
           this.saltCount += 4;
           this.playSfx("pickup");
           this.scene.remove(saltMesh);
           const idx = this.interactableMeshes.indexOf(saltMesh);
           if (idx >= 0) this.interactableMeshes.splice(idx, 1);
+          this.activeCrosshairTarget = null;
           this.cb.onNotify(
             this.lang === "en"
               ? "🧂 Picked up Salt Pouch! (+4 Salt) Press [1] or Space to purge attached leeches."
@@ -2109,6 +2172,7 @@ export class Sinharaja3DEngine {
           this.scene.remove(keyLight);
           const idx = this.interactableMeshes.indexOf(keyStem);
           if (idx >= 0) this.interactableMeshes.splice(idx, 1);
+          this.activeCrosshairTarget = null;
           if (this.cb.onRadioTransmission) {
             this.cb.onRadioTransmission({
               id: "storm_emergency_dispatch",
@@ -2297,6 +2361,7 @@ export class Sinharaja3DEngine {
           this.scene.remove(sampleLight);
           const idx = this.interactableMeshes.indexOf(sampleVial);
           if (idx >= 0) this.interactableMeshes.splice(idx, 1);
+          this.activeCrosshairTarget = null;
           if (this.cb.onRadioTransmission) {
             this.cb.onRadioTransmission({
               id: "all_evidence_collected_dispatch",
@@ -2521,6 +2586,7 @@ export class Sinharaja3DEngine {
         this.scene.remove(featherMesh);
         const idx = this.interactableMeshes.indexOf(featherMesh);
         if (idx >= 0) this.interactableMeshes.splice(idx, 1);
+        this.activeCrosshairTarget = null;
         this.cb.onNotify(
           this.lang === "en"
             ? "🪶 Collected Ceylon Blue Magpie Feather! Movement speed boosted (+25%)."
@@ -2561,21 +2627,21 @@ export class Sinharaja3DEngine {
 
     this.keys[e.key.toLowerCase()] = true;
 
-    // Space -> Jump (when grounded) / Leech removal
+    // Space -> Leech removal if leeches/bleeding active; otherwise Jump
     if (e.code === "Space") {
       e.preventDefault();
-      if (this.player.isGrounded && !this.player.isCrouching && this.player.stamina >= 8) {
+      if (this.attachedLeeches > 0 || this.bleeding) {
+        this.throwSalt();
+      } else if (this.player.isGrounded && !this.player.isCrouching && this.player.stamina >= 8) {
         this.player.vy = 5.6; // Launch upward
         this.player.isGrounded = false;
         this.player.stamina = Math.max(0, this.player.stamina - 8);
         this.playSfx("jump");
-      } else if (this.attachedLeeches > 0) {
-        this.throwSalt();
       }
     }
 
-    // C -> Toggle Crouch
-    if (e.key.toLowerCase() === "c") {
+    // C or Ctrl -> Toggle Crouch
+    if (e.code === "KeyC" || e.code === "ControlLeft" || e.code === "ControlRight" || e.key.toLowerCase() === "c") {
       this.player.isCrouching = !this.player.isCrouching;
       this.playSfx("step");
     }
@@ -2628,6 +2694,15 @@ export class Sinharaja3DEngine {
     // O -> Graphics Quality Preset Toggle (High -> Medium -> Low)
     if (e.key.toLowerCase() === "o") {
       this.cycleQuality();
+    }
+    // M -> Tactical Military GPS PDA Tablet
+    if (e.key.toLowerCase() === "m" && this.cb.onToggleMap) {
+      this.cb.onToggleMap();
+    }
+    // I or Tab -> Tactical Backpack Inventory Grid
+    if ((e.key.toLowerCase() === "i" || e.code === "Tab") && this.cb.onToggleInventory) {
+      e.preventDefault();
+      this.cb.onToggleInventory();
     }
     // Escape -> Pause
     if (e.key === "Escape" && this.cb.onTogglePause) {
@@ -2771,6 +2846,7 @@ export class Sinharaja3DEngine {
     if (!isLit) {
       if (this.flashlight) this.flashlight.visible = false;
       if (this.flashlightSpill) this.flashlightSpill.visible = false;
+      if (this.volumetricBeam) this.volumetricBeam.visible = false;
       return;
     }
     if (this.flashlight) {
@@ -2785,11 +2861,19 @@ export class Sinharaja3DEngine {
       this.flashlightSpill.intensity = (this.uvMode ? 1.0 : 1.4) * this.torchIntensity;
       this.flashlightSpill.color.set(this.uvMode ? 0x9333ea : 0xfff4d6);
     }
+    if (this.volumetricBeam && this.volumetricUniforms) {
+      this.volumetricBeam.visible = true;
+      this.volumetricUniforms.uColor.value.set(this.uvMode ? 0xa855f7 : 0xfffae6);
+      this.volumetricUniforms.uIntensity.value = (this.uvMode ? 0.09 : 0.16) * this.torchIntensity;
+    }
   }
 
   interactTarget() {
     if (this.activeCrosshairTarget && this.activeCrosshairTarget.action) {
-      this.activeCrosshairTarget.action(this.activeCrosshairTarget);
+      const targetObj = this.activeCrosshairTarget.mesh || this.activeCrosshairTarget;
+      const actionFn = this.activeCrosshairTarget.action;
+      this.activeCrosshairTarget = null;
+      actionFn(targetObj);
       return true;
     }
     return false;
@@ -2812,6 +2896,7 @@ export class Sinharaja3DEngine {
       }
     }
     if (closest && closest.userData && closest.userData.action) {
+      this.activeCrosshairTarget = null;
       closest.userData.action(closest);
       return true;
     }
@@ -2944,8 +3029,9 @@ export class Sinharaja3DEngine {
     }
     this.saltCount--;
     this.playSfx("salt");
-    if (this.attachedLeeches > 0) {
+    if (this.attachedLeeches > 0 || this.bleeding) {
       this.attachedLeeches = 0;
+      this.bleeding = false;
       this.cb.onNotify(
         this.lang === "en"
           ? "🧂 Sprinkled salt: Leeches detached and dropped off!"
@@ -2990,6 +3076,7 @@ export class Sinharaja3DEngine {
     }
     this.balmCount--;
     this.repellentTimer = 90;
+    this.attachedLeeches = 0;
     this.bleeding = false;
     this.playSfx("balm");
     this.cb.onNotify(
@@ -3263,6 +3350,17 @@ export class Sinharaja3DEngine {
       const isLit = Boolean(this.torchOn && this.battery > 0);
       this.flashlight.visible = isLit;
       if (this.flashlightSpill) this.flashlightSpill.visible = isLit;
+      if (this.volumetricBeam) this.volumetricBeam.visible = isLit;
+    }
+
+    // Dynamic rain ripples in reflective puddles
+    if (this.puddles && this.puddles.length > 0) {
+      for (let i = 0; i < this.puddles.length; i++) {
+        const p = this.puddles[i];
+        if (p.material) {
+          p.material.roughness = 0.04 + Math.sin(this.gameClock * 3.5 + i * 1.5) * 0.02;
+        }
+      }
     }
 
     if (this.torchGroup) {
@@ -3366,9 +3464,11 @@ export class Sinharaja3DEngine {
     const intersects = this.raycaster.intersectObjects(this.interactableMeshes, false);
     if (intersects.length > 0 && intersects[0].distance < 4.5) {
       const hitObj = intersects[0].object;
-      const ud = hitObj.userData;
+      const ud = hitObj.userData || {};
       this.activeCrosshairTarget = {
         ...ud,
+        mesh: hitObj,
+        userData: ud,
         title: this.lang === "en" ? (ud.titleEn || ud.title) : ud.title,
         prompt: this.lang === "en" ? (ud.promptEn || ud.prompt) : ud.prompt,
         action: ud.action,

@@ -2240,6 +2240,42 @@ export default function App() {
     }
   }, []);
 
+  // Auto-release Pointer Lock whenever any interactive modal or dialogue is active
+  useEffect(() => {
+    const isModalActive = Boolean(
+      dialogue ||
+      runePuzzleOpen ||
+      inspectTapeOpen ||
+      inspectDouglasTapeOpen ||
+      inspectDiaryOpen ||
+      showTacticalMap ||
+      showInventory ||
+      showEvidenceBoard ||
+      showJournal ||
+      showDebriefing ||
+      photoModal ||
+      isPaused
+    );
+    if (isModalActive && document.pointerLockElement) {
+      try {
+        document.exitPointerLock();
+      } catch (e) {}
+    }
+  }, [
+    dialogue,
+    runePuzzleOpen,
+    inspectTapeOpen,
+    inspectDouglasTapeOpen,
+    inspectDiaryOpen,
+    showTacticalMap,
+    showInventory,
+    showEvidenceBoard,
+    showJournal,
+    showDebriefing,
+    photoModal,
+    isPaused,
+  ]);
+
   // Initialize Canvas when playing starts
   useEffect(() => {
     if (currentView !== "playing" || gameOver) return;
@@ -2890,6 +2926,20 @@ export default function App() {
     ? Math.round(Math.hypot(activeObj.x - stats.playerX, activeObj.y - stats.playerY))
     : Math.round(Math.hypot(activeObj.x - stats.playerX, activeObj.y - stats.playerY) / 10);
 
+  // Dynamic Map & Minimap Coordinate Normalization
+  const getMapCoords = (worldX, worldY) => {
+    if (activeChapter === 1) {
+      // 3D bounds for Chapter 1: X in [470, 560], Y (Z) in [705, 875]
+      const pctX = Math.max(5, Math.min(95, ((worldX - 470) / (560 - 470)) * 82 + 9));
+      const pctY = Math.max(5, Math.min(95, ((worldY - 705) / (875 - 705)) * 82 + 9));
+      return { left: `${pctX}%`, top: `${pctY}%` };
+    }
+    return {
+      left: `${(worldX / 3200) * 100}%`,
+      top: `${(worldY / 2400) * 100}%`,
+    };
+  };
+
   // Heart Rate BPM (Simulated based on health/danger)
   const heartBpm = stats.bleeding || stats.health < 40 ? 138 : stats.health < 75 ? 96 : 72;
 
@@ -3362,6 +3412,21 @@ export default function App() {
     >
       <canvas ref={canvasRef} className="game-canvas" />
 
+      {/* ── Realistic Camera Rain Visor & Lens Droplets Overlay ── */}
+      {activeChapter === 1 && (
+        <div className={`camera-rain-visor ${stats.inShelter ? "visor-dry" : "visor-wet"}`}>
+          <div className="visor-droplet vd-1" />
+          <div className="visor-droplet vd-2" />
+          <div className="visor-droplet vd-3" />
+          <div className="visor-droplet vd-4" />
+          <div className="visor-droplet vd-5" />
+          <div className="visor-droplet vd-6" />
+          <div className="visor-droplet vd-7" />
+          <div className="visor-droplet vd-8" />
+          <div className="visor-mist-rim" />
+        </div>
+      )}
+
       {/* ── First-Person Tactical Center Reticle & Interaction Tooltip ── */}
       <div
         className={`tactical-center-crosshair ${
@@ -3708,8 +3773,7 @@ export default function App() {
               <div
                 className="player-radar-dot"
                 style={{
-                  left: `${(stats.playerX / 3200) * 100}%`,
-                  top: `${(stats.playerY / 2400) * 100}%`,
+                  ...getMapCoords(stats.playerX, stats.playerY),
                   transform: `translate(-50%, -50%) rotate(${stats.playerAngle || 0}rad)`,
                 }}
               >
@@ -3717,10 +3781,7 @@ export default function App() {
               </div>
               <div
                 className="obj-radar-dot"
-                style={{
-                  left: `${(activeObj.x / 3200) * 100}%`,
-                  top: `${(activeObj.y / 2400) * 100}%`,
-                }}
+                style={getMapCoords(activeObj.x, activeObj.y)}
               />
               <span className="radar-click-hint">MAP [M]</span>
             </div>
@@ -4598,32 +4659,32 @@ export default function App() {
                   </>
                 ) : (
                   <>
-                    {/* Chapter 1 Zones */}
+                    {/* Chapter 1 Zones (Aligned to 3D Topography) */}
                     <div className="topo-river-band" />
-                    <div className="topo-zone-tag zone-kudawa" style={{ left: "10%", top: "16%" }}>
+                    <div className="topo-zone-tag zone-kudawa" style={{ left: "18%", top: "14%" }}>
                       <span>[ENTRY] KUDAWA ENTRY (කඳවුර)</span>
                     </div>
-                    <div className="topo-zone-tag zone-outpost" style={{ left: "18%", top: "34%" }}>
+                    <div className="topo-zone-tag zone-outpost" style={{ left: "54%", top: "16%" }}>
                       <span>[OUTPOST] RANGER OUTPOST (මුරපොළ)</span>
                     </div>
-                    <div className="topo-zone-tag zone-river" style={{ left: "36%", top: "38%" }}>
+                    <div className="topo-zone-tag zone-river" style={{ left: "47%", top: "24%" }}>
                       <span>[CROSSING] RIVER CROSSING (ඔරු තොට)</span>
                     </div>
-                    <div className="topo-zone-tag zone-swamp hazard" style={{ left: "44%", top: "60%" }}>
+                    <div className="topo-zone-tag zone-swamp hazard" style={{ left: "36%", top: "40%" }}>
                       <span>[HAZARD] LEECH SWAMP (කූඩැලි වගුර)</span>
                     </div>
-                    <div className="topo-zone-tag zone-cave" style={{ left: "55%", top: "48%" }}>
+                    <div className="topo-zone-tag zone-cave" style={{ left: "32%", top: "82%" }}>
                       <span>[CAVE] RUNIC CAVE (පුරාණ ලෙන)</span>
                     </div>
-                    <div className="topo-zone-tag zone-helipad extract" style={{ left: "82%", top: "75%" }}>
+                    <div className="topo-zone-tag zone-helipad extract" style={{ left: "77%", top: "81%" }}>
                       <span>[EXTRACT] EXTRACTION HELIPAD (හෙලිපෑඩ්)</span>
                     </div>
 
                     {/* Safe Campfire Pins */}
-                    <div className="map-pin campfire-pin" style={{ left: "15%", top: "37%" }} title="මුරපොළේ ගිනිමැලය">
+                    <div className="map-pin campfire-pin" style={{ left: "52%", top: "20%" }} title="මුරපොළේ ගිනිමැලය">
                       <Icons.Flame className="tactical-svg-icon map-fire-svg" />
                     </div>
-                    <div className="map-pin campfire-pin" style={{ left: "51%", top: "58%" }} title="ලෙන් දොරටුවේ ගිනිමැලය">
+                    <div className="map-pin campfire-pin" style={{ left: "38%", top: "78%" }} title="ලෙන් දොරටුවේ ගිනිමැලය">
                       <Icons.Flame className="tactical-svg-icon map-fire-svg" />
                     </div>
                   </>
@@ -4632,10 +4693,7 @@ export default function App() {
                 {/* Player Real-Time Marker with Beacon Rings */}
                 <div
                   className="pda-player-beacon"
-                  style={{
-                    left: `${(stats.playerX / 3200) * 100}%`,
-                    top: `${(stats.playerY / 2400) * 100}%`,
-                  }}
+                  style={getMapCoords(stats.playerX, stats.playerY)}
                 >
                   <div className="beacon-ping" />
                   <div className="beacon-core" />
@@ -4645,10 +4703,7 @@ export default function App() {
                 {/* Active Objective Pin */}
                 <div
                   className="pda-objective-pin"
-                  style={{
-                    left: `${(activeObj.x / 3200) * 100}%`,
-                    top: `${(activeObj.y / 2400) * 100}%`,
-                  }}
+                  style={getMapCoords(activeObj.x, activeObj.y)}
                 >
                   <span className="obj-pin-icon">
                     {Icons[activeObj.icon] ? React.createElement(Icons[activeObj.icon], { className: "tactical-svg-icon" }) : <Icons.Target className="tactical-svg-icon" />}
