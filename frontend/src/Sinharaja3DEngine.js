@@ -40,6 +40,7 @@ export class Sinharaja3DEngine {
     this.noiseLevel = 15;
     this.crankCooldown = 0;
     this.elapsedTime = 0;
+    this.gameClock = 0;
     this.hasKey = false;
     this.hasSample = false;
     this.hasGears = false;
@@ -127,6 +128,7 @@ export class Sinharaja3DEngine {
     this.torchGroup = null;
     this.flashlight = null;
     this.flashlightSpill = null;
+    this.hemiLight = null;
     this.volumetricBeam = null;
     this.volumetricUniforms = null;
     this.keyGroup = null;
@@ -858,12 +860,12 @@ export class Sinharaja3DEngine {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.15;
+    this.renderer.toneMappingExposure = 1.35;
 
     // 2. 3D Scene & Sinharaja Nocturnal Atmospheric Fog
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color("#05120a");
-    this.scene.fog = new THREE.FogExp2("#071a10", 0.0075);
+    this.scene.background = new THREE.Color("#071a12");
+    this.scene.fog = new THREE.FogExp2("#092116", 0.0045);
 
     // 3. True Perspective Camera
     this.camera = new THREE.PerspectiveCamera(74, width / height, 0.1, 800);
@@ -877,44 +879,50 @@ export class Sinharaja3DEngine {
     this.centerScreen = new THREE.Vector2(0, 0);
 
     // 5. Environmental Lighting (Nocturnal Rain Forest)
+    // Dynamic Rainforest Canopy & Ground Bounce Hemisphere Light
+    this.hemiLight = new THREE.HemisphereLight(0x386b52, 0x1f2e1e, 1.25);
+    this.scene.add(this.hemiLight);
+
     // Deep nocturnal ambient green-blue to maintain accessibility and visibility (Project I.G.I. clarity)
-    this.ambientLight = new THREE.AmbientLight(0x163827, 0.72);
+    this.ambientLight = new THREE.AmbientLight(0x24523d, 1.15);
     this.scene.add(this.ambientLight);
 
-    // Moonlight rim directional light piercing through canopy
-    this.moonLight = new THREE.DirectionalLight(0x7dd3fc, 0.70);
-    this.moonLight.position.set(450, 220, 600);
+    // Moonlight rim directional light piercing through canopy over Chapter 1 [500, 180, 750]
+    this.moonLight = new THREE.DirectionalLight(0x93c5fd, 1.35);
+    this.moonLight.position.set(500, 180, 750);
+    this.moonLight.target.position.set(505, 0, 780);
     this.scene.add(this.moonLight);
+    this.scene.add(this.moonLight.target);
 
     // Outpost porch kerosene lantern (warm welcoming amber light)
-    const porchLantern = new THREE.PointLight(0xf59e0b, 2.4, 16, 1.8);
+    const porchLantern = new THREE.PointLight(0xf59e0b, 3.2, 22, 1.5);
     porchLantern.position.set(527.5, 2.7, 728.5);
     this.scene.add(porchLantern);
 
     // 6. Tactical Flashlight System (High-Intensity Spot + Soft Foreground Fill Spill)
     this.torchGroup = new THREE.Object3D();
 
-    // Primary Focused Beam (Natural SpotLight with smooth penumbra - zero artificial cones)
-    this.flashlight = new THREE.SpotLight(0xfff4d6, 7.5, 65, Math.PI / 4.4, 0.68, 1.65);
+    // Primary Focused Beam (High-Power 24W Beam with 95m reach and natural falloff)
+    this.flashlight = new THREE.SpotLight(0xfffae6, 24.0, 95, Math.PI / 4.0, 0.55, 1.15);
     this.flashlight.position.set(0, 0, 0);
     this.flashlight.castShadow = true;
     this.flashlight.shadow.mapSize.width = 1024;
     this.flashlight.shadow.mapSize.height = 1024;
     this.flashlight.shadow.camera.near = 0.2;
-    this.flashlight.shadow.camera.far = 65;
+    this.flashlight.shadow.camera.far = 95;
     this.flashlight.shadow.bias = -0.0004;
     this.flashlight.shadow.normalBias = 0.05;
 
+    // Slight downward tilt of -0.65m on target pool illuminates the ground/trail ahead
     this.flashlightTarget = new THREE.Object3D();
-    this.flashlightTarget.position.set(0, 0, -25);
+    this.flashlightTarget.position.set(0, -0.65, -25);
     this.torchGroup.add(this.flashlightTarget);
     this.flashlight.target = this.flashlightTarget;
     this.torchGroup.add(this.flashlight);
 
-    // Secondary Soft Foreground Spill Light (prevents pitch-black claustrophobia around feet)
-    this.flashlightSpill = new THREE.SpotLight(0xfff4d6, 1.4, 20, Math.PI / 2.2, 0.92, 2.0);
+    // Secondary Soft Foreground Fill Light (Omnidirectional player foot bubble to prevent black abyss)
+    this.flashlightSpill = new THREE.PointLight(0xfff0d0, 4.5, 18, 1.2);
     this.flashlightSpill.position.set(0, 0, 0);
-    this.flashlightSpill.target = this.flashlightTarget;
     this.torchGroup.add(this.flashlightSpill);
 
     // 6b. Volumetric Atmospheric Rain/Mist Beam (Soft Additive Cone)
@@ -999,7 +1007,7 @@ export class Sinharaja3DEngine {
     const dCtx = dCanvas.getContext("2d");
 
     // Base rich nocturnal rainforest soil
-    dCtx.fillStyle = "#162215";
+    dCtx.fillStyle = "#2d442b";
     dCtx.fillRect(0, 0, size, size);
 
     // Damp humus and loam blotches
@@ -1285,9 +1293,9 @@ export class Sinharaja3DEngine {
     const terrainMat = new THREE.MeshStandardMaterial({
       map: diffuseTex,
       roughnessMap: roughTex,
-      roughness: 0.82,
-      metalness: 0.12,
-      color: 0xa0b298,
+      roughness: 0.72,
+      metalness: 0.08,
+      color: 0xc4d8bc,
     });
     this.terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
     this.terrainMesh.position.set(terrainCenter.x, 0, terrainCenter.z);
@@ -1984,8 +1992,8 @@ export class Sinharaja3DEngine {
     // ── I. Wet River Granite Boulders with Moss ──
     const boulderGeo = new THREE.DodecahedronGeometry(1.4, 1);
     const boulderMat = new THREE.MeshStandardMaterial({
-      color: 0x3d473d,
-      roughness: 0.72,
+      color: 0x526052,
+      roughness: 0.68,
       metalness: 0.18,
     });
     const boulderCoords = [
@@ -2900,15 +2908,15 @@ export class Sinharaja3DEngine {
     }
     if (this.flashlight) {
       this.flashlight.visible = true;
-      const baseIntensity = this.uvMode ? 4.5 : 7.5;
+      const baseIntensity = this.uvMode ? 14.0 : 24.0;
       this.flashlight.intensity = baseIntensity * this.torchIntensity;
-      this.flashlight.color.set(this.uvMode ? 0xa855f7 : 0xfff4d6);
-      this.flashlight.distance = this.uvMode ? 32 : (65 * Math.sqrt(this.torchIntensity));
+      this.flashlight.color.set(this.uvMode ? 0xa855f7 : 0xfffae6);
+      this.flashlight.distance = this.uvMode ? 45 : (95 * Math.sqrt(this.torchIntensity));
     }
     if (this.flashlightSpill) {
       this.flashlightSpill.visible = true;
-      this.flashlightSpill.intensity = (this.uvMode ? 1.0 : 1.4) * this.torchIntensity;
-      this.flashlightSpill.color.set(this.uvMode ? 0x9333ea : 0xfff4d6);
+      this.flashlightSpill.intensity = (this.uvMode ? 2.8 : 4.5) * this.torchIntensity;
+      this.flashlightSpill.color.set(this.uvMode ? 0x9333ea : 0xfff0d0);
     }
     if (this.volumetricBeam && this.volumetricUniforms) {
       this.volumetricBeam.visible = true;
@@ -3190,6 +3198,7 @@ export class Sinharaja3DEngine {
   update(dt) {
     if (this.paused) return;
     this.elapsedTime += dt;
+    this.gameClock = this.elapsedTime;
 
     if (this.crankCooldown > 0) this.crankCooldown -= dt;
     if (this.repellentTimer > 0) this.repellentTimer -= dt;
@@ -3413,7 +3422,7 @@ export class Sinharaja3DEngine {
       for (let i = 0; i < this.puddles.length; i++) {
         const p = this.puddles[i];
         if (p.material) {
-          p.material.roughness = 0.04 + Math.sin(this.gameClock * 3.5 + i * 1.5) * 0.02;
+          p.material.roughness = 0.04 + Math.sin(this.elapsedTime * 3.5 + i * 1.5) * 0.02;
         }
       }
     }
@@ -3421,9 +3430,9 @@ export class Sinharaja3DEngine {
     // Dynamic Antique Brass Key Floating & Beacon Glow Pulse
     if (this.keyGroup && !this.tasks.keyFound) {
       this.keyGroup.rotation.y += dt * 1.5;
-      this.keyGroup.position.y = this.keyBaseY + Math.sin(this.gameClock * 2.5) * 0.08;
+      this.keyGroup.position.y = this.keyBaseY + Math.sin(this.elapsedTime * 2.5) * 0.08;
       if (this.keyLight) {
-        this.keyLight.intensity = 2.4 + Math.sin(this.gameClock * 3.2) * 0.6;
+        this.keyLight.intensity = 2.4 + Math.sin(this.elapsedTime * 3.2) * 0.6;
       }
     }
 
@@ -3508,8 +3517,9 @@ export class Sinharaja3DEngine {
         this.ambientLight.intensity = 2.0;
       } else {
         this.lightningActive = false;
-        this.moonLight.intensity = 0.48;
-        this.ambientLight.intensity = 0.44;
+        this.moonLight.intensity = 1.35;
+        this.ambientLight.intensity = 1.15;
+        if (this.hemiLight) this.hemiLight.intensity = 1.25;
       }
     }
 
