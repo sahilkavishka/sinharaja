@@ -543,7 +543,8 @@ const CHAPTERS = [
     desc: "ගස් මුල්වලින් වැසුණු රහස් පර්යේෂණ කඳවුරේ ජෙනරේටර් පණගන්වා, අගුළු දැමූ විද්‍යාගාරයේ රහස් ලිපිගොනු සහ DNA සාම්පල සොයාගන්න.",
     image: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=1200",
     climate: "COMPLEX 87 // INDUSTRIAL BLACKOUT",
-    reqMsg: "Chapter 03 සාර්ථකව නිම කරන්න.",
+    isDeploying: true,
+    reqMsg: "සංවර්ධනය වෙමින් පවතී (DEPLOYING SOON) — නුදුරේදීම නිකුත් වේ.",
     evidenceList: [
       { id: "ch4_docs", name: "රහස් ලිපිගොනුව", icon: "Folder" },
       { id: "ch4_keycard", name: "ප්‍රවේශ කාඩ්පත", icon: "Keycard" },
@@ -564,7 +565,8 @@ const CHAPTERS = [
     desc: "අඩි 150ක් උසින් පිහිටි යෝධ නාවෘක්ෂ වියන් පාලම (Canopy Walkway) මතින් නැගී, 1987 අතුරුදහන් වීමේ සම්පූර්ණ සත්‍යය හෙළිකර අවසාන ගලවාගැනීමේ යානය අමතන්න.",
     image: "https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?q=80&w=1200",
     climate: "STRATOSPHERE // GOLDEN CANOPY",
-    reqMsg: "සියලු පරිච්ඡේදවල සාක්ෂි එකතු කිරීමෙන් පසු විවෘත වේ.",
+    isDeploying: true,
+    reqMsg: "සංවර්ධනය වෙමින් පවතී (DEPLOYING SOON) — නුදුරේදීම නිකුත් වේ.",
     evidenceList: [
       { id: "ch5_blackbox", name: "ගවේෂණ කළු පෙට්ටිය", icon: "Box" },
       { id: "ch5_beacon", name: "අවසාන සංඥා උපකරණය", icon: "Satellite" },
@@ -824,13 +826,120 @@ const TreeFernIllustration = () => (
   </svg>
 );
 
+const LeopardIllustration = () => (
+  <svg viewBox="0 0 120 100" width="100%" height="100%">
+    <defs>
+      <linearGradient id="leopardCoat" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#f59e0b" />
+        <stop offset="50%" stopColor="#d97706" />
+        <stop offset="100%" stopColor="#b45309" />
+      </linearGradient>
+      <radialGradient id="leopardEyeGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stopColor="#34d399" />
+        <stop offset="60%" stopColor="#10b981" />
+        <stop offset="100%" stopColor="#047857" />
+      </radialGradient>
+    </defs>
+    {/* Rock Promontory */}
+    <path d="M 10 92 Q 40 76 80 82 Q 110 86 115 95 L 5 98 Z" fill="#1e293b" />
+    {/* Body */}
+    <ellipse cx="55" cy="62" rx="34" ry="18" fill="url(#leopardCoat)" />
+    <ellipse cx="52" cy="65" rx="26" ry="12" fill="#fef3c7" opacity="0.35" />
+    {/* Rosettes */}
+    <ellipse cx="38" cy="60" rx="3" ry="2.2" fill="#18181b" />
+    <ellipse cx="48" cy="56" rx="3.5" ry="2.5" fill="#18181b" />
+    <ellipse cx="62" cy="58" rx="3.2" ry="2.2" fill="#18181b" />
+    <ellipse cx="72" cy="64" rx="2.8" ry="2.0" fill="#18181b" />
+    <ellipse cx="44" cy="68" rx="2.5" ry="1.8" fill="#18181b" />
+    <ellipse cx="58" cy="68" rx="2.6" ry="2.0" fill="#18181b" />
+    {/* Tail */}
+    <path d="M 24 64 Q 10 72 15 88 Q 18 96 12 98" stroke="url(#leopardCoat)" strokeWidth="6" strokeLinecap="round" fill="none" />
+    <circle cx="12" cy="98" r="3.2" fill="#18181b" />
+    {/* Front Paws */}
+    <rect x="74" y="68" width="9" height="18" rx="4" fill="url(#leopardCoat)" />
+    <rect x="85" y="67" width="9" height="19" rx="4" fill="url(#leopardCoat)" />
+    {/* Feline Head */}
+    <circle cx="88" cy="45" r="14" fill="url(#leopardCoat)" />
+    {/* Ears */}
+    <path d="M 80 34 L 84 25 L 89 33 Z" fill="#18181b" />
+    <path d="M 82 33 L 84 27 L 87 33 Z" fill="#fef3c7" />
+    <path d="M 92 34 L 97 26 L 100 35 Z" fill="#18181b" />
+    <path d="M 94 34 L 97 28 L 99 34 Z" fill="#fef3c7" />
+    {/* Muzzle */}
+    <ellipse cx="96" cy="48" rx="6.5" ry="4.5" fill="#fef3c7" />
+    <polygon points="95,46 99,46 97,49" fill="#18181b" />
+    {/* Whiskers */}
+    <line x1="97" y1="48" x2="112" y2="46" stroke="#fff" strokeWidth="0.8" opacity="0.8" />
+    <line x1="97" y1="49" x2="111" y2="51" stroke="#fff" strokeWidth="0.8" opacity="0.8" />
+    {/* Amber / Emerald Glowing Eyes */}
+    <ellipse cx="86" cy="42" rx="2.8" ry="3.2" fill="url(#leopardEyeGlow)" />
+    <line x1="86" y1="39" x2="86" y2="45" stroke="#111" strokeWidth="1.2" strokeLinecap="round" />
+    <ellipse cx="94" cy="42" rx="2.8" ry="3.2" fill="url(#leopardEyeGlow)" />
+    <line x1="94" y1="39" x2="94" y2="45" stroke="#111" strokeWidth="1.2" strokeLinecap="round" />
+  </svg>
+);
+
+const MonolithIllustration = () => (
+  <svg viewBox="0 0 120 100" width="100%" height="100%">
+    <defs>
+      <linearGradient id="monolithStone" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="#334155" />
+        <stop offset="100%" stopColor="#0f172a" />
+      </linearGradient>
+    </defs>
+    <rect x="0" y="0" width="120" height="100" fill="#07120c" />
+    <rect x="25" y="25" width="16" height="65" rx="2" fill="url(#monolithStone)" />
+    <rect x="79" y="25" width="16" height="65" rx="2" fill="url(#monolithStone)" />
+    <rect x="20" y="16" width="80" height="12" rx="2" fill="url(#monolithStone)" />
+    {/* Cave Darkness & Cyan Runes */}
+    <rect x="41" y="28" width="38" height="62" fill="#030712" />
+    <circle cx="60" cy="55" r="18" fill="rgba(6, 182, 212, 0.15)" />
+    <path d="M 52 48 L 60 40 L 68 48 L 60 56 Z" stroke="#38bdf8" strokeWidth="2" fill="none" />
+    <line x1="60" y1="56" x2="60" y2="70" stroke="#06b6d4" strokeWidth="2" />
+    <line x1="50" y1="64" x2="70" y2="64" stroke="#06b6d4" strokeWidth="2" />
+  </svg>
+);
+
+const CabinIllustration = () => (
+  <svg viewBox="0 0 120 100" width="100%" height="100%">
+    <rect x="0" y="0" width="120" height="100" fill="#0a1a12" />
+    <polygon points="15,45 60,15 105,45" fill="#3f2e1e" />
+    <rect x="25" y="45" width="70" height="45" fill="#5c4033" />
+    <rect x="52" y="60" width="16" height="30" fill="#2d1c10" />
+    <rect x="32" y="55" width="14" height="14" fill="#fbbf24" opacity="0.85" />
+    <rect x="74" y="55" width="14" height="14" fill="#fbbf24" opacity="0.85" />
+    {/* Porch light */}
+    <circle cx="60" cy="56" r="4" fill="#ffedd5" />
+    <circle cx="60" cy="56" r="14" fill="rgba(251, 191, 36, 0.25)" />
+  </svg>
+);
+
+const ForestIllustration = () => (
+  <svg viewBox="0 0 120 100" width="100%" height="100%">
+    <rect x="0" y="0" width="120" height="100" fill="#051b11" />
+    <circle cx="30" cy="35" r="28" fill="#064e3b" opacity="0.7" />
+    <circle cx="85" cy="30" r="32" fill="#065f46" opacity="0.75" />
+    <circle cx="58" cy="42" r="24" fill="#047857" opacity="0.8" />
+    <path d="M 0 90 Q 60 75 120 90 L 120 100 L 0 100 Z" fill="#022c22" />
+    <line x1="28" y1="50" x2="28" y2="92" stroke="#292524" strokeWidth="5" />
+    <line x1="88" y1="46" x2="88" y2="92" stroke="#292524" strokeWidth="6" />
+    <circle cx="60" cy="70" r="1.5" fill="#4ade80" />
+    <circle cx="75" cy="62" r="1.8" fill="#4ade80" />
+    <circle cx="42" cy="65" r="1.2" fill="#4ade80" />
+  </svg>
+);
+
 const SPECIES_ILLUSTRATIONS = {
   magpie: MagpieIllustration,
   langur: LangurIllustration,
   viper: ViperIllustration,
+  leopard: LeopardIllustration,
   firefly: FireflyIllustration,
   pitcher: PitcherIllustration,
   fern: TreeFernIllustration,
+  monolith: MonolithIllustration,
+  outpost: CabinIllustration,
+  forest: ForestIllustration,
 };
 
 // ── Master Evidence Case Data (15 Items Across 5 Chapters) ───────────────
@@ -917,6 +1026,7 @@ export const MASTER_EVIDENCE = [
     forensicNotesEnglish: "Hand-inked elevations on waterproof vellum marking the cavern coordinates behind the secondary cascade.",
     connectionTo: "tape",
     connectionText: "සන්නිවේදන කඳවුර දෙසට මඟ පෙන්වයි (Directs to field radio post)",
+    hasInspectAction: "map2",
   },
   {
     id: "tape",
@@ -1192,6 +1302,21 @@ export const MASTER_FIELD_GUIDE = [
     survivalTipEnglish: "Always shine torch [F] on ground trail litter. Apply Kithul Herbal Infusion [H] immediately if envenomed.",
   },
   {
+    id: "sri_lanka_leopard",
+    nameSinhala: "ශ්‍රී ලංකා කොටියා",
+    nameEnglish: "Sri Lankan Leopard",
+    scientificName: "Panthera pardus kotiya",
+    category: "FAUNA // APEX PREDATOR",
+    status: "Endangered (IUCN Red List)",
+    habitat: "Granite Promontories, Ridge Bluffs & Dense Rainforest Core",
+    icon: "Target",
+    illustrationType: "leopard",
+    descriptionSinhala: "සිංහරාජයේ රජු වන ආවේණික අග්‍රගන්‍ය ක්ෂීරපායී විලෝපිකයා. රන්වන්-දුඹුරු සම මත ඝන කළු රොසෙට් ලප රටා සහිත මොවුන් රාත්‍රී කුණාටු මැද උස් ගල් පර මත සිට නිම්නය දෙස සීරුවෙන් බලා සිටියි.",
+    descriptionEnglish: "The apex terrestrial carnivore strictly endemic to Sri Lanka. Features a powerful, muscular frame with golden-tawny pelt patterned in rich black rosettes. Silently surveys the valley from high rock bluffs.",
+    survivalTipSinhala: "කොටියා දුටු විට කලබල නොවී සීරුවෙන් පසුපසට වන්න. ආලෝකය [F] දැල්වීමෙන් විලෝපිකයා දුරස්ථව තබාගත හැක. කැමරාවෙන් [C] ඡායාරූප ලබාගන්න.",
+    survivalTipEnglish: "Maintain visual contact and step back slowly if spotted. Strong flashlight beam [F] discourages predatory interest. Use Camera [C] for field records.",
+  },
+  {
     id: "firefly",
     nameSinhala: "සිංහරාජ කලාමැදිරියන් (සමමුහුර්ත ප්‍රතිදීප්ත කෘමීන්)",
     nameEnglish: "Synchronous Fireflies",
@@ -1286,6 +1411,23 @@ export const EXPEDITION_LORE_LOGS = [
   },
 ];
 
+// Authentic 1987 Field Audio Transmission by Prof. Arthur Douglas
+const DOUGLAS_VOICE_SCRIPT =
+  "Expedition log, November 14, 1987. Professor Arthur Douglas recording. " +
+  "A sudden torrential storm has breached the riverbanks. The valley is rapidly flooding! " +
+  "Do not attempt to swim the surging river currents—you must cross via the giant fallen timber trunk bridge. " +
+  "Search beneath my outpost workbench: secure the UV Blacklight torch using key 'U'. " +
+  "We marked our retreat trail with luminescent ultraviolet footprints leading directly to the ancient monolith cavern. " +
+  "Recover the three critical expedition evidence items: my Field Journal, the Brass Key, and the Bioluminescent Flora Specimen. " +
+  "Then ascend through the cavern tunnel to the summit ridge helipad for emergency extraction. " +
+  "Stay vigilant, officer. Sinharaja's deepest secrets are now in your hands.";
+
+// Authentic 1987 Field Audio Dispatch by Dr. Jayasuriya (Chapter 2)
+const JAYASURIYA_VOICE_SCRIPT =
+  "Expedition field dispatch, December 2nd, 1987. Dr. Jayasuriya, chief geologist recording. " +
+  "The blue crystal inside the mine is disrupting our radios... the water level is rising! " +
+  "Our only chance of escape is the radio tower on the summit!";
+
 // ── Forensic Investigation Evidence Board Modal ───────────────────────────
 function EvidenceBoardModal({
   isOpen,
@@ -1296,6 +1438,7 @@ function EvidenceBoardModal({
   onInspectDiary,
   onInspectTape,
   onInspectDouglasTape,
+  onInspectMap,
   viewMode = "playing",
 }) {
   const [activeTab, setActiveTab] = useState(viewMode === "playing" ? String(activeChapter) : "all");
@@ -1611,6 +1754,18 @@ function EvidenceBoardModal({
                     </button>
                   )}
 
+                  {evidence[selectedEvidence.id] && (selectedEvidence.hasInspectAction === "map2" || selectedEvidence.id === "map2") && (
+                    <button
+                      className="inspector-action-btn btn-primary-gold"
+                      onClick={() => {
+                        setSelectedEvidence(null);
+                        if (onInspectMap) onInspectMap();
+                      }}
+                    >
+                      <Icons.Map className="tactical-svg-icon" /> {lang === "en" ? "VIEW TOPOGRAPHIC SURVEY MAP" : "භූවිද්‍යා සමීක්ෂණ සිතියම බලන්න"}
+                    </button>
+                  )}
+
                   {evidence[selectedEvidence.id] && selectedEvidence.id === "ch4_docs" && (
                     <button
                       className="inspector-action-btn btn-primary-gold"
@@ -1841,13 +1996,21 @@ function FieldJournalModal({
                     <div className="polaroid-pin pin-yellow" />
                     <div className="polaroid-tape top-left" />
                     <div className="album-photo-box">
-                      <Icons.Camera className="album-svg-cam" />
+                      {photo.snapshotUrl ? (
+                        <img src={photo.snapshotUrl} alt={photo.name || photo.title} className="album-real-snapshot" />
+                      ) : SPECIES_ILLUSTRATIONS[photo.illustrationType] ? (
+                        <div className="album-illustration-fallback">
+                          {React.createElement(SPECIES_ILLUSTRATIONS[photo.illustrationType])}
+                        </div>
+                      ) : (
+                        <Icons.Camera className="album-svg-cam" />
+                      )}
                       <span className="photo-stamp">FIELD VERIFIED</span>
                     </div>
                     <div className="album-caption-box">
-                      <h4>{photo.name}</h4>
+                      <h4>{photo.name || photo.title}</h4>
                       <p>{photo.desc}</p>
-                      <span className="album-date-stamp">EXPEDITION SNAPSHOT // 2024</span>
+                      <span className="album-date-stamp">{photo.date || "1987.11.14 // EXPEDITION"}</span>
                     </div>
                   </div>
                 ))}
@@ -1862,11 +2025,19 @@ function FieldJournalModal({
         <div className="photo-lightbox-overlay" onClick={() => setSelectedPhoto(null)}>
           <div className="photo-lightbox-card" onClick={(e) => e.stopPropagation()}>
             <div className="lightbox-header">
-              <h3>{selectedPhoto.name}</h3>
+              <h3>{selectedPhoto.name || selectedPhoto.title}</h3>
               <button className="inspector-close-btn" onClick={() => setSelectedPhoto(null)}>✕</button>
             </div>
             <div className="lightbox-photo-large">
-              <Icons.Camera className="lightbox-svg-icon" />
+              {selectedPhoto.snapshotUrl ? (
+                <img src={selectedPhoto.snapshotUrl} alt={selectedPhoto.name || selectedPhoto.title} className="lightbox-real-snapshot" />
+              ) : SPECIES_ILLUSTRATIONS[selectedPhoto.illustrationType] ? (
+                <div className="lightbox-illustration-fallback">
+                  {React.createElement(SPECIES_ILLUSTRATIONS[selectedPhoto.illustrationType])}
+                </div>
+              ) : (
+                <Icons.Camera className="lightbox-svg-icon" />
+              )}
             </div>
             <p className="lightbox-desc">{selectedPhoto.desc}</p>
             <button className="inspector-action-btn btn-secondary-back" onClick={() => setSelectedPhoto(null)}>
@@ -1939,9 +2110,9 @@ export default function App() {
   const [isMuted, setIsMuted] = useState(false);
   const [lang, setLang] = useState(() => {
     try {
-      return localStorage.getItem("sinharaja_lang") || "si";
+      return localStorage.getItem("sinharaja_lang") || "en";
     } catch (e) {
-      return "si";
+      return "en";
     }
   });
   const [controlScheme, setControlScheme] = useState(() => {
@@ -2008,7 +2179,12 @@ export default function App() {
   const [showInventory, setShowInventory] = useState(false);
   const [inspectDiaryOpen, setInspectDiaryOpen] = useState(false);
   const [inspectTapeOpen, setInspectTapeOpen] = useState(false);
+  const [isJayasuriyaVoicePlaying, setIsJayasuriyaVoicePlaying] = useState(false);
+  const jayasuriyaUtteranceRef = useRef(null);
+  const [inspectMap2Open, setInspectMap2Open] = useState(false);
   const [inspectDouglasTapeOpen, setInspectDouglasTapeOpen] = useState(false);
+  const [isDouglasVoicePlaying, setIsDouglasVoicePlaying] = useState(false);
+  const douglasUtteranceRef = useRef(null);
   const [radioTransmission, setRadioTransmission] = useState(null);
   const [showDebriefing, setShowDebriefing] = useState(false);
   const [dialogue, setDialogue] = useState(null);
@@ -2041,8 +2217,9 @@ export default function App() {
   // Interactive Rune Puzzle Modal State
   const [runePuzzleOpen, setRunePuzzleOpen] = useState(false);
   const [dial1, setDial1] = useState(0);
-  const [dial2, setDial2] = useState(0);
-  const [dial3, setDial3] = useState(0);
+  const [dial2, setDial2] = useState(2);
+  const [dial3, setDial3] = useState(3);
+  const [showRiddleHelper, setShowRiddleHelper] = useState(false);
   const [puzzleError, setPuzzleError] = useState("");
   const unlockCallbackRef = useRef(null);
 
@@ -2158,6 +2335,11 @@ export default function App() {
 
   // Launch Active Chapter
   const launchChapter = (chapId) => {
+    const targetChap = CHAPTERS.find((c) => c.id === chapId);
+    if (chapId >= 4 || targetChap?.isDeploying) {
+      showToast(`🚧 [DEPLOYING SOON] Chapter 0${chapId} සංවර්ධනය වෙමින් පවතී (Under Active Deployment). ඉදිරියේදී නිකුත් වේ!`);
+      return;
+    }
     if (!unlockedChapters.includes(chapId)) {
       showToast("[LOCKED] මෙම පරිච්ඡේදය තවමත් අගුළු වැටී ඇත! පෙර පරිච්ඡේදය අවසන් කරන්න.");
       return;
@@ -2165,7 +2347,7 @@ export default function App() {
     setActiveChapter(chapId);
     setGameOver(null);
     setIsPaused(false);
-    setControlsEngaged(false);
+    setControlsEngaged(true);
     setShowOnboardingTip(false);
     setCurrentView("playing");
 
@@ -2179,19 +2361,25 @@ export default function App() {
         textEn: "Kudawa Outpost: Investigate Douglas's camp, recover all 3 field evidence clues, and advance toward the cave portal!",
       });
     } else if (chapId === 2) {
-      setDialogue({
-        title: "CHAPTER 02: නිහඬ දියඇලි නිම්නය",
+      setDialogue(null);
+      setRadioTransmission({
+        id: "chap2_start",
         speaker: "EXPEDITION HQ",
-        avatar: "Radio",
-        text: "දෙවන කලාපය: දියඇලි ජල කඳ තරණය කිරීමට උණ බම්බු පහුර සොයාගන්න. අතුරුදහන් වූ භූවිද්‍යා කඳවුරේ සිතියම, පටිගත කළ හඬපටය සහ නිල් ස්ඵටිකය සොයාගෙන කඳු මුදුනේ සංඥා කුලුන දල්වන්න!",
+        callsign: "HQ DISPATCH",
+        text: "මීදුම් නිම්නය: කඩා වැටුණු හෙලිකොප්ටරය සහ භූවිද්‍යා කඳවුර පරීක්ෂා කරන්න. උණ බම්බු පහුරෙන් සැඩ පහර තරණය කර දියඇල්ල පිටුපස රහස් පතල සොයාගන්න!",
+        textEn: "Mist Gorge: Inspect crashed chopper and expedition camp. Lash bamboo raft to cross the rapids and locate the hidden mine!",
       });
     } else if (chapId === 3) {
-      setDialogue({
-        title: "CHAPTER 03: යක්ෂ ගිරි භූගත අගාධය",
+      setDialogue(null);
+      setRadioTransmission({
+        id: "chap3_start",
         speaker: "EXPEDITION HQ",
-        avatar: "Radio",
-        text: "තුන්වන කලාපය: ගැඹුරු හුණුගල් ලෙන් අගාධය! විෂ සල්ෆර් වායුවෙන් ආරක්ෂා වීමට Gas Mask එක පළඳින්න. ජල සොරොව්ව හරවා ප්‍රතිදීප්ත අගාධ පාෂාණය සහ පතල් වාර්තා ලබාගෙන භූගත ලිෆ්ට් එකෙන් පිටවන්න!",
+        callsign: "HQ DISPATCH",
+        text: "තුන්වන කලාපය (The Hollow Below): කේබල් ඩක්කුවෙන් බැස භූගත ලෙන් පද්ධතියට පිවිසෙන්න. 1987 ගවේෂණ කණ්ඩායමේ උපකරණ, ලෙන් සටහන් සහ අගාධයේ නිල් ස්ඵටික රහස් සොයාගෙන රහස් පර්යේෂණාගාර පිවිසුම විවෘත කරන්න!",
+        textEn: "The Hollow Below: Disembark into the subterranean cavern network. Track the 1987 expedition traces, decode cave inscriptions, navigate the subterranean river, and uncover the route to the Forgotten Facility!",
       });
+      setControlsEngaged(true);
+      setShowOnboardingTip(false);
     } else if (chapId === 4) {
       setDialogue({
         title: "CHAPTER 04: නටබුන් වූ රහස් පර්යේෂණාගාරය",
@@ -2216,13 +2404,237 @@ export default function App() {
     }
   };
 
-  // Toggle Pause
-  const togglePause = useCallback(() => {
+  const playDouglasVoice = useCallback(() => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      setToastMsg("Speech synthesis not supported in this browser.");
+      return;
+    }
+
+    try {
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(DOUGLAS_VOICE_SCRIPT);
+      utterance.lang = "en-US";
+      utterance.rate = 0.88;
+      utterance.pitch = 0.92;
+
+      const voices = window.speechSynthesis.getVoices();
+      const selectedVoice =
+        voices.find(
+          (v) =>
+            v.lang.startsWith("en") &&
+            (v.name.includes("Male") ||
+              v.name.includes("David") ||
+              v.name.includes("George") ||
+              v.name.includes("Natural") ||
+              v.name.includes("English"))
+        ) || voices.find((v) => v.lang.startsWith("en"));
+
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+      }
+
+      utterance.onstart = () => {
+        setIsDouglasVoicePlaying(true);
+      };
+      utterance.onend = () => {
+        setIsDouglasVoicePlaying(false);
+      };
+      utterance.onerror = () => {
+        setIsDouglasVoicePlaying(false);
+      };
+
+      douglasUtteranceRef.current = utterance;
+      window.speechSynthesis.speak(utterance);
+    } catch (err) {
+      console.warn("Speech synthesis error:", err);
+      setIsDouglasVoicePlaying(false);
+    }
+  }, []);
+
+  const stopDouglasVoice = useCallback(() => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch (err) {}
+    }
+    setIsDouglasVoicePlaying(false);
+  }, []);
+
+  const playJayasuriyaVoice = useCallback(() => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      setToastMsg("Speech synthesis not supported in this browser.");
+      return;
+    }
+
+    try {
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(JAYASURIYA_VOICE_SCRIPT);
+      utterance.lang = "en-US";
+      utterance.rate = 0.88;
+      utterance.pitch = 0.94;
+
+      const voices = window.speechSynthesis.getVoices();
+      const selectedVoice =
+        voices.find(
+          (v) =>
+            v.lang.startsWith("en") &&
+            (v.name.includes("Male") ||
+              v.name.includes("David") ||
+              v.name.includes("George") ||
+              v.name.includes("Natural") ||
+              v.name.includes("English"))
+        ) || voices.find((v) => v.lang.startsWith("en"));
+
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+      }
+
+      utterance.onstart = () => {
+        setIsJayasuriyaVoicePlaying(true);
+      };
+      utterance.onend = () => {
+        setIsJayasuriyaVoicePlaying(false);
+      };
+      utterance.onerror = () => {
+        setIsJayasuriyaVoicePlaying(false);
+      };
+
+      jayasuriyaUtteranceRef.current = utterance;
+      window.speechSynthesis.speak(utterance);
+    } catch (err) {
+      console.warn("Speech synthesis error:", err);
+      setIsJayasuriyaVoicePlaying(false);
+    }
+  }, []);
+
+  const stopJayasuriyaVoice = useCallback(() => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch (err) {}
+    }
+    setIsJayasuriyaVoicePlaying(false);
+  }, []);
+
+  // Active modals ref so handleGlobalEscape and togglePause have stable identities without triggering engine re-initialization
+  const activeModalsRef = useRef({});
+  activeModalsRef.current = {
+    photoModal,
+    dialogue,
+    runePuzzleOpen,
+    inspectDouglasTapeOpen,
+    inspectTapeOpen,
+    inspectMap2Open,
+    inspectDiaryOpen,
+    showInventory,
+    showTacticalMap,
+    showEvidenceBoard,
+    showJournal,
+    showDebriefing,
+  };
+
+  // Centralized Global Escape Handler: dismisses whichever modal is active first, avoiding pause conflict
+  const handleGlobalEscape = useCallback(() => {
+    const modals = activeModalsRef.current;
+    if (modals.photoModal) {
+      setPhotoModal(null);
+      return;
+    }
+    if (modals.dialogue) {
+      setDialogue(null);
+      if (engineRef.current) engineRef.current.requestPointerLock();
+      return;
+    }
+    if (modals.runePuzzleOpen) {
+      setRunePuzzleOpen(false);
+      return;
+    }
+    if (modals.inspectDouglasTapeOpen) {
+      stopDouglasVoice();
+      setInspectDouglasTapeOpen(false);
+      return;
+    }
+    if (modals.inspectTapeOpen) {
+      stopJayasuriyaVoice();
+      setInspectTapeOpen(false);
+      return;
+    }
+    if (modals.inspectMap2Open) {
+      setInspectMap2Open(false);
+      return;
+    }
+    if (modals.inspectDiaryOpen) {
+      setInspectDiaryOpen(false);
+      return;
+    }
+    if (modals.showInventory) {
+      setShowInventory(false);
+      return;
+    }
+    if (modals.showTacticalMap) {
+      setShowTacticalMap(false);
+      return;
+    }
+    if (modals.showEvidenceBoard) {
+      setShowEvidenceBoard(false);
+      return;
+    }
+    if (modals.showJournal) {
+      setShowJournal(false);
+      return;
+    }
+    if (modals.showDebriefing) {
+      setShowDebriefing(false);
+      return;
+    }
+
+    // If no modal is open, toggle game pause cleanly
     setIsPaused((prev) => {
       const next = !prev;
       if (engineRef.current) engineRef.current.paused = next;
       return next;
     });
+  }, [stopDouglasVoice, stopJayasuriyaVoice]);
+
+  const handleGlobalEscapeRef = useRef(handleGlobalEscape);
+  handleGlobalEscapeRef.current = handleGlobalEscape;
+
+  // Toggle Pause (stable reference with empty dependencies)
+  const togglePause = useCallback(() => {
+    if (handleGlobalEscapeRef.current) {
+      handleGlobalEscapeRef.current();
+    }
+  }, []);
+
+  // Global Escape key listener & Pointer Lock rejection suppressor
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      if (e.key === "Escape" || e.code === "Escape") {
+        e.preventDefault();
+        handleGlobalEscape();
+      }
+    };
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [handleGlobalEscape]);
+
+  useEffect(() => {
+    const handleRejection = (event) => {
+      if (
+        event.reason &&
+        (event.reason.name === "DOMException" ||
+          (typeof event.reason.message === "string" &&
+            (event.reason.message.includes("pointer") ||
+              event.reason.message.includes("Pointer") ||
+              event.reason.message.includes("exited the lock"))))
+      ) {
+        event.preventDefault();
+      }
+    };
+    window.addEventListener("unhandledrejection", handleRejection);
+    return () => window.removeEventListener("unhandledrejection", handleRejection);
   }, []);
 
   // Engage Controls & Pointer Lock
@@ -2279,6 +2691,7 @@ export default function App() {
       dialogue ||
       runePuzzleOpen ||
       inspectTapeOpen ||
+      inspectMap2Open ||
       inspectDouglasTapeOpen ||
       inspectDiaryOpen ||
       showTacticalMap ||
@@ -2298,6 +2711,7 @@ export default function App() {
     dialogue,
     runePuzzleOpen,
     inspectTapeOpen,
+    inspectMap2Open,
     inspectDouglasTapeOpen,
     inspectDiaryOpen,
     showTacticalMap,
@@ -2334,6 +2748,7 @@ export default function App() {
     const engine = new Sinharaja3DEngine(canvas, {
       chapter: activeChapter,
       lang,
+      evidence,
       onPointerLockChange: (locked) => {
         setIsPointerLocked(locked);
         if (locked) setControlsEngaged(true);
@@ -2413,7 +2828,10 @@ export default function App() {
         setIsImmersiveHud((prev) => !prev);
       },
       onTogglePause: () => {
-        togglePause();
+        handleGlobalEscape();
+      },
+      onEscapePress: () => {
+        handleGlobalEscape();
       },
       onToggleMap: () => {
         setShowTacticalMap((prev) => {
@@ -2436,10 +2854,21 @@ export default function App() {
       },
       onOpenRunePuzzle: (unlockCallback) => {
         unlockCallbackRef.current = unlockCallback;
+        setDial1(Math.random() < 0.5 ? 0 : 3);
+        setDial2(Math.random() < 0.5 ? 0 : 2);
+        setDial3(Math.random() < 0.5 ? 2 : 3);
+        setShowRiddleHelper(false);
+        setPuzzleError("");
         setRunePuzzleOpen(true);
       },
       onOpenDouglasTape: () => {
         setInspectDouglasTapeOpen(true);
+      },
+      onOpenTapeModal: () => {
+        setInspectTapeOpen(true);
+      },
+      onOpenMap2Modal: () => {
+        setInspectMap2Open(true);
       },
       onRadioTransmission: (data) => {
         setRadioTransmission(data);
@@ -2461,16 +2890,42 @@ export default function App() {
       },
       onPhotoCaptured: (photo) => {
         setCapturedPhotos((prev) => {
-          if (prev.some((p) => p.id === photo.id)) return prev;
-          const updated = [...prev, photo];
-          if (saveGameRef.current) {
-            setTimeout(() => saveGameRef.current(), 100);
+          let updated = prev;
+          if (!prev.some((p) => p.id === photo.id)) {
+            updated = [...prev, photo];
+            if (saveGameRef.current) {
+              setTimeout(() => saveGameRef.current(), 100);
+            }
+          } else {
+            updated = prev.map((p) => (p.id === photo.id ? { ...p, ...photo } : p));
+          }
+          // Check for Master Wildlife Photographer achievement (All 4 Endemic Species)
+          const hasMagpie = updated.some((p) => p.id === "magpie_photo");
+          const hasViper = updated.some((p) => p.id === "viper_photo");
+          const hasLangur = updated.some((p) => p.id === "langur_photo");
+          const hasLeopard = updated.some((p) => p.id === "leopard_photo");
+          if (hasMagpie && hasViper && hasLangur && hasLeopard) {
+            setUnlockedAchievements((uPrev) => {
+              if (uPrev.includes("master_photographer")) return uPrev;
+              setAchievementToast({
+                id: "master_photographer",
+                name: lang === "en" ? "Golden Wildlife Master (All 4 Species)" : "වනජීවී විශාරද සම්මානය (සතුන් 4ම)",
+                icon: "🏆",
+              });
+              setTimeout(() => setAchievementToast(null), 4500);
+              return [...uPrev, "master_photographer"];
+            });
           }
           return updated;
         });
         setPhotoFlash(true);
         setTimeout(() => setPhotoFlash(false), 250);
-        setPhotoModal(photo);
+        // User Request #6: Silently save photo without modal description popup
+        showToast(
+          lang === "en"
+            ? `📸 Photo Saved to Album: ${photo.titleEn || photo.title || photo.name || "Wild Specimen"}`
+            : `📸 ඡායාරූපය ඇල්බමයට සුරැකිණි: ${photo.title || photo.name || "වනජීවී ඡායාරූපය"}`
+        );
       },
       onAchievementUnlocked: (id, name, icon) => {
         setUnlockedAchievements((prev) => {
@@ -2515,6 +2970,7 @@ export default function App() {
     });
 
     engineRef.current = engine;
+    window.__SINHARAJA_ENGINE__ = engine;
     if (isMuted) engine.setMuted(true);
 
     return () => {
@@ -2525,7 +2981,7 @@ export default function App() {
       engine.destroy();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentView, activeChapter, gameOver, showToast, togglePause]);
+  }, [currentView, activeChapter, gameOver]);
 
   // Synchronize audio mute state smoothly without restarting engine
   useEffect(() => {
@@ -2677,17 +3133,30 @@ export default function App() {
     const choice2 = DIAL_2_OPTIONS[dial2];
     const choice3 = DIAL_3_OPTIONS[dial3];
 
-    if (choice1.includes("සූර්යයා") && choice2.includes("ගංගාව") && choice3.includes("සිංහයා")) {
+    const isMatch =
+      (choice1.includes("SUN") || choice1.includes("සූර්යයා")) &&
+      (choice2.includes("RIVER") || choice2.includes("ගංගාව")) &&
+      (choice3.includes("LION") || choice3.includes("සිංහයා"));
+
+    if (isMatch) {
       setRunePuzzleOpen(false);
-      showToast("[ACCESS GRANTED] රහස් සංකේත නිවැරදියි! ලෙන් දොරටුව විවෘත විය.");
+      showToast(
+        lang === "en"
+          ? "[ACCESS GRANTED] Monolith cipher aligned! The subterranean cavern portal groans open."
+          : "[ACCESS GRANTED] රහස් සංකේත නිවැරදියි! ලෙන් දොරටුව විවෘත විය."
+      );
       if (engineRef.current) engineRef.current.playSfx("pickup");
       if (unlockCallbackRef.current) {
         unlockCallbackRef.current();
       }
     } else {
       if (engineRef.current) engineRef.current.playSfx("hurt");
-      setPuzzleError("[CODE ERROR] සංකේත ගැලපීම වැරදියි! දිනපොතේ සටහන නැවත සිතා බලන්න.");
-      setTimeout(() => setPuzzleError(""), 3500);
+      setPuzzleError(
+        lang === "en"
+          ? "[CIPHER MISMATCH] The stone tumblers grind and lock! Check your clues and align the 3 runes."
+          : "[සංකේත ගැලපීම වැරදියි] ගල් දොරටුවේ අගුල සිරවිය! හෝඩුවාවන් නැවත සිතා බලන්න."
+      );
+      setTimeout(() => setPuzzleError(""), 3800);
     }
   };
 
@@ -2708,48 +3177,120 @@ export default function App() {
   // Dynamic Active Mission Objective Tracking
   const getActiveObjectiveInfo = () => {
     if (activeChapter === 2) {
-      if (!stats.tasks?.mapFound) {
+      if (!stats.tasks?.reachCamp) {
         return {
-          title: "භූවිද්‍යා සිතියම (Geologist Map)",
-          icon: "Map",
-          x: 950,
-          y: 650,
-          desc: "අතහැර දැමූ භූවිද්‍යා කඳවුරේ සිතියම සොයාගන්න",
+          title: lang === "en" ? "Expedition Camp" : "භූවිද්‍යා කඳවුර",
+          icon: "Tent",
+          x: 125,
+          y: 155,
+          desc: lang === "en" ? "Reach the abandoned geological expedition camp" : "අතහැර දැමූ භූවිද්‍යා කඳවුර වෙත යන්න",
         };
       }
-      if (!stats.tasks?.raftUsed) {
+      if (!stats.tasks?.mapFound) {
         return {
-          title: "උණ බම්බු පහුර (Bamboo Raft)",
-          icon: "Target",
-          x: 820,
-          y: 980,
-          desc: "දියඇලි අගාධය තරණය කිරීමට උණ බම්බු පහුර පදින්න",
+          title: lang === "en" ? "Geologist Map (map2)" : "භූවිද්‍යා සිතියම",
+          icon: "Map",
+          x: 125,
+          y: 155,
+          desc: lang === "en" ? "Examine and collect the survey cartograph from the desk" : "කඳවුරු මේසය මත ඇති භූවිද්‍යා සිතියම ලබාගන්න",
+        };
+      }
+      if (!stats.tasks?.raftMaterialsFound) {
+        return {
+          title: lang === "en" ? "Raft Repair Materials" : "පහුරු අමුද්‍රව්‍ය",
+          icon: "Hammer",
+          x: 128,
+          y: 160,
+          desc: lang === "en" ? "Collect bamboo stalks and climbing ropes near camp" : "කඳවුර අසල ඇති උණ බම්බු සහ කඹ එකතු කරන්න",
+        };
+      }
+      if (!stats.tasks?.raftRepaired) {
+        return {
+          title: lang === "en" ? "Repair Bamboo Raft" : "පහුර අලුත්වැඩියාව",
+          icon: "Tool",
+          x: 138,
+          y: 185,
+          desc: lang === "en" ? "Assemble and lash the bamboo raft at the river landing" : "ගං ඉවුරේ ඇති උණ බම්බු පහුර අලුත්වැඩියා කරන්න",
+        };
+      }
+      if (!stats.tasks?.riverCrossed) {
+        return {
+          title: lang === "en" ? "Cross Galganga Rapids" : "ගංගාව තරණය",
+          icon: "Compass",
+          x: 138,
+          y: 185,
+          desc: lang === "en" ? "Board the bamboo raft and navigate the white-water rapids" : "පහුර පදවා සැඩ පහර තරණය කර එතෙර වන්න",
         };
       }
       if (!stats.tasks?.tapeFound) {
         return {
-          title: "හඬපටය (Cassette Tape)",
+          title: lang === "en" ? "Jayasuriya's Audio Tape" : "ආචාර්ය ජයසූරියගේ හඬපටය",
           icon: "Tape",
-          x: 1800,
-          y: 1750,
-          desc: "ජලයෙන් පෙඟුණු පටිගත කළ හඬපටය අහුලාගන්න",
+          x: 175,
+          y: 232,
+          desc: lang === "en" ? "Find the audio cassette wedged near the waterfall base" : "දියඇල්ල පාමුල ගල්පර අතර ඇති හඬපටය සොයාගන්න",
+        };
+      }
+      if (!stats.tasks?.mineFound) {
+        return {
+          title: lang === "en" ? "Hidden Mine Entrance" : "සැඟවුණු පතල් පිවිසුම",
+          icon: "Eye",
+          x: 198,
+          y: 252,
+          desc: lang === "en" ? "Locate the 19th-century mine entrance behind the waterfall" : "දියඇල්ල පිටුපස ඇති පැරණි පතල් පිවිසුම සොයාගන්න",
+        };
+      }
+      if (!stats.tasks?.mineEntered) {
+        return {
+          title: lang === "en" ? "Enter Flooded Mine" : "පතලට පිවිසෙන්න",
+          icon: "Door",
+          x: 205,
+          y: 258,
+          desc: lang === "en" ? "Pass through the timber-shored portal into the mine shaft" : "ලී රාමු සහිත දොරටුවෙන් පතල් කුහරය තුළට පිවිසෙන්න",
+        };
+      }
+      if (!stats.tasks?.pumpActivated) {
+        return {
+          title: lang === "en" ? "Drainage Pump Valve" : "ජල පොම්ප ලීවරය",
+          icon: "Tool",
+          x: 235,
+          y: 285,
+          desc: lang === "en" ? "Engage the steam/diesel drainage pump to lower the water" : "පතලේ ජලය බැස්සවීමට ජල පොම්පය ක්‍රියාත්මක කරන්න",
         };
       }
       if (!stats.tasks?.gemFound) {
         return {
-          title: "ස්ඵටික සාම්පලය (Crystal Sample)",
+          title: lang === "en" ? "Azure Crystal (gem)" : "නිල් ස්ඵටිකය",
           icon: "Crystal",
-          x: 2400,
-          y: 1500,
-          desc: "පැරණි පතලෙන් දීප්තිමත් නිල් ස්ඵටිකය ලබාගන්න",
+          x: 248,
+          y: 295,
+          desc: lang === "en" ? "Harvest the glowing blue piezoelectric crystal from the wall" : "පාෂාණ බිත්තියෙන් විහිදෙන නිල් ස්ඵටිකය ලබාගන්න",
+        };
+      }
+      if (!stats.tasks?.mineEscaped) {
+        return {
+          title: lang === "en" ? "Escape Collapsing Mine!" : "කඩා වැටෙන පතලෙන් පලායන්න!",
+          icon: "AlertTriangle",
+          x: 198,
+          y: 252,
+          desc: lang === "en" ? "Sprint to the surface before the cave-in crushes you!" : "පතල කඩා වැටීමට පෙර වහාම එළිමහනට දිවයන්න!",
+        };
+      }
+      if (!stats.tasks?.trolleyFixed) {
+        return {
+          title: lang === "en" ? "Cable Trolley Mechanism" : "කේබල් කරත්ත ලීවරය",
+          icon: "Tool",
+          x: 185,
+          y: 225,
+          desc: lang === "en" ? "Activate the winch mechanism on the cliffside cable trolley" : "කඳු ගැටය මත ඇති කේබල් කරත්තය සක්‍රිය කරන්න",
         };
       }
       return {
-        title: "සංඥා කුලුන (Signal Tower)",
-        icon: "Tower",
-        x: 2850,
-        y: 1900,
-        desc: "කඳු මුදුනේ සංඥා කුලුන වෙත ගොස් පණිවිඩය යවන්න",
+        title: lang === "en" ? "Traverse Chasm to Chapter 03" : "අගාධය හරහා Chapter 03 වෙත",
+        icon: "Flag",
+        x: 185,
+        y: 225,
+        desc: lang === "en" ? "Board the cable trolley and glide across the misty gorge" : "කේබල් කරත්තයට ගොඩවී අගාධය තරණය කරන්න",
       };
     }
 
@@ -2955,7 +3496,7 @@ export default function App() {
   };
 
   const activeObj = getActiveObjectiveInfo();
-  const distToActiveObj = activeChapter === 1
+  const distToActiveObj = activeChapter <= 2
     ? Math.round(Math.hypot(activeObj.x - stats.playerX, activeObj.y - stats.playerY))
     : Math.round(Math.hypot(activeObj.x - stats.playerX, activeObj.y - stats.playerY) / 10);
 
@@ -2965,6 +3506,12 @@ export default function App() {
       // 3D bounds for Chapter 1: X in [470, 560], Y (Z) in [705, 875]
       const pctX = Math.max(5, Math.min(95, ((worldX - 470) / (560 - 470)) * 82 + 9));
       const pctY = Math.max(5, Math.min(95, ((worldY - 705) / (875 - 705)) * 82 + 9));
+      return { left: `${pctX}%`, top: `${pctY}%` };
+    }
+    if (activeChapter === 2) {
+      // 3D bounds for Chapter 2: X in [90, 270], Y (Z) in [90, 320]
+      const pctX = Math.max(5, Math.min(95, ((worldX - 90) / (270 - 90)) * 82 + 9));
+      const pctY = Math.max(5, Math.min(95, ((worldY - 90) / (320 - 90)) * 82 + 9));
       return { left: `${pctX}%`, top: `${pctY}%` };
     }
     return {
@@ -3088,21 +3635,27 @@ export default function App() {
           <span className="sector-strip-label"><Icons.Crosshair className="tactical-svg-icon" /> {lang === "en" ? "SECTOR SELECTION:" : "කලාප තේරීම:"}</span>
           <div className="sector-nav-pills">
             {CHAPTERS.map((chap) => {
-              const isUnlocked = unlockedChapters.includes(chap.id);
+              const isDeploying = chap.isDeploying || chap.id >= 4;
+              const isUnlocked = !isDeploying && unlockedChapters.includes(chap.id);
               const isDone = completedChapters.includes(chap.id);
               return (
                 <button
                   key={chap.id}
-                  className={`sector-pill-btn ${isDone ? "pill-done" : isUnlocked ? "pill-ready" : "pill-locked"}`}
+                  className={`sector-pill-btn ${isDeploying ? "pill-deploying" : isDone ? "pill-done" : isUnlocked ? "pill-ready" : "pill-locked"}`}
                   onClick={() => {
-                    if (isUnlocked) launchChapter(chap.id);
-                    else showToast(`[LOCKED] ${chap.title} අගුළු වැටී ඇත!`);
+                    if (isDeploying) {
+                      showToast(`🚧 [DEPLOYING SOON] ${chap.title} සංවර්ධනය වෙමින් පවතී (Under Active Deployment).`);
+                    } else if (isUnlocked) {
+                      launchChapter(chap.id);
+                    } else {
+                      showToast(`[LOCKED] ${chap.title} අගුළු වැටී ඇත!`);
+                    }
                   }}
                 >
                   <span className="pill-dot" />
                   <strong>SEC 0{chap.id}</strong>
                   <span>{chap.sectorShort || chap.title}</span>
-                  <small>{isDone ? "✓" : isUnlocked ? "READY" : "LOCK"}</small>
+                  <small>{isDeploying ? "DEV" : isDone ? "✓" : isUnlocked ? "READY" : "LOCK"}</small>
                 </button>
               );
             })}
@@ -3112,21 +3665,34 @@ export default function App() {
         {/* Classified Mission Dossier Cards Grid */}
         <div className="chapters-grid">
           {CHAPTERS.map((chap) => {
-            const isUnlocked = unlockedChapters.includes(chap.id);
+            const isDeploying = chap.isDeploying || chap.id >= 4;
+            const isUnlocked = !isDeploying && unlockedChapters.includes(chap.id);
             const isDone = completedChapters.includes(chap.id);
             return (
               <div
                 key={chap.id}
-                className={`chapter-flashcard mission-dossier-card ${isUnlocked ? "unlocked" : "locked"} ${
+                className={`chapter-flashcard mission-dossier-card ${isDeploying ? "locked deploying-card" : isUnlocked ? "unlocked" : "locked"} ${
                   isDone ? "completed-card" : ""
                 }`}
-                onClick={() => isUnlocked && launchChapter(chap.id)}
+                onClick={() => {
+                  if (isDeploying) {
+                    showToast(`🚧 [DEPLOYING SOON] ${chap.title} සංවර්ධනය වෙමින් පවතී (Under Active Deployment).`);
+                  } else if (isUnlocked) {
+                    launchChapter(chap.id);
+                  }
+                }}
               >
                 {/* Dossier Card Header Tab */}
                 <div className="dossier-card-top-tab">
                   <span className="dossier-file-code">DOSSIER // FILE EXP-0{chap.id}</span>
-                  <span className={`status-badge ${isDone ? "completed" : isUnlocked ? "active" : "locked"}`}>
-                    {isDone ? "✓ ARCHIVE COMPLETED" : isUnlocked ? "CLEARED FOR DEPLOYMENT" : "TOP SECRET // CLASSIFIED"}
+                  <span className={`status-badge ${isDeploying ? "deploying" : isDone ? "completed" : isUnlocked ? "active" : "locked"}`}>
+                    {isDeploying
+                      ? "🚧 DEPLOYING SOON // සංවර්ධනය වෙමින් පවතී"
+                      : isDone
+                      ? "✓ ARCHIVE COMPLETED"
+                      : isUnlocked
+                      ? "CLEARED FOR DEPLOYMENT"
+                      : "TOP SECRET // CLASSIFIED"}
                   </span>
                 </div>
 
@@ -3184,24 +3750,35 @@ export default function App() {
                     </div>
                   )}
 
-                  {!isUnlocked && (
+                  {isDeploying ? (
+                    <div className="lock-reason deploying-notice">
+                      <Icons.Lock className="tactical-svg-icon" /> 🚧 {chap.reqMsg || "සංවර්ධනය වෙමින් පවතී (DEPLOYING SOON) — ඉදිරියේදී නිකුත් වේ."}
+                    </div>
+                  ) : !isUnlocked ? (
                     <div className="lock-reason">
                       <Icons.Lock className="tactical-svg-icon" /> {chap.reqMsg}
                     </div>
-                  )}
+                  ) : null}
 
                   <button
-                    className={`chap-play-btn ${isUnlocked ? "btn-primary" : "btn-locked"}`}
+                    className={`chap-play-btn ${isDeploying ? "btn-deploying" : isUnlocked ? "btn-primary" : "btn-locked"}`}
+                    disabled={isDeploying}
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (isUnlocked) {
+                      if (isDeploying) {
+                        showToast(`🚧 [DEPLOYING SOON] ${chap.title} සංවර්ධනය වෙමින් පවතී (Under Active Deployment). ඉදිරියේදී නිකුත් වේ!`);
+                      } else if (isUnlocked) {
                         launchChapter(chap.id);
                       } else {
                         showToast(`[LOCKED] ${chap.title} අගුළු වැටී ඇත! එය විවෘත කිරීමට Chapter 0${chap.id - 1} සම්පූර්ණ කරන්න.`);
                       }
                     }}
                   >
-                    {isUnlocked ? (isDone ? `REPLAY ${chap.title} ▶` : `DEPLOY OPERATION 0${chap.id} ▶`) : `🔒 LOCKED (COMPLETE CH 0${chap.id - 1})`}
+                    {isDeploying
+                      ? "🚧 DEPLOYING SOON (සංවර්ධනය වෙමින් පවතී)"
+                      : isUnlocked
+                      ? (isDone ? `REPLAY ${chap.title} ▶` : `DEPLOY OPERATION 0${chap.id} ▶`)
+                      : `🔒 LOCKED (COMPLETE CH 0${chap.id - 1})`}
                   </button>
                 </div>
               </div>
@@ -3222,6 +3799,7 @@ export default function App() {
             onInspectDiary={() => setInspectDiaryOpen(true)}
             onInspectTape={() => setInspectTapeOpen(true)}
             onInspectDouglasTape={() => setInspectDouglasTapeOpen(true)}
+            onInspectMap={() => setInspectMap2Open(true)}
             viewMode="chapters"
           />
         )}
@@ -3404,10 +3982,30 @@ export default function App() {
       title = I18N[lang].game_over_insane_title;
       msg = I18N[lang].game_over_insane_msg;
       cls = "insane-screen";
+    } else if (gameOver === "drowned" || gameOver === "river") {
+      title = lang === "en" ? "SWEPT AWAY // DROWNED IN RAPIDS" : "සැඩ පහරට හසුවිය // මීදුම් අගාධයේ ගිලී මියගියේය";
+      msg = lang === "en"
+        ? "The torrential Galganga rapids overpowered you and dragged you into the rocky abyss. The fast-moving river can only be crossed safely using the bamboo raft!"
+        : "ගල්ගඟේ සැඩ පහරට හසුවී ඔබ මීදුම් අගාධයට ගසාගෙන ගොස් ජීවිතක්ෂයට පත්විය. ගඟ හරහා ගමන් කළ හැක්කේ ශක්තිමත් කළ උණ බම්බු පහුරෙන් පමණි!";
+      cls = "dead-screen";
     } else if (gameOver === "won") {
       cls = "won-screen";
-      title = I18N[lang].victory_title;
-      msg = victoryType === "hero" ? I18N[lang].victory_hero_msg : I18N[lang].victory_survivor_msg;
+      if (activeChapter === 2) {
+        title = lang === "en" ? "CHAPTER 02 COMPLETED // GORGE CONQUERED" : "දෙවන පරිච්ඡේදය සාර්ථකව නිම විය!";
+        msg =
+          lang === "en"
+            ? "Outstanding survival skills, officer! You braved the Mist Gorge, navigated the Galganga torrent, recovered Dr. Jayasuriya's audio log, drained the flooded shaft, secured the Azure Crystal, and traversed the chasm via the cable trolley. Chapter 03 (Yaksha Giri) is now unlocked!"
+            : "විශිෂ්ටයි! ඔබ දියඇලි අගාධයේ සැඩ පහර තරණය කර, ආචාර්ය ජයසූරියගේ හඬපටය සොයාගෙන, පතලේ ජලය බැස්සවීමෙන් පසු නිල් ස්ඵටිකය ලබාගෙන කේබල් කරත්තයෙන් අගාධය තරණය කළා. Chapter 03 (යක්ෂ ගිරි) දැන් විවෘතයි!";
+      } else if (activeChapter === 3) {
+        title = lang === "en" ? "CHAPTER 03 COMPLETED // THE HOLLOW BELOW" : "තුන්වන පරිච්ඡේදය සාර්ථකව නිම විය!";
+        msg =
+          lang === "en"
+            ? "Outstanding bravery, officer! You braved the subterranean abyss of Yaksha Giri, deciphered the prehistoric inscription, navigated toxic sulfur fissures with the gas mask, regulated the ancient floodgate, secured the Azure Resonance Crystal, and breached the blast doors of the 1987 subterranean laboratory. Chapter 04 (The Forgotten Facility) is now unlocked!"
+            : "විශිෂ්ටයි! ඔබ යක්ෂ ගිරි භූගත අගාධය ජයගෙන, පුරාණ ශිලා ලේඛනය විකේතනය කර, වායු මුහුණු ආවරණයෙන් විෂ වායුව මර්දනය කර, සොරොව්වෙන් ජලය බැස්සවීමෙන් පසු නිල් අගාධ ස්ඵටිකය ලබාගෙන 1987 රහස් පර්යේෂණාගාර පිවිසුම විවෘත කළා. Chapter 04 (නටබුන් වූ රහස් පර්යේෂණාගාරය) දැන් විවෘතයි!";
+      } else {
+        title = I18N[lang].victory_title;
+        msg = victoryType === "hero" ? I18N[lang].victory_hero_msg : I18N[lang].victory_survivor_msg;
+      }
     }
 
     return (
@@ -3425,6 +4023,24 @@ export default function App() {
           <h1 className="game-over-title">{title}</h1>
           <p className="game-over-msg">{msg}</p>
           <div className="modal-buttons">
+            {gameOver === "won" && activeChapter === 2 && (
+              <button
+                className="start-btn"
+                style={{ background: "#059669", color: "#fff", borderColor: "#34d399" }}
+                onClick={() => launchChapter(3)}
+              >
+                {lang === "en" ? "PROCEED TO CHAPTER 03 ▶" : "CHAPTER 03 වෙත යන්න ▶"}
+              </button>
+            )}
+            {gameOver === "won" && activeChapter === 3 && (
+              <button
+                className="start-btn"
+                style={{ background: "#059669", color: "#fff", borderColor: "#34d399" }}
+                onClick={() => launchChapter(4)}
+              >
+                {lang === "en" ? "PROCEED TO CHAPTER 04 ▶" : "CHAPTER 04 වෙත යන්න ▶"}
+              </button>
+            )}
             <button className="start-btn" onClick={() => launchChapter(activeChapter)}>
               {I18N[lang].play_again} ▶
             </button>
@@ -3742,13 +4358,13 @@ export default function App() {
                 {stats.venomToxicity > 0 && (
                   <div className="hazard-status-pill venom-pill animate-pulse">
                     <Icons.Warning className="tactical-svg-icon" />
-                    <span>විෂ {stats.venomToxicity}% [2: ඖෂධ]</span>
+                    <span>{lang === "en" ? `Toxicity ${stats.venomToxicity}% [2: Antivenom]` : `විෂ ${stats.venomToxicity}% [2: ඖෂධ]`}</span>
                   </div>
                 )}
                 {stats.attachedLeeches > 0 && (
                   <div className="hazard-status-pill leech-pill animate-pulse">
                     <Icons.WaterDrop className="tactical-svg-icon" />
-                    <span>කූඩැල්ලන් x{stats.attachedLeeches} [1: ලුණු]</span>
+                    <span>{lang === "en" ? `Leeches x${stats.attachedLeeches} [1: Salt]` : `කූඩැල්ලන් x${stats.attachedLeeches} [1: ලුණු]`}</span>
                   </div>
                 )}
                 {stats.stalkerEyes && (
@@ -3948,58 +4564,70 @@ export default function App() {
 
               {activeChapter === 2 ? (
                 <ul className="mission-checklist">
-            <li className={stats.tasks?.mapFound ? "task-complete" : "task-active"}>
-              <span className="check-box">{stats.tasks?.mapFound ? "✓" : "○"}</span>
-              <span>භූවිද්‍යා සිතියම සොයාගන්න</span>
-            </li>
-            <li className={stats.hasGears || stats.cableRepaired ? "task-complete" : "task-active"}>
-              <span className="check-box">{stats.hasGears || stats.cableRepaired ? "✓" : "○"}</span>
-              <span>කේබල් කරත්ත ගියර් (Gears) සොයාගන්න</span>
-            </li>
-            <li className={stats.tasks?.raftUsed || stats.tasks?.cableUsed ? "task-complete" : "task-active"}>
-              <span className="check-box">{stats.tasks?.raftUsed || stats.tasks?.cableUsed ? "✓" : "○"}</span>
-              <span>පහුරෙන් හෝ කේබල් කරත්තයෙන් එතෙර වන්න</span>
-            </li>
-            <li className={stats.tasks?.tapeFound ? "task-complete" : "task-active"}>
-              <span className="check-box">{stats.tasks?.tapeFound ? "✓" : "○"}</span>
-              <span>දියඇල්ලේ කැසට් පටිය (Tape) අසන්න</span>
-            </li>
-            <li className={stats.tasks?.gemFound ? "task-complete" : "task-active"}>
-              <span className="check-box">{stats.tasks?.gemFound ? "✓" : "○"}</span>
-              <span>මයිකා පතලේ නිල් ස්ඵටිකය ලබාගන්න</span>
-            </li>
-            <li className={stats.tasks?.towerReached ? "task-complete" : "task-active"}>
-              <span className="check-box">{stats.tasks?.towerReached ? "✓" : "○"}</span>
-              <span>කඳු මුදුනේ සංඥා කුලුන දල්වන්න</span>
-            </li>
-          </ul>
-        ) : activeChapter === 3 ? (
-          <ul className="mission-checklist">
-            <li className={stats.tasks?.slateFound ? "task-complete" : "task-active"}>
-              <span className="check-box">{stats.tasks?.slateFound ? "✓" : "○"}</span>
-              <span>පුරාණ ශිලා ලේඛනය කියවන්න</span>
-            </li>
-            <li className={stats.tasks?.maskFound ? "task-complete" : "task-active"}>
-              <span className="check-box">{stats.tasks?.maskFound ? "✓" : "○"}</span>
-              <span>වායු මුහුණු ආවරණය (Gas Mask) පළඳින්න</span>
-            </li>
-            <li className={stats.tasks?.floodgateUsed ? "task-complete" : "task-active"}>
-              <span className="check-box">{stats.tasks?.floodgateUsed ? "✓" : "○"}</span>
-              <span>සොරොව්ව හරවා ජලය බැස්සවීම</span>
-            </li>
-            <li className={stats.tasks?.coreFound ? "task-complete" : "task-active"}>
-              <span className="check-box">{stats.tasks?.coreFound ? "✓" : "○"}</span>
-              <span>ප්‍රතිදීප්ත අගාධ පාෂාණය ලබාගන්න</span>
-            </li>
-            <li className={stats.tasks?.logFound ? "task-complete" : "task-active"}>
-              <span className="check-box">{stats.tasks?.logFound ? "✓" : "○"}</span>
-              <span>පතල් කම්කරු සටහන පරීක්ෂා කරන්න</span>
-            </li>
-            <li className={stats.tasks?.elevatorReached ? "task-complete" : "task-active"}>
-              <span className="check-box">{stats.tasks?.elevatorReached ? "✓" : "○"}</span>
-              <span>භූගත එසවුම් ලිෆ්ට් එක ක්‍රියාත්මක කරන්න</span>
-            </li>
-          </ul>
+                  <li className={stats.tasks?.mapFound ? "task-complete" : "task-active"}>
+                    <span className="check-box">{stats.tasks?.mapFound ? "✓" : "○"}</span>
+                    <span className="task-name">{lang === "en" ? "Inspect & Collect Geologist's Map (map2)" : "භූවිද්‍යා සිතියම පරීක්ෂා කර ලබාගන්න"}</span>
+                    {stats.tasks?.mapFound && <span className="task-done-badge">{lang === "en" ? "DONE" : "සම්පූර්ණයි"}</span>}
+                  </li>
+                  <li className={(stats.tasks?.raftMaterialsFound || stats.tasks?.raftRepaired || stats.tasks?.riverCrossed) ? "task-complete" : "task-active"}>
+                    <span className="check-box">{(stats.tasks?.raftMaterialsFound || stats.tasks?.raftRepaired || stats.tasks?.riverCrossed) ? "✓" : "○"}</span>
+                    <span className="task-name">{lang === "en" ? "Salvage Bamboo & Climbing Rope for Raft" : "පහුර සඳහා උණ බම්බු සහ කඹය සොයාගන්න"}</span>
+                    {(stats.tasks?.raftMaterialsFound || stats.tasks?.raftRepaired || stats.tasks?.riverCrossed) && <span className="task-done-badge">{lang === "en" ? "DONE" : "සම්පූර්ණයි"}</span>}
+                  </li>
+                  <li className={stats.tasks?.riverCrossed ? "task-complete" : "task-active"}>
+                    <span className="check-box">{stats.tasks?.riverCrossed ? "✓" : "○"}</span>
+                    <span className="task-name">{lang === "en" ? "Lash Bamboo Raft & Cross River Rapids" : "උණ බම්බු පහුරෙන් ගංගාවේ සැඩ පහර තරණය කරන්න"}</span>
+                    {stats.tasks?.riverCrossed && <span className="task-done-badge">{lang === "en" ? "DONE" : "සම්පූර්ණයි"}</span>}
+                  </li>
+                  <li className={stats.tasks?.tapeFound ? "task-complete" : "task-active"}>
+                    <span className="check-box">{stats.tasks?.tapeFound ? "✓" : "○"}</span>
+                    <span className="task-name">{lang === "en" ? "Recover Jayasuriya's Audio Tape (Evidence B)" : "දියඇල්ල පාමුල ආචාර්ය ජයසූරියගේ කැසට් පටය අසන්න"}</span>
+                    {stats.tasks?.tapeFound && <span className="task-done-badge">{lang === "en" ? "DONE" : "සම්පූර්ණයි"}</span>}
+                  </li>
+                  <li className={(stats.tasks?.pumpActivated && stats.tasks?.gemFound) ? "task-complete" : "task-active"}>
+                    <span className="check-box">{(stats.tasks?.pumpActivated && stats.tasks?.gemFound) ? "✓" : "○"}</span>
+                    <span className="task-name">{lang === "en" ? "Drain Mine Shaft & Harvest Azure Crystal (Evidence C)" : "පතලේ ජලය බස්සවා නිල් ස්ඵටිකය ලබාගන්න"}</span>
+                    {(stats.tasks?.pumpActivated && stats.tasks?.gemFound) && <span className="task-done-badge">{lang === "en" ? "DONE" : "සම්පූර්ණයි"}</span>}
+                  </li>
+                  <li className={(stats.tasks?.mineEscaped && (stats.tasks?.trolleyFixed || stats.tasks?.gorgeCrossed)) ? "task-complete" : "task-active"}>
+                    <span className="check-box">{(stats.tasks?.mineEscaped && (stats.tasks?.trolleyFixed || stats.tasks?.gorgeCrossed)) ? "✓" : "○"}</span>
+                    <span className="task-name">{lang === "en" ? "Escape Cave-In & Traverse Gorge via Cable Trolley" : "පතලෙන් පලාගොස් කේබල් කරත්තයෙන් නිම්නය තරණය"}</span>
+                    {(stats.tasks?.mineEscaped && (stats.tasks?.trolleyFixed || stats.tasks?.gorgeCrossed)) && <span className="task-done-badge">{lang === "en" ? "DONE" : "සම්පූර්ණයි"}</span>}
+                  </li>
+                </ul>
+              ) : activeChapter === 3 ? (
+                <ul className="mission-checklist">
+                  <li className={stats.tasks?.slateFound ? "task-complete" : "task-active"}>
+                    <span className="check-box">{stats.tasks?.slateFound ? "✓" : "○"}</span>
+                    <span className="task-name">{lang === "en" ? "Recover Ancient Inscription Slate (Evidence 01)" : "පුරාණ ශිලා ලේඛනය සොයාගැනීම (සාක්ෂි 01)"}</span>
+                    {stats.tasks?.slateFound && <span className="task-done-badge">{lang === "en" ? "DONE" : "සම්පූර්ණයි"}</span>}
+                  </li>
+                  <li className={stats.tasks?.maskFound ? "task-complete" : "task-active"}>
+                    <span className="check-box">{stats.tasks?.maskFound ? "✓" : "○"}</span>
+                    <span className="task-name">{lang === "en" ? "Equip Miner's Gas Mask against Toxic Vents" : "විෂ වායුවෙන් බේරීමට වායු මුහුණු ආවරණය පැළඳීම"}</span>
+                    {stats.tasks?.maskFound && <span className="task-done-badge">{lang === "en" ? "DONE" : "සම්පූර්ණයි"}</span>}
+                  </li>
+                  <li className={(stats.tasks?.floodgateUsed && stats.tasks?.riverCrossed) ? "task-complete" : "task-active"}>
+                    <span className="check-box">{(stats.tasks?.floodgateUsed && stats.tasks?.riverCrossed) ? "✓" : "○"}</span>
+                    <span className="task-name">{lang === "en" ? "Rotate Sluice Wheel & Cross Underground River" : "සොරොව්ව හරවා භූගත ගඟ තරණය කිරීම"}</span>
+                    {(stats.tasks?.floodgateUsed && stats.tasks?.riverCrossed) && <span className="task-done-badge">{lang === "en" ? "DONE" : "සම්පූර්ණයි"}</span>}
+                  </li>
+                  <li className={stats.tasks?.logFound ? "task-complete" : "task-active"}>
+                    <span className="check-box">{stats.tasks?.logFound ? "✓" : "○"}</span>
+                    <span className="task-name">{lang === "en" ? "Recover 1987 Subterranean Survey Log (Evidence 02)" : "1987 පතල් ගවේෂණ සටහන සොයාගැනීම (සාක්ෂි 02)"}</span>
+                    {stats.tasks?.logFound && <span className="task-done-badge">{lang === "en" ? "DONE" : "සම්පූර්ණයි"}</span>}
+                  </li>
+                  <li className={stats.tasks?.coreFound ? "task-complete" : "task-active"}>
+                    <span className="check-box">{stats.tasks?.coreFound ? "✓" : "○"}</span>
+                    <span className="task-name">{lang === "en" ? "Extract Resonance Crystal Specimen (Evidence 03)" : "ප්‍රතිදීප්ත අගාධ ස්ඵටිකය ලබාගැනීම (සාක්ෂි 03)"}</span>
+                    {stats.tasks?.coreFound && <span className="task-done-badge">{lang === "en" ? "DONE" : "සම්පූර්ණයි"}</span>}
+                  </li>
+                  <li className={stats.tasks?.elevatorReached ? "task-complete" : "task-active"}>
+                    <span className="check-box">{stats.tasks?.elevatorReached ? "✓" : "○"}</span>
+                    <span className="task-name">{lang === "en" ? "Escape Tremor & Unlock Chapter 04 Blast Doors" : "කම්පනයෙන් බේරී Chapter 04 පර්යේෂණාගාර පිවිසුම විවෘත කිරීම"}</span>
+                    {stats.tasks?.elevatorReached && <span className="task-done-badge">{lang === "en" ? "DONE" : "සම්පූර්ණයි"}</span>}
+                  </li>
+                </ul>
         ) : activeChapter === 4 ? (
           <ul className="mission-checklist">
             <li className={stats.tasks?.generatorFixed ? "task-complete" : "task-active"}>
@@ -4054,19 +4682,19 @@ export default function App() {
           <ul className="mission-checklist">
             <li className={stats.tasks?.diaryFound ? "task-complete" : "task-active"}>
               <span className="check-box">{stats.tasks?.diaryFound ? "✓" : "○"}</span>
-              <span>මුරපොළේ දිනපොත කියවන්න</span>
+              <span>{lang === "en" ? "Read Kudawa Outpost Field Diary" : "මුරපොළේ දිනපොත කියවන්න"}</span>
             </li>
             <li className={stats.tasks?.keyFound ? "task-complete" : "task-active"}>
               <span className="check-box">{stats.tasks?.keyFound ? "✓" : "○"}</span>
-              <span>පුරාණ පිත්තල යතුර සොයාගන්න</span>
+              <span>{lang === "en" ? "Recover Antique Brass Key" : "පුරාණ පිත්තල යතුර සොයාගන්න"}</span>
             </li>
             <li className={stats.tasks?.sampleFound ? "task-complete" : "task-active"}>
               <span className="check-box">{stats.tasks?.sampleFound ? "✓" : "○"}</span>
-              <span>පර්යේෂණ සාම්පලය අහුලාගන්න</span>
+              <span>{lang === "en" ? "Extract Subterranean Flora Sample" : "පර්යේෂණ සාම්පලය අහුලාගන්න"}</span>
             </li>
             <li className={stats.tasks?.helipadReached ? "task-complete" : "task-active"}>
               <span className="check-box">{stats.tasks?.helipadReached ? "✓" : "○"}</span>
-              <span>හෙලිකොප්ටර් කලාපයට යන්න</span>
+              <span>{lang === "en" ? "Evacuate to Summit Ridge Helipad" : "හෙලිකොප්ටර් කලාපයට යන්න"}</span>
             </li>
           </ul>
         )}
@@ -4079,12 +4707,21 @@ export default function App() {
       {showOnboardingTip && (
         <div className="game-onboarding-tip">
           <div className="onboarding-tip-header">
-            <span><Icons.Target className="tactical-svg-icon" /> ගවේෂක උපදෙස් (FIELD INTEL)</span>
+            <span><Icons.Target className="tactical-svg-icon" /> {lang === "en" ? "FIELD INTEL // EXPEDITION PROTOCOL" : "ගවේෂක උපදෙස් (FIELD INTEL)"}</span>
             <button className="tip-close-btn" onClick={() => setShowOnboardingTip(false)}>✕</button>
           </div>
           <p>
-            <strong>WASD / ඊතල</strong> හෝ තිරය මත <strong>ක්ලික් කර</strong> ඇවිදින්න. <br />
-            ගිනිමැලය අසල <strong>[T]</strong> ඔබා ඔසුපැන් පෙරන්න | <strong>[Z]</strong> ඔබා Zoom කරන්න | මඟ පෙන්වුම් පුවරු අනුගමනය කරන්න!
+            {lang === "en" ? (
+              <>
+                Navigate with <strong>WASD / Arrow Keys</strong> or <strong>Click</strong> on terrain. <br />
+                Press <strong>[T]</strong> near campfires to brew remedy tea | <strong>[Z]</strong> to Zoom | Follow trail signposts!
+              </>
+            ) : (
+              <>
+                <strong>WASD / ඊතල</strong> හෝ තිරය මත <strong>ක්ලික් කර</strong> ඇවිදින්න. <br />
+                ගිනිමැලය අසල <strong>[T]</strong> ඔබා ඔසුපැන් පෙරන්න | <strong>[Z]</strong> ඔබා Zoom කරන්න | මඟ පෙන්වුම් පුවරු අනුගමනය කරන්න!
+              </>
+            )}
           </p>
         </div>
       )}
@@ -4092,42 +4729,42 @@ export default function App() {
       {/* Tea Buff Active Indicator */}
       {stats.teaBuffTimer > 0 && (
         <div className="tea-buff-badge">
-          <Icons.Tea className="tactical-svg-icon" /> ඔසුපැන් ශක්තිය: {stats.teaBuffTimer}s (Stamina ∞ | Health Regen)
+          <Icons.Tea className="tactical-svg-icon" /> {lang === "en" ? `🍵 Herbal Remedy Tea: ${stats.teaBuffTimer}s (Stamina ∞ | Health Regen)` : `ඔසුපැන් ශක්තිය: ${stats.teaBuffTimer}s (Stamina ∞ | Health Regen)`}
         </div>
       )}
 
       {/* Leech Repellent Balm Active Indicator */}
       {stats.repellentTimer > 0 && (
         <div className="repellent-buff-badge">
-          <Icons.Balm className="tactical-svg-icon" /> කූඩැලි ආරක්ෂාව: {stats.repellentTimer}s (Leeches Repelled)
+          <Icons.Balm className="tactical-svg-icon" /> {lang === "en" ? `🌿 Leech Repellent Shield: ${stats.repellentTimer}s (Immunity Active)` : `කූඩැලි ආරක්ෂාව: ${stats.repellentTimer}s (Leeches Repelled)`}
         </div>
       )}
 
       {/* Magpie Charm Active Indicator */}
       {stats.magpieCharmActive && (
         <div className="charm-buff-badge">
-          <Icons.Feather className="tactical-svg-icon" /> කැහිබෙලි ආමුදිතය: වේගය +20% & නොනවතින ශක්තිය (Active)
+          <Icons.Feather className="tactical-svg-icon" /> {lang === "en" ? "🪶 Blue Magpie Sacred Charm: Speed +25% & Enduring Stamina (Active)" : "කැහිබෙලි ආමුදිතය: වේගය +20% & නොනවතින ශක්තිය (Active)"}
         </div>
       )}
 
       {/* Tropical Rainstorm Warning Indicator */}
       {stats.stormActive && (
         <div className="storm-alert-badge">
-          <Icons.Warning className="tactical-svg-icon" /> වැසි කුණාටුව සක්‍රියයි! යෝධ ගස් කොටන් පාලම (Log Bridge) ඔස්සේ එතෙර වන්න!
+          <Icons.Warning className="tactical-svg-icon" /> {lang === "en" ? "⚠️ Tropical Rainstorm Active! Cross via Giant Fallen Log Bridge!" : "වැසි කුණාටුව සක්‍රියයි! යෝධ ගස් කොටන් පාලම (Log Bridge) ඔස්සේ එතෙර වන්න!"}
         </div>
       )}
 
       {/* Shelter Protection Badge */}
       {stats.inShelter && (
         <div className="shelter-buff-badge">
-          <Icons.Shield className="tactical-svg-icon" /> මුරපොළ කුටිය: වැස්සෙන් ආරක්ෂිතයි (Sanity & Battery ආරෝපණය වේ)
+          <Icons.Shield className="tactical-svg-icon" /> {lang === "en" ? "🛡️ Outpost Quarters: Sheltered from Storm (Sanity & Battery Recharging)" : "මුරපොළ කුටිය: වැස්සෙන් ආරක්ෂිතයි (Sanity & Battery ආරෝපණය වේ)"}
         </div>
       )}
 
       {/* Mud Slowdown Alert */}
       {stats.inMud && (
         <div className="mud-alert-badge">
-          <Icons.Warning className="tactical-svg-icon" /> මඩ වගුර: වේගය අඩු වී ඇත! (ගස් පාලම ඔස්සේ යන්න)
+          <Icons.Warning className="tactical-svg-icon" /> {lang === "en" ? "⚠️ Mud Marsh: Movement Slowed! (Cross over the fallen timber bridge)" : "මඩ වගුර: වේගය අඩු වී ඇත! (ගස් පාලම ඔස්සේ යන්න)"}
         </div>
       )}
 
@@ -4136,9 +4773,9 @@ export default function App() {
         <button
           className="hypothermia-alert-badge"
           onClick={() => handleVirtualAction("gingertea")}
-          title="ඉඟුරු තේ පානය කර ශරීරය උණුසුම් කරගන්න [G]"
+          title={lang === "en" ? "Drink Ginger Tea to warm up [G]" : "ඉඟුරු තේ පානය කර ශරීරය උණුසුම් කරගන්න [G]"}
         >
-          <Icons.Snowflake className="tactical-svg-icon" /> දැඩි ශීතල අනතුර (Hypothermia)! [G] ඔබා ඉඟුරු තේ පානය කරන්න හෝ උණුදිය උල්පතට යන්න!
+          <Icons.Snowflake className="tactical-svg-icon" /> {lang === "en" ? "❄️ Hypothermia Danger! Press [G] to drink Ceylon Ginger Tea or find thermal springs!" : "දැඩි ශීතල අනතුර (Hypothermia)! [G] ඔබා ඉඟුරු තේ පානය කරන්න හෝ උණුදිය උල්පතට යන්න!"}
         </button>
       )}
 
@@ -4146,15 +4783,15 @@ export default function App() {
       {stats.nearCampfire && (
         <div className="campfire-actions-container">
           <div className="campfire-safe-badge">
-            <Icons.Flame className="tactical-svg-icon" /> ගිනිමැලය අසල: Health & Sanity සුවපත් වෙමින් පවතී
+            <Icons.Flame className="tactical-svg-icon" /> {lang === "en" ? "🔥 Near Campfire: Thermal Warmth Restoring Vitals & Sanity" : "ගිනිමැලය අසල: Health & Sanity සුවපත් වෙමින් පවතී"}
           </div>
           {stats.herbCount > 0 && (
             <button
               className="campfire-brew-btn"
               onClick={() => handleVirtualAction("tea")}
-              title="ඖෂධ 1ක් වැය කර ඔසුපැන් පෙරන්න"
+              title={lang === "en" ? "Use 1 Herb to Brew Remedy Tea" : "ඖෂධ 1ක් වැය කර ඔසුපැන් පෙරන්න"}
             >
-              <Icons.Tea className="tactical-svg-icon" /> ඔසුපැන් පෙරන්න [T] (+25 HP, +35 SAN, 60s Buff)
+              <Icons.Tea className="tactical-svg-icon" /> {lang === "en" ? "Brew Remedy Tea [T] (+25 HP, +35 SAN, 60s Buff)" : "ඔසුපැන් පෙරන්න [T] (+25 HP, +35 SAN, 60s Buff)"}
             </button>
           )}
         </div>
@@ -4165,9 +4802,9 @@ export default function App() {
         <button
           className="bleeding-alert-action-btn"
           onClick={() => handleVirtualAction("salt")}
-          title="කූඩැල්ලා ඉවත් කිරීමට මෙතන ඔබන්න"
+          title={lang === "en" ? "Click to purge leeches with salt" : "කූඩැල්ලා ඉවත් කිරීමට මෙතන ඔබන්න"}
         >
-          <Icons.Heart className="tactical-svg-icon" /> කූඩැල්ලා එල්ලී ඇත! [ ලුණු දැමීම - මෙතන ඔබන්න හෝ SPACE ]
+          <Icons.Heart className="tactical-svg-icon" /> {lang === "en" ? "🩸 Leeches Attached! [ Throw Salt - Click Here or Press SPACE / 1 ]" : "කූඩැල්ලා එල්ලී ඇත! [ ලුණු දැමීම - මෙතන ඔබන්න හෝ SPACE ]"}
         </button>
       )}
 
@@ -4213,11 +4850,51 @@ export default function App() {
               <button className="close-btn" onClick={() => setRunePuzzleOpen(false)}>✕</button>
             </div>
             <p className="puzzle-hint-text">
-              {lang === "en" ? "Align the 3 secret runes noted in Douglas's journal:" : "දිනපොතේ සඳහන් වූ රහස් සංකේත 3 ගලපන්න:"}<br />
-              <em>{lang === "en" ? "“At dawn as the Sun rises... across the River... enter the Lion's sanctuary...”" : "“හිරු නැගෙන හෝරාවේ... ගංගාවෙන් එතෙර වී... සිංහයාගේ ලෙනට...”"}</em>
+              {lang === "en"
+                ? "Decipher the 3 elemental runes from Douglas's diary to disengage the monolith tumblers:"
+                : "ඩග්ලස්ගේ ක්ෂේත්‍ර සටහන්වල ඇති රහස් සංකේත ත්‍රිත්වය විසඳා ගල් දොරටුවේ අගුල විවර කරන්න:"}
             </p>
-            <div className="puzzle-diary-clue-pill">
-              <Icons.Book className="tactical-svg-icon" /> {lang === "en" ? "Journal Clue: " : "දිනපොතේ හෝඩුවාව: "}<strong>{lang === "en" ? "1. SUN | 2. RIVER | 3. LION" : "1. SUN (සූර්යයා) | 2. RIVER (ගංගාව) | 3. LION (සිංහයා)"}</strong>
+
+            {/* Cryptic Inscription & Toggleable Riddle Drawer */}
+            <div className="puzzle-riddle-box">
+              <button
+                type="button"
+                className="puzzle-riddle-toggle-btn"
+                onClick={() => setShowRiddleHelper((prev) => !prev)}
+              >
+                <Icons.Book className="tactical-svg-icon" />
+                <span>
+                  {showRiddleHelper
+                    ? (lang === "en" ? "Hide Expedition Field Notes" : "ක්ෂේත්‍ර සටහන හකුලන්න")
+                    : (lang === "en" ? "Inspect Douglas's Cryptic Verse [Journal Clue]" : "ඩග්ලස්ගේ කාව්‍යමය හෝඩුවාව පරීක්ෂා කරන්න")}
+                </span>
+                <span className="chevron-icon">{showRiddleHelper ? "▲" : "▼"}</span>
+              </button>
+              {showRiddleHelper && (
+                <div className="puzzle-riddle-content animate-fade-in">
+                  <p className="riddle-verse-line">
+                    <em>
+                      {lang === "en"
+                        ? "“I. At dawn when the golden radiance awakens the misty rainforest canopy...”"
+                        : "“I. උදෑසන මීදුම් වියන අවදි කරන නැගෙනහිර සූර්යයාගේ දීප්තිය...”"}
+                    </em>
+                  </p>
+                  <p className="riddle-verse-line">
+                    <em>
+                      {lang === "en"
+                        ? "“II. Follow the roaring torrent carving deep into the granite bedrock gorge...”"
+                        : "“II. කළුගල් පීරමින් නිම්නය ඔස්සේ ගලා බසින ජල ධාරාව...”"}
+                    </em>
+                  </p>
+                  <p className="riddle-verse-line">
+                    <em>
+                      {lang === "en"
+                        ? "“III. And bow before the sovereign guardian beast that watches the ancient ridge...”"
+                        : "“III. පෞරාණික දොරටුව අභියස ගර්ජනා කරන මහා මෘගරාජයා...”"}
+                    </em>
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="rune-dials-row">
@@ -4383,22 +5060,22 @@ export default function App() {
               <button className="close-btn" onClick={() => setShowControlsGuide(false)}>✕</button>
             </div>
             <div className="guide-grid">
-              <div className="guide-row"><span className="kbd">W A S D / ඊතල</span><span>ඇවිදීම (Move Explorer)</span></div>
-              <div className="guide-row"><span className="kbd">SHIFT</span><span>වේගයෙන් දිවීම (Sprint)</span></div>
-              <div className="guide-row"><span className="kbd">1 / SPACE</span><span>කූඩැල්ලන්ට ලුණු දැමීම (Throw Salt)</span></div>
-              <div className="guide-row"><span className="kbd">2 / H</span><span>ඖෂධ භාවිතය / විෂ නාශනය (Heal & Antivenom)</span></div>
-              <div className="guide-row"><span className="kbd">R</span><span>හෑන්ඩ්-ක්‍රෑන්ක් ඩයිනමෝවෙන් ආරෝපණය (Crank Dynamo +14% Battery)</span></div>
-              <div className="guide-row"><span className="kbd">B</span><span>කූඩැලි ආලේපනය (Leech Balm 90s Buff)</span></div>
-              <div className="guide-row"><span className="kbd">T</span><span>ගිනිමැලය අසල ඔසුපැන් පෙරීම (Brew Tea)</span></div>
-              <div className="guide-row"><span className="kbd">G</span><span>ඉඟුරු තේ පානය (Ginger Tea / Warmth +40%)</span></div>
-              <div className="guide-row"><span className="kbd">C</span><span>ක්ෂේත්‍ර කැමරාව (Wildlife Camera Snapshot)</span></div>
-              <div className="guide-row"><span className="kbd">U</span><span>පාරජම්බුල කිරණ (UV Blacklight Mode)</span></div>
-              <div className="guide-row"><span className="kbd">Z</span><span>දුරදක්න කැමරාව (Binoculars Zoom)</span></div>
-              <div className="guide-row"><span className="kbd">3 / F</span><span>විදුලි පන්දම (Flashlight On/Off)</span></div>
-              <div className="guide-row"><span className="kbd">4 / E</span><span>පරීක්ෂාව / ඇරීම (Interact)</span></div>
-              <div className="guide-row"><span className="kbd">M</span><span>සිතියම (Tactical Map)</span></div>
-              <div className="guide-row"><span className="kbd">I</span><span>බඩු මල්ල (Inventory Backpack)</span></div>
-              <div className="guide-row"><span className="kbd">ESC</span><span>Pause Menu</span></div>
+              <div className="guide-row"><span className="kbd">WASD / {lang === "en" ? "Arrows" : "ඊතල"}</span><span>{lang === "en" ? "Walk / Navigate Terrain" : "ඇවිදීම (Move Explorer)"}</span></div>
+              <div className="guide-row"><span className="kbd">SHIFT</span><span>{lang === "en" ? "Tactical Sprint" : "වේගයෙන් දිවීම (Sprint)"}</span></div>
+              <div className="guide-row"><span className="kbd">1 / SPACE</span><span>{lang === "en" ? "Throw Salt at Attached Leeches" : "කූඩැල්ලන්ට ලුණු දැමීම (Throw Salt)"}</span></div>
+              <div className="guide-row"><span className="kbd">2 / H</span><span>{lang === "en" ? "Consume Remedy / Cure Venom" : "ඖෂධ භාවිතය / විෂ නාශනය (Heal & Antivenom)"}</span></div>
+              <div className="guide-row"><span className="kbd">R</span><span>{lang === "en" ? "Hand-Crank Flashlight Dynamo" : "හෑන්ඩ්-ක්‍රෑන්ක් ඩයිනමෝවෙන් ආරෝපණය (Crank Dynamo)"}</span></div>
+              <div className="guide-row"><span className="kbd">B</span><span>{lang === "en" ? "Apply Leech Repellent Balm (90s)" : "කූඩැලි ආලේපනය (Leech Balm 90s Buff)"}</span></div>
+              <div className="guide-row"><span className="kbd">T</span><span>{lang === "en" ? "Brew Healing Tea at Campfire" : "ගිනිමැලය අසල ඔසුපැන් පෙරීම (Brew Tea)"}</span></div>
+              <div className="guide-row"><span className="kbd">J / G</span><span>{lang === "en" ? "Drink Hot Ceylon Ginger Tea" : "ඉඟුරු තේ පානය (Ginger Tea / Warmth)"}</span></div>
+              <div className="guide-row"><span className="kbd">P / C</span><span>{lang === "en" ? "Wildlife Field Camera Snapshot" : "ක්ෂේත්‍ර කැමරාව (Wildlife Camera Snapshot)"}</span></div>
+              <div className="guide-row"><span className="kbd">U</span><span>{lang === "en" ? "UV Blacklight Mode (Hidden Runes)" : "පාරජම්බුල කිරණ (UV Blacklight Mode)"}</span></div>
+              <div className="guide-row"><span className="kbd">Z</span><span>{lang === "en" ? "Binoculars Tactical Zoom" : "දුරදක්න කැමරාව (Binoculars Zoom)"}</span></div>
+              <div className="guide-row"><span className="kbd">F / 3</span><span>{lang === "en" ? "Toggle Flashlight Beam" : "විදුලි පන්දම (Flashlight On/Off)"}</span></div>
+              <div className="guide-row"><span className="kbd">E / CLICK</span><span>{lang === "en" ? "Interact / Collect Item" : "පරීක්ෂාව / ඇරීම (Interact)"}</span></div>
+              <div className="guide-row"><span className="kbd">M</span><span>{lang === "en" ? "Tactical Survey Map & Radar" : "සිතියම (Tactical Map)"}</span></div>
+              <div className="guide-row"><span className="kbd">I</span><span>{lang === "en" ? "Field Backpack Inventory" : "බඩු මල්ල (Inventory Backpack)"}</span></div>
+              <div className="guide-row"><span className="kbd">ESC</span><span>{lang === "en" ? "Mission Pause & Settings" : "Pause Menu"}</span></div>
             </div>
           </div>
         </div>
@@ -4409,13 +5086,13 @@ export default function App() {
         <div
           className="diegetic-interact-prompt animate-pulse-bounce"
           onClick={() => handleVirtualAction("interact")}
-          title="ක්‍රියාත්මක කරන්න [E]"
+          title={lang === "en" ? "Click to Interact [E]" : "ක්‍රියාත්මක කරන්න [E]"}
         >
           <span className="interact-key-pill">[E]</span>
           <span className="interact-icon"><Icons.Inspect className="tactical-svg-icon" /></span>
           <div className="interact-details">
             <span className="interact-title">{stats.nearInteractable.title}</span>
-            <span className="interact-action">{stats.nearInteractable.prompt || "පරීක්ෂා කරන්න (INTERACT)"}</span>
+            <span className="interact-action">{stats.nearInteractable.prompt || (lang === "en" ? "[E] INTERACT" : "පරීක්ෂා කරන්න (INTERACT)")}</span>
           </div>
           <span className="interact-arrow">▶</span>
         </div>
@@ -4558,6 +5235,20 @@ export default function App() {
             className="belt-slot"
             onClick={() => {
               if (engineRef.current) engineRef.current.playSfx("pda_open");
+              setShowJournal(true);
+            }}
+            title={lang === "en" ? "Wildlife Photo Album & Field Guide" : "වනජීවී ඡායාරූප ඇල්බමය සහ මාර්ගෝපදේශය"}
+          >
+            <span className="belt-hotkey">[J]</span>
+            <span className="belt-icon"><Icons.Journal className="tactical-svg-icon" /></span>
+            <span className="belt-tag">{lang === "en" ? "ALBUM" : "ඇල්බමය"}</span>
+            <span className="belt-count-badge">{capturedPhotos.length}</span>
+          </div>
+
+          <div
+            className="belt-slot"
+            onClick={() => {
+              if (engineRef.current) engineRef.current.playSfx("pda_open");
               setShowInventory(true);
             }}
             title={lang === "en" ? "Survival Backpack Inventory [I]" : "බඩු මල්ල [I]"}
@@ -4580,6 +5271,7 @@ export default function App() {
           onInspectDiary={() => setInspectDiaryOpen(true)}
           onInspectTape={() => setInspectTapeOpen(true)}
           onInspectDouglasTape={() => setInspectDouglasTapeOpen(true)}
+          onInspectMap={() => setInspectMap2Open(true)}
           viewMode="playing"
         />
       )}
@@ -4907,10 +5599,18 @@ export default function App() {
                   <div className={`inv-item-card ${evidence.map2 ? "item-discovered" : "item-missing"}`}>
                     <div className="inv-item-icon"><Icons.Map className="tactical-svg-icon" /></div>
                     <div className="inv-item-info">
-                      <h3>භූවිද්‍යාඥයින්ගේ සිතියම (Geologist Map)</h3>
-                      <span className="inv-item-qty">{evidence.map2 ? "✓ හමුවිය (EVIDENCE 01)" : "තවමත් හමුවී නැත"}</span>
-                      <p>පැරණි පතල සහ උණ බම්බු පහුරේ පිහිටීම සලකුණු කර ඇති රහස් සිතියමයි.</p>
+                      <h3>{lang === "en" ? "Geologist's Cartograph (map2)" : "භූවිද්‍යාඥයින්ගේ සිතියම (Geologist Map)"}</h3>
+                      <span className="inv-item-qty">{evidence.map2 ? (lang === "en" ? "✓ SECURED (EVIDENCE 01)" : "✓ හමුවිය (EVIDENCE 01)") : (lang === "en" ? "Not yet located" : "තවමත් හමුවී නැත")}</span>
+                      <p>{lang === "en" ? "Topographical survey marking the secret mine entrance behind the waterfall." : "පැරණි පතල සහ උණ බම්බු පහුරේ පිහිටීම සලකුණු කර ඇති රහස් සිතියමයි."}</p>
                     </div>
+                    {evidence.map2 && (
+                      <button
+                        className="inv-action-btn inspect-btn"
+                        onClick={() => setInspectMap2Open(true)}
+                      >
+                        {lang === "en" ? "INSPECT MAP" : "සිතියම බලන්න (VIEW MAP)"}
+                      </button>
+                    )}
                   </div>
 
                   {/* Chapter 2 Item 2: Tape */}
@@ -5043,12 +5743,12 @@ export default function App() {
                   <div className={`inv-item-card ${evidence.diary ? "item-discovered" : "item-missing"}`}>
                     <div className="inv-item-icon"><Icons.Book className="tactical-svg-icon" /></div>
                     <div className="inv-item-info">
-                      <h3>ලෙයින් පෙඟුණු දිනපොත (Bloody Ranger Diary)</h3>
-                      <span className="inv-item-qty">{evidence.diary ? "✓ හමුවිය (EVIDENCE 01)" : "තවමත් හමුවී නැත"}</span>
+                      <h3>{lang === "en" ? "Prof. Douglas's Field Journal" : "ලෙයින් පෙඟුණු දිනපොත (Bloody Ranger Diary)"}</h3>
+                      <span className="inv-item-qty">{evidence.diary ? (lang === "en" ? "✓ SECURED (EVIDENCE 01)" : "✓ හමුවිය (EVIDENCE 01)") : (lang === "en" ? "Not yet located" : "තවමත් හමුවී නැත")}</span>
                       <p>
                         {evidence.diary
-                          ? "1987 ගවේෂණ කණ්ඩායමේ රහස් සටහන් සහ ලෙන් දොරටුවේ රහස් කේතය අඩංගුය."
-                          : "මුරපොළේ මේසය පරීක්ෂා කර සොයාගන්න."}
+                          ? (lang === "en" ? "1987 expedition notes revealing the three ancient elemental runes and river crossing." : "1987 ගවේෂණ කණ්ඩායමේ රහස් සටහන් සහ ලෙන් දොරටුවේ රහස් කේතය අඩංගුය.")
+                          : (lang === "en" ? "Investigate the abandoned Kudawa Outpost workbench." : "මුරපොළේ මේසය පරීක්ෂා කර සොයාගන්න.")}
                       </p>
                     </div>
                     {evidence.diary && (
@@ -5056,7 +5756,7 @@ export default function App() {
                         className="inv-action-btn inspect-btn"
                         onClick={() => setInspectDiaryOpen(true)}
                       >
-                        කියවන්න (INSPECT)
+                        {lang === "en" ? "READ [INSPECT]" : "කියවන්න (INSPECT)"}
                       </button>
                     )}
                   </div>
@@ -5065,12 +5765,12 @@ export default function App() {
                   <div className={`inv-item-card ${evidence.key ? "item-discovered" : "item-missing"}`}>
                     <div className="inv-item-icon"><Icons.Key className="tactical-svg-icon" /></div>
                     <div className="inv-item-info">
-                      <h3>පුරාණ පිත්තල යතුර (Ancient Brass Key)</h3>
-                      <span className="inv-item-qty">{evidence.key ? "✓ ළඟ ඇත (EVIDENCE 02)" : "තවමත් හමුවී නැත"}</span>
+                      <h3>{lang === "en" ? "Antique Brass Monolith Key" : "පුරාණ පිත්තල යතුර (Ancient Brass Key)"}</h3>
+                      <span className="inv-item-qty">{evidence.key ? (lang === "en" ? "✓ IN POSSESSION (EVIDENCE 02)" : "✓ ළඟ ඇත (EVIDENCE 02)") : (lang === "en" ? "Not yet located" : "තවමත් හමුවී නැත")}</span>
                       <p>
                         {evidence.key
-                          ? "සිංහරාජයේ රහස් භූගත ලෙන විවෘත කිරීමට අවශ්‍ය පුරාණ කැටයම් සහිත යතුරයි."
-                          : "ගංගා ඉවුරේ පැරණි ඔරුව අසල ඇත."}
+                          ? (lang === "en" ? "Ancient engraved key required to disengage the monolith cave gate lock." : "සිංහරාජයේ රහස් භූගත ලෙන විවෘත කිරීමට අවශ්‍ය පුරාණ කැටයම් සහිත යතුරයි.")
+                          : (lang === "en" ? "Resting atop the flat river boulder across the log bridge." : "ගංගා ඉවුරේ පැරණි ඔරුව අසල ඇත.")}
                       </p>
                     </div>
                   </div>
@@ -5079,12 +5779,12 @@ export default function App() {
                   <div className={`inv-item-card ${evidence.sample ? "item-discovered highlight" : "item-missing"}`}>
                     <div className="inv-item-icon"><Icons.Vial className="tactical-svg-icon" /></div>
                     <div className="inv-item-info">
-                      <h3>පර්යේෂණ සාම්පලය (Bioluminescent Sample)</h3>
-                      <span className="inv-item-qty">{evidence.sample ? "✓ ළඟ ඇත (EVIDENCE 03)" : "තවමත් හමුවී නැත"}</span>
+                      <h3>{lang === "en" ? "Bioluminescent Flora Sample" : "පර්යේෂණ සාම්පලය (Bioluminescent Sample)"}</h3>
+                      <span className="inv-item-qty">{evidence.sample ? (lang === "en" ? "✓ SECURED (EVIDENCE 03)" : "✓ ළඟ ඇත (EVIDENCE 03)") : (lang === "en" ? "Not yet located" : "තවමත් හමුවී නැත")}</span>
                       <p>
                         {evidence.sample
-                          ? "වසර 30ක් අතුරුදහන් වූ කණ්ඩායම සොයාගත් නිල් ආලෝකය විහිදුවන දිලීර සාම්පලය."
-                          : "ගල් ලෙන තුළ ආරක්ෂිතව ඇත."}
+                          ? (lang === "en" ? "Rare living specimen recovered from the subterranean vault altar; glows with ethereal cyan bioluminescence." : "වසර 30ක් අතුරුදහන් වූ කණ්ඩායම සොයාගත් නිල් ආලෝකය විහිදුවන දිලීර සාම්පලය.")
+                          : (lang === "en" ? "Preserved deep inside the ancient subterranean cavern." : "ගල් ලෙන තුළ ආරක්ෂිතව ඇත.")}
                       </p>
                     </div>
                   </div>
@@ -5093,12 +5793,12 @@ export default function App() {
                   <div className={`inv-item-card ${stats.uvUnlocked ? "item-discovered" : "item-missing"}`}>
                     <div className="inv-item-icon"><Icons.UV className="tactical-svg-icon" /></div>
                     <div className="inv-item-info">
-                      <h3>පාරජම්බුල කාචය (UV Blacklight Filter)</h3>
-                      <span className="inv-item-qty">{stats.uvUnlocked ? (stats.uvMode ? "✓ සක්‍රියයි (UV ON)" : "✓ ළඟ ඇත (UV OFF)") : "තවමත් හමුවී නැත"}</span>
+                      <h3>{lang === "en" ? "Tactical UV Blacklight Filter" : "පාරජම්බුල කාචය (UV Blacklight Filter)"}</h3>
+                      <span className="inv-item-qty">{stats.uvUnlocked ? (stats.uvMode ? (lang === "en" ? "✓ ACTIVE (UV ON)" : "✓ සක්‍රියයි (UV ON)") : (lang === "en" ? "✓ IN POSSESSION (UV OFF)" : "✓ ළඟ ඇත (UV OFF)")) : (lang === "en" ? "Not yet located" : "තවමත් හමුවී නැත")}</span>
                       <p>
                         {stats.uvUnlocked
-                          ? "විදුලි පන්දමට සවි කර 1987 රහස් පා සටහන් සහ සංකේත දැකගත හැක. [U] ඔබන්න."
-                          : "මුරපොළේ මේසය යටින් සොයාගන්න."}
+                          ? (lang === "en" ? "Mounts onto flashlight to reveal hidden 1987 tracks and glowing trail runes. Press [U]." : "විදුලි පන්දමට සවි කර 1987 රහස් පා සටහන් සහ සංකේත දැකගත හැක. [U] ඔබන්න.")
+                          : (lang === "en" ? "Located near the Kudawa ranger outpost desk." : "මුරපොළේ මේසය යටින් සොයාගන්න.")}
                       </p>
                     </div>
                     {stats.uvUnlocked && (
@@ -5106,7 +5806,7 @@ export default function App() {
                         className="inv-action-btn"
                         onClick={() => handleVirtualAction("uv")}
                       >
-                        {stats.uvMode ? "OFF කරන්න" : "ක්‍රියාත්මක කරන්න [U]"}
+                        {stats.uvMode ? (lang === "en" ? "TURN OFF" : "OFF කරන්න") : (lang === "en" ? "ACTIVATE [U]" : "ක්‍රියාත්මක කරන්න [U]")}
                       </button>
                     )}
                   </div>
@@ -5115,12 +5815,12 @@ export default function App() {
                   <div className={`inv-item-card ${stats.flareGunFound ? "item-discovered" : "item-missing"}`}>
                     <div className="inv-item-icon"><Icons.Siren className="tactical-svg-icon" /></div>
                     <div className="inv-item-info">
-                      <h3>හදිසි සංඥා තුවක්කුව (Signal Flare Gun)</h3>
-                      <span className="inv-item-qty">{stats.flareGunFound ? "✓ සුදානම් (READY)" : "තවමත් හමුවී නැත"}</span>
+                      <h3>{lang === "en" ? "Emergency Signal Flare Launcher" : "හදිසි සංඥා තුවක්කුව (Signal Flare Gun)"}</h3>
+                      <span className="inv-item-qty">{stats.flareGunFound ? (lang === "en" ? "✓ READY FOR EXTRACTION" : "✓ සුදානම් (READY)") : (lang === "en" ? "Not yet located" : "තවමත් හමුවී නැත")}</span>
                       <p>
                         {stats.flareGunFound
-                          ? "සාක්ෂි 3ම සම්පූර්ණ කළ පසු හෙලිපෑඩ් වෙත ගොස් [E] ඔබා හෙලිකොප්ටරය කැඳවන්න."
-                          : "මුරපොළේ ලොකරය තුළ ඇත."}
+                          ? (lang === "en" ? "Once all 3 evidence items are secured, reach the summit helipad and fire [E] to summon Chopper-01." : "සාක්ෂි 3ම සම්පූර්ණ කළ පසු හෙලිපෑඩ් වෙත ගොස් [E] ඔබා හෙලිකොප්ටරය කැඳවන්න.")
+                          : (lang === "en" ? "Stored inside the Kudawa ranger outpost locker." : "මුරපොළේ ලොකරය තුළ ඇත.")}
                       </p>
                     </div>
                   </div>
@@ -5129,14 +5829,14 @@ export default function App() {
                   <div className={`inv-item-card ${stats.magpieCharmActive ? "item-discovered highlight" : stats.feathersCollected > 0 ? "item-discovered" : "item-missing"}`}>
                     <div className="inv-item-icon"><Icons.Feather className="tactical-svg-icon" /></div>
                     <div className="inv-item-info">
-                      <h3>කැහිබෙලි නිල් පිහාටු (Sacred Feathers)</h3>
+                      <h3>{lang === "en" ? "Ceylon Blue Magpie Sacred Feathers" : "කැහිබෙලි නිල් පිහාටු (Sacred Feathers)"}</h3>
                       <span className="inv-item-qty">
-                        {stats.magpieCharmActive ? "✓ ආමුදිතය ක්‍රියාත්මකයි (+20% Speed & Stamina)" : `එකතු කර ඇත: ${stats.feathersCollected} / 3`}
+                        {stats.magpieCharmActive ? (lang === "en" ? "✓ TALISMAN ACTIVE (+25% Speed & Stamina)" : "✓ ආමුදිතය ක්‍රියාත්මකයි (+20% Speed & Stamina)") : (lang === "en" ? `Feathers Collected: ${stats.feathersCollected} / 3` : `එකතු කර ඇත: ${stats.feathersCollected} / 3`)}
                       </span>
                       <p>
                         {stats.magpieCharmActive
-                          ? "පිහාටු 3ම සතු බැවින් කැහිබෙලි ආමුදිතය මඟින් ක්‍රීඩකයාට අමතර වේගයක් සහ ශක්තියක් ලබාදේ!"
-                          : "වන මාවත් ඔස්සේ පිහාටු 3ම සොයාගෙන විශේෂ වේග බූස්ට් එක සක්‍රිය කරගන්න."}
+                          ? (lang === "en" ? "Empowered by the sacred blue magpie talisman; permanent sprint speed boost active!" : "පිහාටු 3ම සතු බැවින් කැහිබෙලි ආමුදිතය මඟින් ක්‍රීඩකයාට අමතර වේගයක් සහ ශක්තියක් ලබාදේ!")
+                          : (lang === "en" ? "Search forest trails for glowing blue magpie feathers to unlock a tactical speed boost." : "වන මාවත් ඔස්සේ පිහාටු 3ම සොයාගෙන විශේෂ වේග බූස්ට් එක සක්‍රිය කරගන්න.")}
                       </p>
                     </div>
                   </div>
@@ -5152,92 +5852,398 @@ export default function App() {
         <div className="diary-inspect-overlay" onClick={() => setInspectDiaryOpen(false)}>
           <div className="diary-parchment-sheet" onClick={(e) => e.stopPropagation()}>
             <div className="sheet-pin-header">
-              <span className="sheet-date">1987 නොවැම්බර් මස 14 වන දින - කුඩව මුරපොළ</span>
+              <span className="sheet-date">
+                {lang === "en"
+                  ? "14 November 1987 // Kudawa Ranger Field Station"
+                  : "1987 නොවැම්බර් මස 14 වන දින - කුඩව මුරපොළ"}
+              </span>
               <button className="close-btn" onClick={() => setInspectDiaryOpen(false)}>✕</button>
             </div>
             <div className="handwritten-entry">
-              <h3>මහාචාර්ය ඩග්ලස්ගේ අත්අකුරු සටහන:</h3>
+              <h3>
+                {lang === "en"
+                  ? "Professor Douglas's Handwritten Field Log:"
+                  : "මහාචාර්ය ඩග්ලස්ගේ අත්අකුරු සටහන:"}
+              </h3>
               <p>
-                “...අපගේ පර්යේෂණ කණ්ඩායමේ තිදෙනාම දැන් සූදානම්. රාත්‍රියේදී කැලයේ අමුතු ශබ්ද ඇසෙයි.
-                කූඩැල්ලන්ගෙන් බේරීමට ගිනිමැල දැල්වීම අත්‍යවශ්‍ය වේ.
+                {lang === "en"
+                  ? "“...Our expedition team of three is moving into deep canopy at nightfall. Strange rhythmic low-frequency vibrations reverberate beneath the forest floor. Torches and campfires are essential to hold back the predatory leeches.”"
+                  : "“...අපගේ පර්යේෂණ කණ්ඩායමේ තිදෙනාම දැන් සූදානම්. රාත්‍රියේදී කැලයේ අමුතු ශබ්ද ඇසෙයි. කූඩැල්ලන්ගෙන් බේරීමට ගිනිමැල දැල්වීම අත්‍යවශ්‍ය වේ.”"}
               </p>
               <p>
-                ගංගාවෙන් එතෙර වී කඳු පාමුල ඇති පුරාණ ලෙනට පිවිසීමට නම්, ගල් දොරටුවේ ඇති සංකේත තුන
-                පිළිවෙලින් තැබිය යුතුය:
+                {lang === "en"
+                  ? "“To breach the subterranean stone sanctum beyond the river bend, the monolith rotary dials must align to the three sacred elements:”"
+                  : "“ගංගාවෙන් එතෙර වී කඳු පාමුල ඇති පුරාණ ලෙනට පිවිසීමට නම්, ගල් දොරටුවේ ඇති සංකේත තුන පිළිවෙලින් තැබිය යුතුය:”"}
               </p>
               <div className="rune-secret-highlight">
-                <strong>[I] SUN (සූර්යයා)</strong><br />
-                <strong>[II] RIVER (ගංගාව)</strong><br />
-                <strong>[III] LION (සිංහයා)</strong>
+                <strong>[I] {lang === "en" ? "SUN (Dawn's golden radiance awakening the canopy)" : "SUN (සූර්යයා - නැගෙනහිර දීප්තිය)"}</strong><br />
+                <strong>[II] {lang === "en" ? "RIVER (Torrent carving through granite bedrock)" : "RIVER (ගංගාව - ගලායන ජල ධාරාව)"}</strong><br />
+                <strong>[III] {lang === "en" ? "LION (The sovereign beast of the ancient ridge)" : "LION (සිංහයා - පෞරාණික මෘගරාජයා)"}</strong>
               </div>
               <p>
-                යතුර ගංගා ඉවුරේ පැරණි ඔරු තොටේ සඟවා තැබුවෙමි. දෙවියනේ අපට පිහිට වන්න...”
+                {lang === "en"
+                  ? "“I hid the engraved brass gate key atop the flat boulder near the river crossing altar. May providence protect whoever follows our footsteps...”"
+                  : "“යතුර ගංගා ඉවුරේ පැරණි ඔරු තොටේ සඟවා තැබුවෙමි. දෙවියනේ අපට පිහිට වන්න...”"}
               </p>
             </div>
             <button className="diary-close-action" onClick={() => setInspectDiaryOpen(false)}>
-              සටහන වසන්න (CLOSE DIARY)
+              {lang === "en" ? "CLOSE FIELD JOURNAL" : "සටහන වසන්න (CLOSE DIARY)"}
             </button>
           </div>
         </div>
       )}
 
-      {/* ── Audio Cassette Transcript Modal (Chapter 2) ── */}
+      {/* ── Audio Cassette Transcript & Spoken Voice Modal (Chapter 2: Dr. Jayasuriya Recording) ── */}
       {inspectTapeOpen && (
-        <div className="diary-inspect-overlay" onClick={() => setInspectTapeOpen(false)}>
+        <div
+          className="diary-inspect-overlay"
+          onClick={() => {
+            stopJayasuriyaVoice();
+            setInspectTapeOpen(false);
+          }}
+        >
           <div className="diary-parchment-sheet tape-sheet" onClick={(e) => e.stopPropagation()}>
+            {/* Pinned Sticky Header */}
             <div className="sheet-pin-header">
-              <span className="sheet-date">[AUDIO REEL] ශ්‍රව්‍ය පට පිටපත // SONY TCM-150 REEL</span>
-              <button className="close-btn" onClick={() => setInspectTapeOpen(false)}>✕</button>
+              <div className="header-meta-left">
+                <span className="sheet-date">🎙️ 1987 FIELD AUDIO LOG // DR. JAYASURIYA</span>
+                <span className="sheet-sub">GALGANGA CASCADE • CHIEF GEOLOGIST DISPATCH</span>
+              </div>
+              <button
+                type="button"
+                className="sheet-close-btn"
+                title="Close Audio Log [ESC]"
+                onClick={() => {
+                  stopJayasuriyaVoice();
+                  setInspectTapeOpen(false);
+                }}
+              >
+                ✕ CLOSE [ESC]
+              </button>
             </div>
-            <div className="handwritten-entry">
-              <h3>භූවිද්‍යාඥ කණ්ඩායමේ අවසාන හඬ පණිවිඩය:</h3>
-              <p>
-                <em>“(ස්ථිතික හඬ... දියඇල්ලක ඝෝෂාව පසුබිමින් ඇසේ...)”</em>
-              </p>
-              <p>
-                “අද 1987 දෙසැම්බර් 02. අපි දියඇලි අගාධය හරහා උණ බම්බු පහුරෙන් එතෙර වුණා.
-                පැරණි පතල තුළින් නිල් පැහැති ආලෝකයක් විහිදෙනවා! අපි ඒ ස්ඵටිකය ලබාගත්තා...
-              </p>
-              <p>
-                නමුත් අපේ සන්නිවේදන යන්ත්‍ර සියල්ල ක්‍රියා විරහිත වුණා. කවුරුන් හෝ මෙය සොයාගන්නේ නම්,
-                කඳු මුදුනේ ඇති සංඥා කුලුනෙන් රතු එළිය දල්වා හෙලිකොප්ටරය කැඳවන්න!”
-              </p>
+
+            {/* Scrollable Modal Content Body */}
+            <div className="tape-sheet-scrollable-body">
+              {/* Vintage Nagra / Sony Reel-to-Reel Tape Deck Graphic */}
+              <div className="vintage-tape-deck">
+                <div className="deck-chassis">
+                  <div className={`tape-spool-wheel left-wheel ${isJayasuriyaVoicePlaying ? "tape-spool-spin" : ""}`}>
+                    <div className="spool-spoke s1" />
+                    <div className="spool-spoke s2" />
+                    <div className="spool-spoke s3" />
+                    <div className="spool-hub" />
+                  </div>
+                  <div className="tape-head-assembly">
+                    <div className="magnetic-head" />
+                    <div className="tape-tape-ribbon" />
+                    <div className="tape-vu-container">
+                      <span className="vu-label">AUDIO LEVEL VU</span>
+                      <div className="vu-meter-bars">
+                        <div className={`vu-bar b1 ${isJayasuriyaVoicePlaying ? "vu-active" : ""}`} />
+                        <div className={`vu-bar b2 ${isJayasuriyaVoicePlaying ? "vu-active" : ""}`} />
+                        <div className={`vu-bar b3 ${isJayasuriyaVoicePlaying ? "vu-active" : ""}`} />
+                        <div className={`vu-bar b4 ${isJayasuriyaVoicePlaying ? "vu-active" : ""}`} />
+                        <div className={`vu-bar b5 ${isJayasuriyaVoicePlaying ? "vu-active" : ""}`} />
+                      </div>
+                    </div>
+                  </div>
+                  <div className={`tape-spool-wheel right-wheel ${isJayasuriyaVoicePlaying ? "tape-spool-spin" : ""}`}>
+                    <div className="spool-spoke s1" />
+                    <div className="spool-spoke s2" />
+                    <div className="spool-spoke s3" />
+                    <div className="spool-hub" />
+                  </div>
+                </div>
+
+                {/* Tactical Audio Voice Play/Stop Button */}
+                <div className="tape-audio-actions">
+                  <button
+                    type="button"
+                    className={`btn-voice-deck ${isJayasuriyaVoicePlaying ? "btn-stop" : "btn-play"}`}
+                    onClick={isJayasuriyaVoicePlaying ? stopJayasuriyaVoice : playJayasuriyaVoice}
+                  >
+                    {isJayasuriyaVoicePlaying ? (
+                      <>⏹ STOP TRANSMISSION (හඬපටය නවත්වන්න)</>
+                    ) : (
+                      <>▶ PLAY TRANSMISSION (හඬපටය අසන්න)</>
+                    )}
+                  </button>
+                  <span className="deck-status-pill">
+                    {isJayasuriyaVoicePlaying ? "🔴 PLAYING MAGNETIC TAPE..." : "⚪ TAPE DECK READY"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="handwritten-entry">
+                {/* Authentic Expedition Audio Dispatch (English) */}
+                <div className="spoken-voice-transcript-box">
+                  <div className="voice-transcript-header">
+                    <span className="voice-badge">📻 1987 GEOLOGICAL EXPEDITION CASSETTE</span>
+                    <span className="voice-freq">FREQ: 156.40 MHz • GALGANGA OUTPOST</span>
+                  </div>
+                  <div className="spoken-script-content">
+                    <p className="voice-line lead">
+                      "Expedition field dispatch, December 2nd, 1987. Dr. Jayasuriya recording from the Galganga cascade base."
+                    </p>
+                    <p className="voice-line highlight-lead" style={{ color: "#38bdf8", fontWeight: 700, fontSize: "1.05rem", lineHeight: 1.6 }}>
+                      “The blue crystal inside the mine is disrupting our radios... the water level is rising... our only chance of escape is the radio tower on the summit!”
+                    </p>
+                  </div>
+                </div>
+
+                {/* Sinhala Reference Transcript Section */}
+                <div className="sinhala-translation-box">
+                  <h4>ආචාර්ය ජයසූරියගේ අවසාන පටිගත කිරීම (SINHALA TRANSCRIPT):</h4>
+                  <p>
+                    <em>“(ස්ථිතික හඬ... ඇදහැලෙන මහා දියඇල්ලක ඝෝෂාව සහ ජල බිඳිති විසිරෙන හඬ...)”</em>
+                  </p>
+                  <p style={{ color: "#fef08a", fontWeight: 600 }}>
+                    “පතල තුළ ඇති නිල් ස්ඵටිකය අපගේ රේඩියෝ තරංග විනාශ කරනවා... ජල මට්ටම වේගයෙන් ඉහළ යනවා... අපට බේරීමට ඇති එකම මඟ කඳු මුදුනේ ඇති සංඥා කුලුනයි!”
+                  </p>
+                  <p>
+                    දියඇල්ල පිටුපස ඇති 1894 පැරණි පතලේ ජලය බැස්සවීමට ඩීසල් ජල පොම්පය ක්‍රියාත්මක කරන්න. ස්ඵටිකය ලබාගත් පසු කඳු මුදුනේ කේබල් කරත්තය මගින් අගාධය තරණය කරන්න!
+                  </p>
+                </div>
+              </div>
             </div>
-            <button className="diary-close-action" onClick={() => setInspectTapeOpen(false)}>
-              හඬපටය වසන්න (CLOSE TRANSCRIPT)
-            </button>
+
+            {/* Pinned Sticky Footer */}
+            <div className="tape-sheet-footer">
+              <button
+                type="button"
+                className="tape-close-action-btn"
+                onClick={() => {
+                  stopJayasuriyaVoice();
+                  setInspectTapeOpen(false);
+                }}
+              >
+                ✕ CLOSE AUDIO LOG // හඬපටය වසන්න [ESC]
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* ── Audio Cassette Transcript Modal (Chapter 1: Prof Douglas 1987 Audio Log) ── */}
-      {inspectDouglasTapeOpen && (
-        <div className="diary-inspect-overlay" onClick={() => setInspectDouglasTapeOpen(false)}>
-          <div className="diary-parchment-sheet tape-sheet" onClick={(e) => e.stopPropagation()}>
+      {/* ── Geologists' Topographic Survey Map Modal (Chapter 2: map2) ── */}
+      {inspectMap2Open && (
+        <div className="diary-inspect-overlay" onClick={() => setInspectMap2Open(false)}>
+          <div className="diary-parchment-sheet map-inspect-sheet" onClick={(e) => e.stopPropagation()}>
             <div className="sheet-pin-header">
-              <span className="sheet-date">[AUDIO LOG] මහාචාර්ය ඩග්ලස්ගේ හඬපටය // 1987 REEL-TO-REEL LOG</span>
-              <button className="close-btn" onClick={() => setInspectDouglasTapeOpen(false)}>✕</button>
+              <div className="header-meta-left">
+                <span className="sheet-date">🗺️ GEOLOGICAL SURVEY CARTOGRAPH // 1987 EXPEDITION</span>
+                <span className="sheet-sub">GALGANGA MIST GORGE & SUBTERRANEAN SHAFT BLUEPRINT</span>
+              </div>
+              <button
+                type="button"
+                className="sheet-close-btn"
+                title="Close Map [ESC]"
+                onClick={() => setInspectMap2Open(false)}
+              >
+                ✕ CLOSE [ESC]
+              </button>
             </div>
-            <div className="handwritten-entry">
-              <h3>කුඩව මුරපොළේ අවසන් පටිගත කිරීම (1987 නොවැම්බර් 14):</h3>
-              <p>
-                <em>“(චක චක... පැරණි කැසට් රීලය කැරකෙන ශබ්දය සහ ඇදහැලෙන වැහි හඬ...)”</em>
-              </p>
-              <p>
-                “මා කණ්ඩායමේ නායක මහාචාර්ය ඩග්ලස්. වේලාව සවස 5යි... හිටිවනම ගංගා නිම්නයට මහා වැසි කුණාටුවක් කඩා වැටුණා.
-                ගඟ පිටාර ගලා ඇති බැවින් සාමාන්‍ය මාවතෙන් එතෙර විය නොහැකියි! යෝධ ගස් කොටන් පාලම (Fallen Tree Log Bridge) ඔස්සේ පමණක් ආරක්ෂිතව යා හැකියි.
-              </p>
-              <p>
-                අපගේ හෝඩුවාවන් සහ රහස් සංකේත සලකුණු කිරීමට අප පාරජම්බුල (UV) තීන්ත භාවිතා කළා.
-                මේසය යට ඇති <strong>UV Blacklight කාචය [U]</strong> රැගෙන එන්න. අපගේ දීප්තිමත් පා සටහන් (Footprints) ලෙන දෙසට මඟ පෙන්වනු ඇත!
-              </p>
-              <p>
-                එමෙන්ම හදිසි ගැලවුම් සංඥා තුවක්කුව (Flare Gun) ලොකරයේ සුරක්ෂිතව තැබුවෙමි. සාක්ෂි 3ම සොයාගත් පසු හෙලිපෑඩ් වෙත ගොස් සංඥා කරන්න... දෙවියන් ඔබ රැකදේවා!”
-              </p>
+
+            <div className="tape-sheet-scrollable-body">
+              <div className="map-cartograph-viewport">
+                <div className="cartograph-header-badge">
+                  <span>SECTOR 02 // ELEVATION: 420m - 540m MSL</span>
+                  <span>GEODETIC REF: SINHARAJA GRID 87-B</span>
+                </div>
+
+                <div className="cartograph-sketch-container">
+                  <div className="cartograph-poi-marker" style={{ left: "18%", top: "32%" }}>
+                    <span className="poi-icon">🏕️</span>
+                    <span className="poi-label">EXPEDITION CAMP [126, 155]</span>
+                  </div>
+                  <div className="cartograph-poi-marker" style={{ left: "30%", top: "45%" }}>
+                    <span className="poi-icon">🪵</span>
+                    <span className="poi-label">BAMBOO RAFT CROSSING</span>
+                  </div>
+                  <div className="cartograph-poi-marker" style={{ left: "54%", top: "58%" }}>
+                    <span className="poi-icon">🌊</span>
+                    <span className="poi-label">GALGANGA CASCADE (26m)</span>
+                  </div>
+                  <div className="cartograph-poi-marker highlight" style={{ left: "68%", top: "66%" }}>
+                    <span className="poi-icon">⛏️</span>
+                    <span className="poi-label">SECRET 1894 MINE PORTAL</span>
+                  </div>
+                  <div className="cartograph-poi-marker crystal" style={{ left: "82%", top: "80%" }}>
+                    <span className="poi-icon">💎</span>
+                    <span className="poi-label">AZURE CRYSTAL VAULT</span>
+                  </div>
+                  <div className="cartograph-poi-marker" style={{ left: "68%", top: "48%" }}>
+                    <span className="poi-icon">🚡</span>
+                    <span className="poi-label">CABLE TROLLEY TERMINUS</span>
+                  </div>
+                </div>
+
+                <div className="cartograph-field-notes">
+                  <h4>{lang === "en" ? "GEOLOGIST FIELD OBSERVATIONS (DR. JAYASURIYA):" : "භූවිද්‍යාඥ ක්ෂේත්‍ර සටහන් (ආචාර්ය ජයසූරිය):"}</h4>
+                  <p>
+                    {lang === "en"
+                      ? "“The suspension bridge collapsed under boulder debris. Gather bamboo stalks and manila rope near camp to assemble an assault raft. Fast currents require careful maneuvering across the rocky bend.”"
+                      : "“ගල් පෙරලීමෙන් ලී පාලම විනාශ වී ඇත. කඳවුර අසල ඇති උණ බම්බු සහ කඹ එකතු කර ගංගාව තරණයට පහුරක් සාදන්න. සැඩ පහර ඉතා ප්‍රබල බැවින් ගල්පරවලින් ප්‍රවේශම් වන්න.”"}
+                  </p>
+                  <p>
+                    {lang === "en"
+                      ? "“The Great Cascade conceals a 19th-century graphite mine entrance. Flooding has drowned the deeper shafts. The antique drainage pump must be activated before the piezoelectric azure crystal can be harvested from the rock face.”"
+                      : "“මහා දියඇල්ල පිටුපසින් 1894 පැරණි මිනිරන් පතලේ දොරටුව සඟවා ඇත. පතල ජලයෙන් යටවී ඇති බැවින් නිල් ස්ඵටිකය ලබාගැනීමට නම් පළමුව ඩීසල් ජල පොම්පය ක්‍රියාත්මක කර ජල මට්ටම පහත හෙළිය යුතුය.”"}
+                  </p>
+                </div>
+              </div>
             </div>
-            <button className="diary-close-action" onClick={() => setInspectDouglasTapeOpen(false)}>
-              හඬපටය වසන්න (CLOSE AUDIO LOG)
-            </button>
+
+            <div className="tape-sheet-footer">
+              <button
+                type="button"
+                className="tape-close-action-btn"
+                onClick={() => setInspectMap2Open(false)}
+              >
+                ✕ CLOSE MAP // සිතියම වසන්න [ESC]
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Audio Cassette Transcript & Spoken Voice Modal (Chapter 1: Prof Douglas 1987 Audio Log) ── */}
+      {inspectDouglasTapeOpen && (
+        <div
+          className="diary-inspect-overlay"
+          onClick={() => {
+            stopDouglasVoice();
+            setInspectDouglasTapeOpen(false);
+          }}
+        >
+          <div className="diary-parchment-sheet tape-sheet" onClick={(e) => e.stopPropagation()}>
+            {/* Pinned Sticky Header */}
+            <div className="sheet-pin-header">
+              <div className="header-meta-left">
+                <span className="sheet-date">🎙️ 1987 FIELD AUDIO LOG // PROF. ARTHUR DOUGLAS</span>
+                <span className="sheet-sub">KUDAWA OUTPOST • SINHARAJA EXPEDITION RECORDING</span>
+              </div>
+              <button
+                type="button"
+                className="sheet-close-btn"
+                title="Close Audio Log [ESC]"
+                onClick={() => {
+                  stopDouglasVoice();
+                  setInspectDouglasTapeOpen(false);
+                }}
+              >
+                ✕ CLOSE [ESC]
+              </button>
+            </div>
+
+            {/* Scrollable Modal Content Body */}
+            <div className="tape-sheet-scrollable-body">
+              {/* Vintage Nagra Reel-to-Reel Tape Deck Graphic */}
+              <div className="vintage-tape-deck">
+                <div className="deck-chassis">
+                  <div className={`tape-spool-wheel left-wheel ${isDouglasVoicePlaying ? "tape-spool-spin" : ""}`}>
+                    <div className="spool-spoke s1" />
+                    <div className="spool-spoke s2" />
+                    <div className="spool-spoke s3" />
+                    <div className="spool-hub" />
+                  </div>
+                  <div className="tape-head-assembly">
+                    <div className="magnetic-head" />
+                    <div className="tape-tape-ribbon" />
+                    <div className="tape-vu-container">
+                      <span className="vu-label">AUDIO LEVEL VU</span>
+                      <div className="vu-meter-bars">
+                        <div className={`vu-bar b1 ${isDouglasVoicePlaying ? "vu-active" : ""}`} />
+                        <div className={`vu-bar b2 ${isDouglasVoicePlaying ? "vu-active" : ""}`} />
+                        <div className={`vu-bar b3 ${isDouglasVoicePlaying ? "vu-active" : ""}`} />
+                        <div className={`vu-bar b4 ${isDouglasVoicePlaying ? "vu-active" : ""}`} />
+                        <div className={`vu-bar b5 ${isDouglasVoicePlaying ? "vu-active" : ""}`} />
+                      </div>
+                    </div>
+                  </div>
+                  <div className={`tape-spool-wheel right-wheel ${isDouglasVoicePlaying ? "tape-spool-spin" : ""}`}>
+                    <div className="spool-spoke s1" />
+                    <div className="spool-spoke s2" />
+                    <div className="spool-spoke s3" />
+                    <div className="spool-hub" />
+                  </div>
+                </div>
+
+                {/* Tactical Audio Voice Play/Stop Button */}
+                <div className="tape-audio-actions">
+                  <button
+                    type="button"
+                    className={`btn-voice-deck ${isDouglasVoicePlaying ? "btn-stop" : "btn-play"}`}
+                    onClick={isDouglasVoicePlaying ? stopDouglasVoice : playDouglasVoice}
+                  >
+                    {isDouglasVoicePlaying ? (
+                      <>⏹ STOP TRANSMISSION (හඬපටය නවත්වන්න)</>
+                    ) : (
+                      <>▶ PLAY TRANSMISSION (හඬපටය අසන්න)</>
+                    )}
+                  </button>
+                  <span className="deck-status-pill">
+                    {isDouglasVoicePlaying ? "🔴 PLAYING MAGNETIC TAPE..." : "⚪ TAPE DECK READY"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="handwritten-entry">
+                {/* Authentic Expedition Audio Dispatch (English) */}
+                <div className="spoken-voice-transcript-box">
+                  <div className="voice-transcript-header">
+                    <span className="voice-badge">📻 1987 EXPEDITION AUDIO TRANSMISSION</span>
+                    <span className="voice-freq">FREQ: 142.85 MHz • VHF CASSETTE</span>
+                  </div>
+                  <div className="spoken-script-content">
+                    <p className="voice-line lead">
+                      "Expedition log, November 14, 1987. Professor Arthur Douglas recording."
+                    </p>
+                    <p className="voice-line">
+                      "A sudden torrential storm has breached the riverbanks. The valley is rapidly flooding! Do not attempt to swim the surging river currents—you must cross via the <strong>massive fallen tree log bridge</strong>."
+                    </p>
+                    <p className="voice-line">
+                      "Search beneath my outpost workbench: secure the <strong>UV Blacklight torch using key [U]</strong>. We marked our retreat trail with luminescent ultraviolet footprints leading directly to the <strong>ancient monolith cavern</strong>."
+                    </p>
+                    <p className="voice-line">
+                      "Recover the <strong>three critical expedition evidence items</strong> (Field Journal, Brass Key, and Bioluminescent Flora Specimen). Then ascend through the cavern tunnel to the summit ridge <strong>helipad for emergency extraction</strong>. Stay vigilant, officer!"
+                    </p>
+                  </div>
+                </div>
+
+                {/* Sinhala Reference Transcript Section */}
+                <div className="sinhala-translation-box">
+                  <h4>කුඩව මුරපොළේ අවසන් පටිගත කිරීම (SINHALA TRANSCRIPT):</h4>
+                  <p>
+                    <em>“(චක චක... පැරණි කැසට් රීලය කැරකෙන ශබ්දය සහ ඇදහැලෙන වැහි හඬ...)”</em>
+                  </p>
+                  <p>
+                    “මා කණ්ඩායමේ නායක මහාචාර්ය ඩග්ලස්. වේලාව සවස 5යි... හිටිවනම ගංගා නිම්නයට මහා වැසි කුණාටුවක් කඩා වැටුණා.
+                    ගඟ පිටාර ගලා ඇති බැවින් සාමාන්‍ය මාවතෙන් එතෙර විය නොහැකියි! යෝධ ගස් කොටන් පාලම (Fallen Tree Log Bridge) ඔස්සේ පමණක් ආරක්ෂිතව යා හැකියි.
+                  </p>
+                  <p>
+                    අපගේ හෝඩුවාවන් සහ රහස් සංකේත සලකුණු කිරීමට අප පාරජම්බුල (UV) තීන්ත භාවිතා කළා.
+                    මේසය යට ඇති <strong>UV Blacklight කාචය [U]</strong> රැගෙන එන්න. අපගේ දීප්තිමත් පා සටහන් (Footprints) ලෙන දෙසට මඟ පෙන්වනු ඇත!
+                  </p>
+                  <p>
+                    සාක්ෂි 3ම සොයාගත් පසු කඳු මුදුනේ හෙලිපෑඩ් වෙත ගොස් සංඥා කරන්න හෝ හෙලිකොප්ටරයට ගොඩවන්න... දෙවියන් ඔබ රැකදේවා!”
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Pinned Sticky Footer */}
+            <div className="tape-sheet-footer">
+              <button
+                type="button"
+                className="tape-close-action-btn"
+                onClick={() => {
+                  stopDouglasVoice();
+                  setInspectDouglasTapeOpen(false);
+                }}
+              >
+                ✕ CLOSE AUDIO LOG // හඬපටය වසන්න [ESC]
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -5250,18 +6256,26 @@ export default function App() {
           <div className="photo-polaroid-card animate-snap" onClick={(e) => e.stopPropagation()}>
             <div className="polaroid-pin"><Icons.Pin className="tactical-svg-icon" /></div>
             <div className="polaroid-art-frame">
-              <span className="polaroid-subject-icon">
-                {Icons[photoModal.icon] ? React.createElement(Icons[photoModal.icon], { className: "tactical-svg-icon" }) : <Icons.Camera className="tactical-svg-icon" />}
-              </span>
+              {photoModal.snapshotUrl ? (
+                <img src={photoModal.snapshotUrl} alt={photoModal.name || photoModal.title} className="polaroid-real-snapshot" />
+              ) : SPECIES_ILLUSTRATIONS[photoModal.illustrationType] ? (
+                <div className="polaroid-illustration-fallback">
+                  {React.createElement(SPECIES_ILLUSTRATIONS[photoModal.illustrationType])}
+                </div>
+              ) : (
+                <span className="polaroid-subject-icon">
+                  {Icons[photoModal.icon] ? React.createElement(Icons[photoModal.icon], { className: "tactical-svg-icon" }) : <Icons.Camera className="tactical-svg-icon" />}
+                </span>
+              )}
               <span className="polaroid-stamp">SINHARAJA ARCHIVE // 1987</span>
             </div>
             <div className="polaroid-caption">
-              <h3>{photoModal.name}</h3>
+              <h3>{photoModal.name || photoModal.title}</h3>
               <p>{photoModal.desc}</p>
               <span className="polaroid-subject-tag">WILDLIFE RECORDED ✓</span>
             </div>
             <button className="polaroid-save-btn" onClick={() => setPhotoModal(null)}>
-              ඇල්බමයට සුරකින්න (CLOSE) [SPACE]
+              {lang === "en" ? "SAVE TO ALBUM (CLOSE) [SPACE]" : "ඇල්බමයට සුරකින්න (CLOSE) [SPACE]"}
             </button>
           </div>
         </div>
