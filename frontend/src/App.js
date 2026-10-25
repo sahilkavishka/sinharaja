@@ -474,17 +474,26 @@ const CHAPTERS = [
     sectorShort: "KUDAWA",
     coords: "06°24′33″N 80°29′42″E // ELEV 420m",
     hazard: "SEVERE LEECHES // FLASH MONSOON // VIPER HAZARD",
+    hazardEn: "SEVERE LEECHES // FLASH MONSOON // PIT VIPER STRIKES",
+    hazardSi: "දරුණු කූඩැල්ලන් // ක්ෂණික වැසි කුණාටු // පොළොං අනතුර",
     satFreq: "142.85 MHz [SAT-1 LINK OK]",
-    nameSinhala: "කුඩව අඳුරු මාවත",
     nameEnglish: "The Kudawa Trailhead",
+    nameSinhala: "කුඩව අඳුරු මාවත",
+    taglineEn: "Search for the initial forensic clues of Douglas's missing 1987 expedition.",
+    taglineSinhala: "අතුරුදහන් වූ ගවේෂකයන්ගේ ආරම්භක හෝඩුවාවන් සෙවීම",
     tagline: "අතුරුදහන් වූ ගවේෂකයන්ගේ ආරම්භක හෝඩුවාවන් සෙවීම",
+    descEn: "Traverse the leech-infested mud trails and deep rainforest basin. Recover Professor Douglas's field journal, the brass key, and the bioluminescent flora sample from the ancient cave sanctuary to summon emergency evacuation.",
+    descSinhala: "කූඩැල්ලන් පිරි මඩ වගුර සහ ගංගා නිම්නය තරණය කර අතහැර දැමූ මුරපොළේ දිනපොත සහ භූගත ලෙනේ සාම්පල සොයාගෙන හෙලිපෑඩ් වෙත ළඟා වන්න.",
     desc: "කූඩැල්ලන් පිරි මඩ වගුර සහ ගංගා නිම්නය තරණය කර අතහැර දැමූ මුරපොළේ දිනපොත සහ භූගත ලෙනේ සාම්පල සොයාගෙන හෙලිපෑඩ් වෙත ළඟා වන්න.",
-    image: "https://images.unsplash.com/photo-1511497584788-87676104235f?q=80&w=1200",
+    image: "/chapters/ch1_kudawa.jpg",
+    fallbackImage: "https://images.unsplash.com/photo-1448375240586-882707db888b?q=80&w=1200",
     climate: "STORM // MIDNIGHT PROTOCOL",
+    reqMsgEn: "Available immediately for deployment.",
+    reqMsgSi: "වහාම ක්‍රියාත්මක කිරීමට විවෘතයි.",
     evidenceList: [
-      { id: "diary", name: "ලෙයින් පෙඟුණු දිනපොත", icon: "Book" },
-      { id: "key", name: "පුරාණ පිත්තල යතුර", icon: "Key" },
-      { id: "sample", name: "පර්යේෂණ සාම්පලය", icon: "Vial" },
+      { id: "diary", nameEn: "Douglas's Field Journal", nameSi: "ලෙයින් පෙඟුණු දිනපොත", name: "ලෙයින් පෙඟුණු දිනපොත", icon: "Book" },
+      { id: "key", nameEn: "Ancient Brass Key", nameSi: "පුරාණ පිත්තල යතුර", name: "පුරාණ පිත්තල යතුර", icon: "Key" },
+      { id: "sample", nameEn: "Bioluminescent Flora Sample", nameSi: "පර්යේෂණ සාම්පලය", name: "පර්යේෂණ සාම්පලය", icon: "Vial" },
     ],
   },
   {
@@ -494,18 +503,27 @@ const CHAPTERS = [
     sectorShort: "MIST GORGE",
     coords: "06°25′12″N 80°31′05″E // ELEV 650m",
     hazard: "CRYOGENIC CHILL // HYPOTHERMIA // RAPIDS DROWN RISK",
+    hazardEn: "CRYOGENIC CHILL // HYPOTHERMIA // RAPIDS DROWNING",
+    hazardSi: "අධික ශීතල // හයිපෝතර්මියාව // සැඩ පහරින් ගසාගෙන යාම",
     satFreq: "142.90 MHz [INTERMITTENT]",
-    nameSinhala: "මීදුම් නිම්නය සහ මහා දියඇලි",
     nameEnglish: "The Mist Gorge & Cascades",
+    nameSinhala: "මීදුම් නිම්නය සහ මහා දියඇලි",
+    taglineEn: "Freezing mist, turbulent rapids, and the mystery of the crashed Bell-206 helicopter.",
+    taglineSinhala: "අධික ශීතල, ඝන මීදුම සහ කැඩුණු කේබල් කරත්තයේ අභිරහස",
     tagline: "අධික ශීතල, ඝන මීදුම සහ කැඩුණු කේබල් කරත්තයේ අභිරහස",
+    descEn: "Survive freezing temperatures, lash a sturdy bamboo raft to cross the Galganga white-water rapids, and unseal the flooded 1894 mine shaft behind the great cascade to extract the piezoelectric Azure Crystal.",
+    descSinhala: "ශීතලෙන් මිදී (Body Warmth) උණ බම්බු පහුර සහ කේබල් කරත්තය (Cable Trolley) අලුත්වැඩියා කර, පැරණි භූවිද්‍යා කඳවුරේ සිතියම, හඬපටය සහ නිල් ස්ඵටිකය සොයාගෙන සංඥා කුලුන දල්වන්න.",
     desc: "ශීතලෙන් මිදී (Body Warmth) උණ බම්බු පහුර සහ කේබල් කරත්තය (Cable Trolley) අලුත්වැඩියා කර, පැරණි භූවිද්‍යා කඳවුරේ සිතියම, හඬපටය සහ නිල් ස්ඵටිකය සොයාගෙන සංඥා කුලුන දල්වන්න.",
-    image: "https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?q=80&w=1200",
+    image: "/chapters/ch2_cascade.jpg",
+    fallbackImage: "https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?q=80&w=1200",
     climate: "HEAVY MIST // CRYOGENIC GORGE",
+    reqMsgEn: "Complete Chapter 01: Kudawa Outpost to unlock.",
+    reqMsgSi: "Chapter 01 අවසන් කර සාක්ෂි එකතු කිරීමෙන් පසු විවෘත වේ.",
     reqMsg: "Chapter 01 අවසන් කර සාක්ෂි එකතු කිරීමෙන් පසු විවෘත වේ.",
     evidenceList: [
-      { id: "map2", name: "භූවිද්‍යා සිතියම", icon: "Map" },
-      { id: "tape", name: "පටිගත කළ හඬපටය", icon: "Tape" },
-      { id: "gem", name: "නිල් ස්ඵටික සාම්පලය", icon: "Crystal" },
+      { id: "map2", nameEn: "Geological Survey Cartograph", nameSi: "භූවිද්‍යා සිතියම", name: "භූවිද්‍යා සිතියම", icon: "Map" },
+      { id: "tape", nameEn: "Jayasuriya's Audio Cassette", nameSi: "පටිගත කළ හඬපටය", name: "පටිගත කළ හඬපටය", icon: "Tape" },
+      { id: "gem", nameEn: "Subterranean Azure Crystal", nameSi: "නිල් ස්ඵටික සාම්පලය", name: "නිල් ස්ඵටික සාම්පලය", icon: "Crystal" },
     ],
   },
   {
@@ -515,18 +533,27 @@ const CHAPTERS = [
     sectorShort: "CAVERNS",
     coords: "06°23′45″N 80°30′22″E // DEPTH -140m",
     hazard: "SUBTERRANEAN DARKNESS // AIR HAZARD // CAVE LEECHES",
+    hazardEn: "TOXIC SULFUR VENTS // SUBTERRANEAN TORRENT // SEISMIC COLLAPSE",
+    hazardSi: "විෂ සල්ෆර් වායුව // භූගත සැඩ ගංගාව // පාෂාණ කඩා වැටීම",
     satFreq: "143.15 MHz [OFFLINE / UNDERGROUND]",
+    nameEnglish: "The Hollow Below — Subterranean Caverns",
     nameSinhala: "යක්ෂ ගිරි භූගත අගාධය",
-    nameEnglish: "The Subterranean Caverns",
+    taglineEn: "A prehistoric limestone labyrinth concealed beneath the rainforest root systems.",
+    taglineSinhala: "පොළොව යට සැඟවුණු ප්‍රාග් ඓතිහාසික ලෙන් සංකීර්ණය",
     tagline: "පොළොව යට සැඟවුණු ප්‍රාග් ඓතිහාසික ලෙන් සංකීර්ණය",
+    descEn: "Disembark from the severed trolley into subterranean darkness. Equip a miner's gas mask to survive toxic fissure vents, turn the cast-iron sluice wheel to drain the river, extract the 12m Azure Spire Core, and survive the tremor cave-in to unlock Sector 04.",
+    descSinhala: "භූගත අන්ධකාරයේ වෙසෙන අද්භූත සතුන් සහ පැරණි ශිලා ලේඛන මැදින් භූගත ගංගාව තරණය කර 1987 රහස් ලෙන සොයා යන්න.",
     desc: "භූගත අන්ධකාරයේ වෙසෙන අද්භූත සතුන් සහ පැරණි ශිලා ලේඛන මැදින් භූගත ගංගාව තරණය කර 1987 රහස් ලෙන සොයා යන්න.",
-    image: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1200",
+    image: "/chapters/ch3_cavern.jpg",
+    fallbackImage: "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?q=80&w=1200",
     climate: "SUBTERRANEAN // BIOLUMINESCENT",
+    reqMsgEn: "Complete Chapter 02: Mist Gorge to unlock.",
+    reqMsgSi: "Chapter 02 සාර්ථකව නිම කරන්න.",
     reqMsg: "Chapter 02 සාර්ථකව නිම කරන්න.",
     evidenceList: [
-      { id: "ch3_slate", name: "ශිලා ලේඛන පිටපත", icon: "Scroll" },
-      { id: "ch3_torch", name: "පුරාණ තෙල් පහන", icon: "Lantern" },
-      { id: "ch3_core", name: "ප්‍රතිදීප්ත පාෂාණය", icon: "Orb" },
+      { id: "ch3_slate", nameEn: "Ancient Inscription Slate", nameSi: "ශිලා ලේඛන පිටපත", name: "ශිලා ලේඛන පිටපත", icon: "Scroll" },
+      { id: "ch3_torch", nameEn: "1987 Expedition Survey Log", nameSi: "පුරාණ තෙල් පහන", name: "පුරාණ තෙල් පහන", icon: "Lantern" },
+      { id: "ch3_core", nameEn: "Resonance Crystal Specimen", nameSi: "ප්‍රතිදීප්ත පාෂාණය", name: "ප්‍රතිදීප්ත පාෂාණය", icon: "Orb" },
     ],
   },
   {
@@ -536,19 +563,28 @@ const CHAPTERS = [
     sectorShort: "COMPLEX 87",
     coords: "06°22′18″N 80°32′44″E // ELEV 580m",
     hazard: "HIGH VOLTAGE GRID // MUTATED FLORA // BIO-SPECIMENS",
+    hazardEn: "HIGH VOLTAGE GRID // MUTATED FLORA // CORROSIVE SPORES",
+    hazardSi: "අධි වෝල්ටීයතා විදුලි දැල // විකෘති ශාක // විෂබීජ කාන්දුව",
     satFreq: "143.40 MHz [ENCRYPTED SIGNAL DETECTED]",
+    nameEnglish: "The Forgotten Facility — Complex 87",
     nameSinhala: "නටබුන් වූ රහස් පර්යේෂණාගාරය",
-    nameEnglish: "The Forgotten Facility",
+    taglineEn: "An overgrown 1987 cold-war bioscience bunker broadcasting an encrypted distress signal.",
+    taglineSinhala: "අතහැර දැමූ 1987 රසායනාගාරය සහ අමුතු සංඥා",
     tagline: "අතහැර දැමූ 1987 රසායනාගාරය සහ අමුතු සංඥා",
+    descEn: "Restore auxiliary high-voltage power generators in the root-strangled research bunker. Bypass pneumatic security blast doors, decrypt classified expedition dossiers, and isolate the mutated botanical genome.",
+    descSinhala: "ගස් මුල්වලින් වැසුණු රහස් පර්යේෂණ කඳවුරේ ජෙනරේටර් පණගන්වා, අගුළු දැමූ විද්‍යාගාරයේ රහස් ලිපිගොනු සහ DNA සාම්පල සොයාගන්න.",
     desc: "ගස් මුල්වලින් වැසුණු රහස් පර්යේෂණ කඳවුරේ ජෙනරේටර් පණගන්වා, අගුළු දැමූ විද්‍යාගාරයේ රහස් ලිපිගොනු සහ DNA සාම්පල සොයාගන්න.",
-    image: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=1200",
+    image: "/chapters/ch4_facility.jpg",
+    fallbackImage: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1200",
     climate: "COMPLEX 87 // INDUSTRIAL BLACKOUT",
     isDeploying: true,
+    reqMsgEn: "ACTIVE DEVELOPMENT // DEPLOYING SOON (Under Active Build)",
+    reqMsgSi: "සංවර්ධනය වෙමින් පවතී (DEPLOYING SOON) — නුදුරේදීම නිකුත් වේ.",
     reqMsg: "සංවර්ධනය වෙමින් පවතී (DEPLOYING SOON) — නුදුරේදීම නිකුත් වේ.",
     evidenceList: [
-      { id: "ch4_docs", name: "රහස් ලිපිගොනුව", icon: "Folder" },
-      { id: "ch4_keycard", name: "ප්‍රවේශ කාඩ්පත", icon: "Keycard" },
-      { id: "ch4_sample", name: "විකෘති DNA සාම්පලය", icon: "Dna" },
+      { id: "ch4_docs", nameEn: "Classified Project Dossier", nameSi: "රහස් ලිපිගොනුව", name: "රහස් ලිපිගොනුව", icon: "Folder" },
+      { id: "ch4_keycard", nameEn: "Level-3 Security Keycard", nameSi: "ප්‍රවේශ කාඩ්පත", name: "ප්‍රවේශ කාඩ්පත", icon: "Keycard" },
+      { id: "ch4_sample", nameEn: "Mutated Specimen Culture", nameSi: "විකෘති DNA සාම්පලය", name: "විකෘති DNA සාම්පලය", icon: "Dna" },
     ],
   },
   {
@@ -558,19 +594,28 @@ const CHAPTERS = [
     sectorShort: "CANOPY",
     coords: "06°21′05″N 80°34′19″E // ALT +150m CANOPY",
     hazard: "EXTREME HEIGHTS // CANOPY SQUALLS // EMP SURGES",
+    hazardEn: "EXTREME VERTICAL HEIGHTS // CANOPY SQUALLS // EMP SURGES",
+    hazardSi: "අධික උන්නතාංශය // තද සුළි සුළං // විද්‍යුත් චුම්භක කම්පන",
     satFreq: "144.00 MHz [GLOBAL ORBITAL UPLINK]",
+    nameEnglish: "The Colossus Canopy & Sinhagala Summit",
     nameSinhala: "මහා නාවෘක්ෂය සහ අවසාන සත්‍යය",
-    nameEnglish: "The Colossus Canopy & Final Truth",
+    taglineEn: "The cloud-level ancient ironwood canopy and the ultimate truth of the 1987 tragedy.",
+    taglineSinhala: "වලාකුළු මට්ටමේ මහා ගස් වියන සහ අවසාන හෙළිදරව්ව",
     tagline: "වලාකුළු මට්ටමේ මහා ගස් වියන සහ අවසාන හෙළිදරව්ව",
+    descEn: "Ascend suspended suspension walkways 150 feet in the air across the ancient Sinharaja ironwood giants. Reach the mist-shrouded granite peak of Sinhagala to activate the orbital distress beacon and expose the truth.",
+    descSinhala: "අඩි 150ක් උසින් පිහිටි යෝධ නාවෘක්ෂ වියන් පාලම (Canopy Walkway) මතින් නැගී, 1987 අතුරුදහන් වීමේ සම්පූර්ණ සත්‍යය හෙළිකර අවසාන ගලවාගැනීමේ යානය අමතන්න.",
     desc: "අඩි 150ක් උසින් පිහිටි යෝධ නාවෘක්ෂ වියන් පාලම (Canopy Walkway) මතින් නැගී, 1987 අතුරුදහන් වීමේ සම්පූර්ණ සත්‍යය හෙළිකර අවසාන ගලවාගැනීමේ යානය අමතන්න.",
-    image: "https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?q=80&w=1200",
+    image: "/chapters/ch5_canopy.jpg",
+    fallbackImage: "https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?q=80&w=1200",
     climate: "STRATOSPHERE // GOLDEN CANOPY",
     isDeploying: true,
+    reqMsgEn: "ACTIVE DEVELOPMENT // DEPLOYING SOON (Under Active Build)",
+    reqMsgSi: "සංවර්ධනය වෙමින් පවතී (DEPLOYING SOON) — නුදුරේදීම නිකුත් වේ.",
     reqMsg: "සංවර්ධනය වෙමින් පවතී (DEPLOYING SOON) — නුදුරේදීම නිකුත් වේ.",
     evidenceList: [
-      { id: "ch5_blackbox", name: "ගවේෂණ කළු පෙට්ටිය", icon: "Box" },
-      { id: "ch5_beacon", name: "අවසාන සංඥා උපකරණය", icon: "Satellite" },
-      { id: "ch5_truth", name: "මහාචාර්ය ඩග්ලස්ගේ සටහන", icon: "Scroll" },
+      { id: "ch5_blackbox", nameEn: "Expedition Flight Blackbox", nameSi: "ගවේෂණ කළු පෙට්ටිය", name: "ගවේෂණ කළු පෙට්ටිය", icon: "Box" },
+      { id: "ch5_beacon", nameEn: "Long-Range Orbital Transceiver", nameSi: "අවසාන සංඥා උපකරණය", name: "අවසාන සංඥා උපකරණය", icon: "Satellite" },
+      { id: "ch5_truth", nameEn: "Douglas's Final Transmission", nameSi: "මහාචාර්ය ඩග්ලස්ගේ සටහන", name: "මහාචාර්ය ඩග්ලස්ගේ සටහන", icon: "Scroll" },
     ],
   },
 ];
@@ -3547,10 +3592,25 @@ export default function App() {
         <div className="select-header">
           <div className="header-titles">
             <h1 className="main-title">
-              <span className="title-sinhala">සිංහරාජ: අතුරුදහන් වූ ගවේෂණය</span>
-              <span className="title-english-sub">SINHARAJA BIOSPHERE // OPERATION: THE LOST EXPEDITION</span>
+              {lang === "en" ? (
+                <>
+                  <span className="title-primary-en">SINHARAJA: THE LOST EXPEDITION</span>
+                  <span className="title-english-sub">
+                    <span className="agency-seal">UNESCO BIOSPHERE RESERVE</span> {"// 1987 EXPEDITIONARY FORCES // OPERATION ARCHIVE"}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="title-sinhala">සිංහරාජ: අතුරුදහන් වූ ගවේෂණය</span>
+                  <span className="title-english-sub">{"SINHARAJA BIOSPHERE // OPERATION: THE LOST EXPEDITION"}</span>
+                </>
+              )}
             </h1>
-            <p className="main-subtitle">{I18N[lang].tagline_main}</p>
+            <p className="main-subtitle">
+              {lang === "en"
+                ? "First-Person 3D Tactical Rainforest Survival & Forensic Mystery Expedition"
+                : I18N[lang].tagline_main}
+            </p>
 
             {/* Telemetry Strip */}
             <div className="dossier-telemetry-bar">
@@ -3568,7 +3628,7 @@ export default function App() {
                 <strong className="telem-val telem-gold">{totalEvidenceCount} / 15 ({Math.round((totalEvidenceCount / 15) * 100)}%)</strong>
               </div>
               <div className="telemetry-item">
-                <span className="telem-label">{lang === "en" ? "AWARDS:" : "සම්මාන:"}</span>
+                <span className="telem-label">{lang === "en" ? "AWARDS & TROPHIES:" : "සම්මාන:"}</span>
                 <strong className="telem-val telem-blue">{unlockedAchievements.length} / {MASTER_ACHIEVEMENTS.length}</strong>
               </div>
             </div>
@@ -3687,18 +3747,18 @@ export default function App() {
                   <span className="dossier-file-code">DOSSIER // FILE EXP-0{chap.id}</span>
                   <span className={`status-badge ${isDeploying ? "deploying" : isDone ? "completed" : isUnlocked ? "active" : "locked"}`}>
                     {isDeploying
-                      ? "🚧 DEPLOYING SOON // සංවර්ධනය වෙමින් පවතී"
+                      ? (lang === "en" ? "🚧 UNDER DEVELOPMENT" : "🚧 DEPLOYING SOON // සංවර්ධනය වෙමින් පවතී")
                       : isDone
-                      ? "✓ ARCHIVE COMPLETED"
+                      ? (lang === "en" ? "✓ ARCHIVE SECURED" : "✓ ARCHIVE COMPLETED")
                       : isUnlocked
-                      ? "CLEARED FOR DEPLOYMENT"
-                      : "TOP SECRET // CLASSIFIED"}
+                      ? (lang === "en" ? "CLEARED FOR DEPLOYMENT" : "ක්‍රියාත්මක කිරීමට සූදානම්")
+                      : (lang === "en" ? "TOP SECRET // CLASSIFIED" : "රහස්‍ය ලේඛනාගාරය")}
                   </span>
                 </div>
 
                 <div
                   className="flashcard-image"
-                  style={{ backgroundImage: `url(${chap.image})` }}
+                  style={{ backgroundImage: `url(${chap.image}), url(${chap.fallbackImage})` }}
                 >
                   <div className="recon-crosshair-overlay">
                     <div className="recon-reticle" />
@@ -3716,33 +3776,38 @@ export default function App() {
 
                 <div className="flashcard-body">
                   <span className="chap-watermark-num">0{chap.id}</span>
-                  <h2 className="chap-sinhala">{chap.nameSinhala}</h2>
-                  <h3 className="chap-english">{chap.nameEnglish}</h3>
-                  <p className="chap-tagline">“{chap.tagline}”</p>
-                  <p className="chap-desc">{chap.desc}</p>
+                  <h2 className="chap-main-heading">
+                    {lang === "en" ? chap.nameEnglish : chap.nameSinhala}
+                  </h2>
+                  <h3 className="chap-sub-heading">
+                    {lang === "en" ? chap.nameSinhala : chap.nameEnglish}
+                  </h3>
+                  <p className="chap-tagline">“{lang === "en" ? (chap.taglineEn || chap.tagline) : (chap.taglineSinhala || chap.tagline)}”</p>
+                  <p className="chap-desc">{lang === "en" ? (chap.descEn || chap.desc) : (chap.descSinhala || chap.desc)}</p>
 
                   {/* Hazard Assessment Callout */}
-                  {chap.hazard && (
+                  {(chap.hazardEn || chap.hazard) && (
                     <div className="dossier-hazard-strip">
-                      <span className="hazard-title">⚠️ THREAT INTEL:</span>
-                      <span className="hazard-desc">{chap.hazard}</span>
+                      <span className="hazard-title">⚠️ {lang === "en" ? "THREAT ASSESSMENT:" : "අවදානම් තොරතුරු:"}</span>
+                      <span className="hazard-desc">{lang === "en" ? (chap.hazardEn || chap.hazard) : (chap.hazardSi || chap.hazard)}</span>
                     </div>
                   )}
 
                   {chap.evidenceList && (
                     <div className="card-evidence-box">
                       <span className="evidence-box-title">
-                        <Icons.Target className="tactical-svg-icon" /> {lang === "en" ? "MISSION INTEL & CLUES:" : "මෙහෙයුම් ඉලක්ක හා සාක්ෂි:"}
+                        <Icons.Target className="tactical-svg-icon" /> {lang === "en" ? "FORENSIC OBJECTIVES & EVIDENCE:" : "මෙහෙයුම් ඉලක්ක හා සාක්ෂි:"}
                       </span>
                       <div className="evidence-tags">
                         {chap.evidenceList.map((ev) => {
                           const isFound = evidence[ev.id];
+                          const evName = lang === "en" ? (ev.nameEn || ev.name) : (ev.nameSi || ev.name);
                           return (
                             <span
                               key={ev.id}
                               className={`ev-tag ${isFound ? "found" : "missing"}`}
                             >
-                              <span className="ev-tag-status-dot" /> {ev.name} {isFound ? "✓" : "○"}
+                              <span className="ev-tag-status-dot" /> {evName} {isFound ? "✓" : "○"}
                             </span>
                           );
                         })}
@@ -3752,11 +3817,11 @@ export default function App() {
 
                   {isDeploying ? (
                     <div className="lock-reason deploying-notice">
-                      <Icons.Lock className="tactical-svg-icon" /> 🚧 {chap.reqMsg || "සංවර්ධනය වෙමින් පවතී (DEPLOYING SOON) — ඉදිරියේදී නිකුත් වේ."}
+                      <Icons.Lock className="tactical-svg-icon" /> 🚧 {lang === "en" ? (chap.reqMsgEn || "UNDER ACTIVE DEPLOYMENT // COMING SOON") : (chap.reqMsgSi || chap.reqMsg)}
                     </div>
                   ) : !isUnlocked ? (
                     <div className="lock-reason">
-                      <Icons.Lock className="tactical-svg-icon" /> {chap.reqMsg}
+                      <Icons.Lock className="tactical-svg-icon" /> {lang === "en" ? (chap.reqMsgEn || `LOCKED // Complete Chapter 0${chap.id - 1} and gather clues to proceed.`) : (chap.reqMsgSi || chap.reqMsg)}
                     </div>
                   ) : null}
 
@@ -3766,19 +3831,21 @@ export default function App() {
                     onClick={(e) => {
                       e.stopPropagation();
                       if (isDeploying) {
-                        showToast(`🚧 [DEPLOYING SOON] ${chap.title} සංවර්ධනය වෙමින් පවතී (Under Active Deployment). ඉදිරියේදී නිකුත් වේ!`);
+                        showToast(lang === "en" ? `🚧 [DEPLOYING SOON] ${chap.title} is under active deployment.` : `🚧 [DEPLOYING SOON] ${chap.title} සංවර්ධනය වෙමින් පවතී (Under Active Deployment). ඉදිරියේදී නිකුත් වේ!`);
                       } else if (isUnlocked) {
                         launchChapter(chap.id);
                       } else {
-                        showToast(`[LOCKED] ${chap.title} අගුළු වැටී ඇත! එය විවෘත කිරීමට Chapter 0${chap.id - 1} සම්පූර්ණ කරන්න.`);
+                        showToast(lang === "en" ? `[LOCKED] ${chap.title} is locked! Complete Chapter 0${chap.id - 1} to unlock.` : `[LOCKED] ${chap.title} අගුළු වැටී ඇත! එය විවෘත කිරීමට Chapter 0${chap.id - 1} සම්පූර්ණ කරන්න.`);
                       }
                     }}
                   >
                     {isDeploying
-                      ? "🚧 DEPLOYING SOON (සංවර්ධනය වෙමින් පවතී)"
+                      ? (lang === "en" ? "🚧 UNDER DEVELOPMENT" : "🚧 DEPLOYING SOON (සංවර්ධනය වෙමින් පවතී)")
                       : isUnlocked
-                      ? (isDone ? `REPLAY ${chap.title} ▶` : `DEPLOY OPERATION 0${chap.id} ▶`)
-                      : `🔒 LOCKED (COMPLETE CH 0${chap.id - 1})`}
+                      ? (isDone
+                          ? (lang === "en" ? `REPLAY ${chap.title} ▶` : `නැවත ක්‍රීඩා කරන්න ${chap.title} ▶`)
+                          : (lang === "en" ? `DEPLOY MISSION 0${chap.id} ▶` : `මෙහෙයුම අරඹන්න 0${chap.id} ▶`))
+                      : (lang === "en" ? `🔒 LOCKED (COMPLETE CH 0${chap.id - 1})` : `🔒 අගුළු වැටී ඇත (CH 0${chap.id - 1} අවසන් කරන්න)`)}
                   </button>
                 </div>
               </div>

@@ -1678,6 +1678,31 @@ body {
   margin-bottom: 0;
 }
 
+.title-primary-en {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 3.2vw, 2.7rem);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #f8fafc;
+  background: linear-gradient(180deg, #ffffff 40%, #86efac 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 24px rgba(74, 222, 128, 0.4));
+  line-height: 1.15;
+}
+
+.agency-seal {
+  display: inline-block;
+  background: rgba(245, 158, 11, 0.18);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  color: #fbbf24;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  vertical-align: middle;
+}
+
 .title-sinhala {
   font-family: var(--font-display);
   font-size: clamp(1.7rem, 3vw, 2.6rem);
@@ -1991,26 +2016,49 @@ body {
 .continue-expedition-banner {
   position: relative;
   z-index: 10;
-  background: linear-gradient(90deg, rgba(245, 158, 11, 0.18) 0%, rgba(20, 35, 24, 0.9) 50%, rgba(34, 197, 94, 0.15) 100%);
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.16) 0%, rgba(12, 28, 16, 0.92) 50%, rgba(34, 197, 94, 0.14) 100%);
   border: 1px solid rgba(245, 158, 11, 0.4);
   border-left: 4px solid #fbbf24;
   border-radius: 10px;
   padding: 12px 20px;
-  margin-bottom: 1.8rem;
+  margin-bottom: 1.6rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 14px;
 }
 
-.continue-expedition-banner span {
-  font-family: var(--font-sinhala);
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #fde68a;
+.continue-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.continue-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(245, 158, 11, 0.18);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  color: #fbbf24;
+  font-family: var(--font-hud);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+.continue-msg {
+  font-family: var(--font-hud);
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #f1f5f9;
+  letter-spacing: 0.06em;
 }
 
 .continue-btn {
@@ -2125,11 +2173,33 @@ body {
 
 /* Recon Photo Header */
 .flashcard-image {
-  height: 165px;
+  height: 185px;
+  background-color: #07150a;
   background-size: cover;
   background-position: center;
   position: relative;
   overflow: hidden;
+  transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mission-dossier-card:hover .flashcard-image {
+  transform: scale(1.04);
+}
+
+.flashcard-image::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.2) 2px,
+    rgba(0, 0, 0, 0.2) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.65;
 }
 
 .flashcard-image::after {
@@ -2137,6 +2207,7 @@ body {
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.15) 0%, rgba(6, 12, 7, 0.95) 100%);
+  z-index: 1;
 }
 
 /* Recon Crosshair & Telemetry Overlay */
@@ -2309,22 +2380,25 @@ body {
   line-height: 1;
 }
 
+.chap-main-heading,
 .chap-sinhala {
-  font-size: 1.12rem;
-  font-weight: 700;
+  font-size: 1.15rem;
+  font-weight: 800;
   color: #f8fafc;
   margin-bottom: 2px;
   position: relative;
   z-index: 1;
+  letter-spacing: 0.02em;
 }
 
+.chap-sub-heading,
 .chap-english {
   font-family: var(--font-display);
   font-size: 0.74rem;
   color: #fbbf24;
   letter-spacing: 0.08em;
   font-weight: 700;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   position: relative;
   z-index: 1;
 }

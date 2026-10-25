@@ -79,7 +79,7 @@ export const I18N = {
 
     // Chapter Select Screen
     expedition_dossier: "SINHARAJA EXPEDITION DOSSIER",
-    tagline_main: "Tactical 2D Rainforest Survival & Mystery Investigation",
+    tagline_main: "Tactical 3D First-Person Rainforest Survival & Forensic Mystery Expedition",
     select_chapter: "SELECT EXPEDITION SECTOR",
     locked_desc: "Complete previous sectors and gather forensic evidence to unlock.",
     launch_expedition: "LAUNCH EXPEDITION",
@@ -173,7 +173,7 @@ export const I18N = {
 
     // Chapter Select Screen
     expedition_dossier: "සිංහරාජ ගවේෂණ මෙහෙයුම් ලේඛනාගාරය",
-    tagline_main: "තාක්ෂණික 2D වැසි වනාන්තර පැවැත්ම සහ අභිරහස් විමර්ශනය",
+    tagline_main: "ත්‍රිමාණ (3D) වැසි වනාන්තර පැවැත්ම සහ අභිරහස් විමර්ශන ගවේෂණය",
     select_chapter: "ගවේෂණ කලාපය තෝරන්න",
     locked_desc: "පෙර කලාප අවසන් කර සාක්ෂි එකතු කිරීමෙන් පසු විවෘත වේ.",
     launch_expedition: "ගවේෂණය ආරම්භ කරන්න",
