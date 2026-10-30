@@ -3575,277 +3575,241 @@ export default function App() {
   const cardinalStr = cardinalDirections[cardinalIndex];
 
   // ══════════════════════════════════════════════════════════════════════════
-  // VIEW 1: CHAPTER SELECT SCREEN (TACTICAL MISSION DOSSIER THEATER)
+  // VIEW 1: CHAPTER SELECT SCREEN (CINEMATIC EXPEDITION THEATER)
   // ══════════════════════════════════════════════════════════════════════════
   if (currentView === "chapters") {
+    const nextChapterId = [1, 2, 3, 4, 5].find((c) => !completedChapters.includes(c)) || 1;
+    const nextChapObj = CHAPTERS.find((c) => c.id === nextChapterId) || CHAPTERS[0];
+    const hasSave = completedChapters.length > 0;
+
     return (
-      <div className="chapter-select-screen">
+      <div className="chapter-select-screen game-menu-root">
         <TopographicalTheaterSvg />
         <div className="fog-overlay" />
 
-        {/* Top Department Agency Banner */}
-        <div className="dossier-department-banner">
-          <span className="agency-code">SRI LANKA SPECIAL EXPEDITION FORCES // SINHARAJA BIOSPHERE SECTOR // REF #1987-EXP</span>
-          <span className="clearance-tag">TOP SECRET // CLASSIFIED INTEL ARCHIVE</span>
-        </div>
-
-        <div className="select-header">
-          <div className="header-titles">
-            <h1 className="main-title">
-              {lang === "en" ? (
-                <>
-                  <span className="title-primary-en">SINHARAJA: THE LOST EXPEDITION</span>
-                  <span className="title-english-sub">
-                    <span className="agency-seal">UNESCO BIOSPHERE RESERVE</span> {"// 1987 EXPEDITIONARY FORCES // OPERATION ARCHIVE"}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <span className="title-sinhala">සිංහරාජ: අතුරුදහන් වූ ගවේෂණය</span>
-                  <span className="title-english-sub">{"SINHARAJA BIOSPHERE // OPERATION: THE LOST EXPEDITION"}</span>
-                </>
-              )}
-            </h1>
-            <p className="main-subtitle">
-              {lang === "en"
-                ? "First-Person 3D Tactical Rainforest Survival & Forensic Mystery Expedition"
-                : I18N[lang].tagline_main}
-            </p>
-
-            {/* Telemetry Strip */}
-            <div className="dossier-telemetry-bar">
-              <div className="telemetry-item">
-                <span className="telem-dot pulse-emerald" />
-                <span className="telem-label">SAT-LINK:</span>
-                <strong className="telem-val">INMARSAT-4C [142.85 MHz]</strong>
-              </div>
-              <div className="telemetry-item">
-                <span className="telem-label">METEOROLOGY:</span>
-                <strong className="telem-val">MONSOON RAIN (94% HUMIDITY // 22°C // 994 hPa)</strong>
-              </div>
-              <div className="telemetry-item">
-                <span className="telem-label">{lang === "en" ? "GLOBAL EVIDENCE:" : "සාක්ෂි ප්‍රගතිය:"}</span>
-                <strong className="telem-val telem-gold">{totalEvidenceCount} / 15 ({Math.round((totalEvidenceCount / 15) * 100)}%)</strong>
-              </div>
-              <div className="telemetry-item">
-                <span className="telem-label">{lang === "en" ? "AWARDS & TROPHIES:" : "සම්මාන:"}</span>
-                <strong className="telem-val telem-blue">{unlockedAchievements.length} / {MASTER_ACHIEVEMENTS.length}</strong>
-              </div>
+        {/* 1. TOP GAME HUD NAVIGATION BAR */}
+        <header className="game-top-nav">
+          <div className="game-nav-brand">
+            <span className="brand-leaf-icon">🌿</span>
+            <div className="brand-text-block">
+              <span className="brand-title">SINHARAJA</span>
+              <span className="brand-sub">THE LOST EXPEDITION</span>
             </div>
+            <span className="brand-biosphere-badge">UNESCO BIOSPHERE // 1987</span>
           </div>
 
-          <div className="top-action-bar">
+          <div className="game-nav-actions">
             <button
-              className="action-pill lang-pill"
-              onClick={toggleLanguage}
-              title="භාෂාව මාරු කරන්න / Switch Language"
+              className="game-nav-btn evidence-btn"
+              onClick={() => setShowEvidenceBoard(true)}
+              title={I18N[lang].evidence_board}
             >
-              🌐 {lang === "en" ? "EN ⟷ සිංහල" : "සිංහල ⟷ EN"}
+              <Icons.Evidence className="nav-btn-icon" />
+              <span>{lang === "en" ? "Evidence" : "සාක්ෂි"}</span>
+              <span className="nav-count-badge count-gold">{totalEvidenceCount}/15</span>
             </button>
+
             <button
-              className="action-pill fullscreen-pill"
+              className="game-nav-btn field-guide-btn"
+              onClick={() => setShowJournal(true)}
+              title={I18N[lang].field_guide}
+            >
+              <Icons.Journal className="nav-btn-icon" />
+              <span>{lang === "en" ? "Field Guide" : "සත්තු"}</span>
+              <span className="nav-count-badge count-purple">{journal.length}</span>
+            </button>
+
+            <button
+              className="game-nav-btn trophy-btn"
+              onClick={() => setShowTrophies(true)}
+              title={I18N[lang].achievements}
+            >
+              <Icons.Trophy className="nav-btn-icon" />
+              <span>{lang === "en" ? "Trophies" : "සම්මාන"}</span>
+              <span className="nav-count-badge count-blue">{unlockedAchievements.length}/{MASTER_ACHIEVEMENTS.length}</span>
+            </button>
+
+            <button
+              className="game-nav-btn lang-btn"
+              onClick={toggleLanguage}
+              title="Switch Language / භාෂාව මාරු කරන්න"
+            >
+              <span className="nav-globe">🌐</span>
+              <span>{lang === "en" ? "සිංහල" : "English"}</span>
+            </button>
+
+            <button
+              className="game-nav-btn fullscreen-btn"
               onClick={toggleFullscreen}
               title={isFullscreen ? I18N[lang].exit_fullscreen : I18N[lang].fullscreen}
             >
-              <Icons.Zoom className="tactical-svg-icon" /> {isFullscreen ? I18N[lang].exit_fullscreen : I18N[lang].fullscreen}
-            </button>
-            <button
-              className="action-pill evidence-pill"
-              onClick={() => setShowEvidenceBoard(true)}
-            >
-              <Icons.Evidence className="tactical-svg-icon" /> {I18N[lang].evidence_board} ({totalEvidenceCount} / 15)
-            </button>
-            <button
-              className="action-pill trophy-pill"
-              onClick={() => setShowTrophies(true)}
-            >
-              <Icons.Trophy className="tactical-svg-icon" /> {I18N[lang].achievements} ({unlockedAchievements.length} / {MASTER_ACHIEVEMENTS.length})
-            </button>
-            <button
-              className="action-pill journal-pill"
-              onClick={() => setShowJournal(true)}
-            >
-              <Icons.Journal className="tactical-svg-icon" /> {I18N[lang].field_guide} ({journal.length})
+              <Icons.Zoom className="nav-btn-icon" />
             </button>
           </div>
-        </div>
+        </header>
 
-        {/* Continue Saved Expedition Quick-Deploy Banner */}
-        {completedChapters.length > 0 && (
-          <div className="continue-expedition-banner">
-            <div className="continue-banner-left">
-              <span className="continue-tag"><Icons.Disk className="tactical-svg-icon" /> DOSSIER ACTIVE</span>
-              <strong className="continue-msg">
-                {lang === "en"
-                  ? `PREVIOUS EXPEDITION SAVED // ${completedChapters.length} OF 5 SECTORS SECURED`
-                  : `මෙහෙයුම් ප්‍රගතිය සුරක්ෂිතයි // කලාප 5 න් ${completedChapters.length} ක් සම්පූර්ණයි`}
-              </strong>
+        {/* 2. CINEMATIC HERO TITLE & EXPEDITION INTEL */}
+        <section className="game-hero-banner">
+          <div className="hero-origin-chip">
+            <span className="hero-chip-dot pulse-emerald" />
+            <span>{lang === "en" ? "SRI LANKA UNESCO BIOSPHERE RESERVE" : "ශ්‍රී ලංකා සිංහරාජ ලෝක උරුම වැසි වනාන්තරය"}</span>
+          </div>
+
+          <h1 className="game-hero-title">
+            <span className="hero-title-main">SINHARAJA</span>
+            <span className="hero-title-sub">THE LOST EXPEDITION</span>
+          </h1>
+
+          <p className="game-hero-tagline">
+            {lang === "en"
+              ? "A First-Person 3D Tactical Survival & Forensic Mystery"
+              : "1987 අතුරුදහන් වූ පර්යේෂකයන්ගේ අභිරහස සොයා යන 3D වැසි වනාන්තර ගවේෂණය"}
+          </p>
+
+          <div className="hero-meta-row">
+            <span className="meta-item">🌧 {lang === "en" ? "Monsoon Rain // 22°C" : "ඝන මෝසම් වර්ෂාව // 22°C"}</span>
+            <span className="meta-sep">•</span>
+            <span className="meta-item">📍 {lang === "en" ? "Sinharaja Wilderness Core" : "සිංහරාජ ප්‍රාථමික කලාපය"}</span>
+            <span className="meta-sep">•</span>
+            <span className="meta-item">🧭 {lang === "en" ? "1987 Expedition Archive #87" : "1987 පර්යේෂණ ලිපිගොනුව #87"}</span>
+          </div>
+        </section>
+
+        {/* 3. HERO CONTINUE / START ACTION CARD */}
+        <section className="game-continue-card">
+          <div className="continue-card-content">
+            <div className="continue-card-badge">
+              <span className={`continue-status-dot ${hasSave ? "pulse-amber" : "pulse-emerald"}`} />
+              <span>{hasSave ? (lang === "en" ? "SAVED EXPEDITION ACTIVE" : "ක්‍රියාකාරී මෙහෙයුම සුරක්ෂිතයි") : (lang === "en" ? "READY FOR DEPLOYMENT" : "නව මෙහෙයුමට සූදානම්")}</span>
             </div>
-            <button
-              className="continue-btn"
-              onClick={() => launchChapter([1, 2, 3, 4, 5].find((c) => !completedChapters.includes(c)) || 1)}
-            >
-              {lang === "en" ? "RESUME EXPEDITION OPERATION ▶" : "මෙහෙයුම ඉදිරියට ගෙන යන්න ▶"}
-            </button>
+            <h2 className="continue-mission-title">
+              {lang === "en" ? `MISSION 0${nextChapObj.id}: ${nextChapObj.nameEnglish}` : `මෙහෙයුම 0${nextChapObj.id}: ${nextChapObj.nameSinhala}`}
+            </h2>
+            <p className="continue-mission-sub">
+              {hasSave
+                ? (lang === "en"
+                    ? `${completedChapters.length} of 5 Sectors Cleared • ${totalEvidenceCount} Clues Recovered • Progress Auto-Saved`
+                    : `කලාප 5 න් ${completedChapters.length} ක් සම්පූර්ණයි • සාක්ෂි ${totalEvidenceCount} ක් හමුවිය`)
+                : (lang === "en"
+                    ? "Begin your journey into the Kudawa Trailhead to locate the missing team."
+                    : "මහාචාර්ය ඩග්ලස්ගේ අතුරුදහන්වීම සෙවීමට කුඩව මාවතෙන් ගවේෂණය අරඹන්න.")}
+            </p>
           </div>
-        )}
 
-        {/* Sector Quick Jump Navigation Strip */}
-        <div className="sector-nav-strip">
-          <span className="sector-strip-label"><Icons.Crosshair className="tactical-svg-icon" /> {lang === "en" ? "SECTOR SELECTION:" : "කලාප තේරීම:"}</span>
-          <div className="sector-nav-pills">
-            {CHAPTERS.map((chap) => {
-              const isDeploying = chap.isDeploying || chap.id >= 4;
-              const isUnlocked = !isDeploying && unlockedChapters.includes(chap.id);
-              const isDone = completedChapters.includes(chap.id);
-              return (
-                <button
-                  key={chap.id}
-                  className={`sector-pill-btn ${isDeploying ? "pill-deploying" : isDone ? "pill-done" : isUnlocked ? "pill-ready" : "pill-locked"}`}
-                  onClick={() => {
-                    if (isDeploying) {
-                      showToast(`🚧 [DEPLOYING SOON] ${chap.title} සංවර්ධනය වෙමින් පවතී (Under Active Deployment).`);
-                    } else if (isUnlocked) {
-                      launchChapter(chap.id);
-                    } else {
-                      showToast(`[LOCKED] ${chap.title} අගුළු වැටී ඇත!`);
-                    }
-                  }}
-                >
-                  <span className="pill-dot" />
-                  <strong>SEC 0{chap.id}</strong>
-                  <span>{chap.sectorShort || chap.title}</span>
-                  <small>{isDeploying ? "DEV" : isDone ? "✓" : isUnlocked ? "READY" : "LOCK"}</small>
-                </button>
-              );
-            })}
-          </div>
+          <button
+            className="continue-hero-btn"
+            onClick={() => launchChapter(nextChapterId)}
+          >
+            <span className="btn-play-icon">▶</span>
+            <span>{hasSave ? (lang === "en" ? "RESUME EXPEDITION" : "මෙහෙයුම ඉදිරියට ගෙන යන්න") : (lang === "en" ? "BEGIN EXPEDITION" : "ගවේෂණය අරඹන්න")}</span>
+          </button>
+        </section>
+
+        {/* 4. CHAPTERS SELECTION SECTION */}
+        <div className="game-chapters-header">
+          <h2 className="chapters-heading">
+            {lang === "en" ? "SELECT EXPEDITION SECTOR" : "ගවේෂණ කලාපය තෝරන්න"}
+          </h2>
+          <span className="chapters-subheading">
+            {lang === "en"
+              ? "Deploy directly into any unlocked sector or replay secured zones"
+              : "විවෘත කර ඇති කලාපයකට සෘජුව පිවිසෙන්න හෝ නැවත ක්‍රීඩා කරන්න"}
+          </span>
         </div>
 
-        {/* Classified Mission Dossier Cards Grid */}
-        <div className="chapters-grid">
+        {/* 5. MODERN 5-SECTOR CARDS GRID */}
+        <div className="game-chapters-grid">
           {CHAPTERS.map((chap) => {
             const isDeploying = chap.isDeploying || chap.id >= 4;
             const isUnlocked = !isDeploying && unlockedChapters.includes(chap.id);
             const isDone = completedChapters.includes(chap.id);
+            const isCurrentActive = isUnlocked && !isDone;
+
+            const shortHazard = lang === "en"
+              ? (chap.id === 1 ? "Leeches & Monsoon Rain" : chap.id === 2 ? "Freezing Mist & River Rapids" : chap.id === 3 ? "Toxic Gas & Cavern Tremors" : chap.id === 4 ? "Electric Grid & Bio-Vaults" : "Canopy Heights & High Wind")
+              : (chap.id === 1 ? "කූඩැල්ලන් සහ අධික වැස්ස" : chap.id === 2 ? "අධික ශීතල සහ සැඩ පහර" : chap.id === 3 ? "විෂ වායුව සහ භූ කම්පන" : chap.id === 4 ? "විදුලි දැල සහ විෂ බීජ" : "උස් වියන සහ තද සුළං");
+
             return (
               <div
                 key={chap.id}
-                className={`chapter-flashcard mission-dossier-card ${isDeploying ? "locked deploying-card" : isUnlocked ? "unlocked" : "locked"} ${
-                  isDone ? "completed-card" : ""
-                }`}
+                className={`game-chapter-card ${isDeploying ? "card-deploying" : isDone ? "card-completed" : isUnlocked ? "card-unlocked" : "card-locked"} ${isCurrentActive ? "card-current" : ""}`}
                 onClick={() => {
                   if (isDeploying) {
-                    showToast(`🚧 [DEPLOYING SOON] ${chap.title} සංවර්ධනය වෙමින් පවතී (Under Active Deployment).`);
+                    showToast(lang === "en" ? `🚧 Chapter 0${chap.id} is coming soon in the next update!` : `🚧 Chapter 0${chap.id} ඉදිරි සංස්කරණයෙන් නිකුත් වේ!`);
                   } else if (isUnlocked) {
                     launchChapter(chap.id);
+                  } else {
+                    showToast(lang === "en" ? `🔒 Chapter 0${chap.id} is locked! Complete Chapter 0${chap.id - 1} to proceed.` : `🔒 Chapter 0${chap.id} අගුළු වැටී ඇත! Chapter 0${chap.id - 1} අවසන් කරන්න.`);
                   }
                 }}
               >
-                {/* Dossier Card Header Tab */}
-                <div className="dossier-card-top-tab">
-                  <span className="dossier-file-code">DOSSIER // FILE EXP-0{chap.id}</span>
-                  <span className={`status-badge ${isDeploying ? "deploying" : isDone ? "completed" : isUnlocked ? "active" : "locked"}`}>
-                    {isDeploying
-                      ? (lang === "en" ? "🚧 UNDER DEVELOPMENT" : "🚧 DEPLOYING SOON // සංවර්ධනය වෙමින් පවතී")
-                      : isDone
-                      ? (lang === "en" ? "✓ ARCHIVE SECURED" : "✓ ARCHIVE COMPLETED")
-                      : isUnlocked
-                      ? (lang === "en" ? "CLEARED FOR DEPLOYMENT" : "ක්‍රියාත්මක කිරීමට සූදානම්")
-                      : (lang === "en" ? "TOP SECRET // CLASSIFIED" : "රහස්‍ය ලේඛනාගාරය")}
-                  </span>
-                </div>
-
+                {/* Visual Thumbnail */}
                 <div
-                  className="flashcard-image"
+                  className="game-card-media"
                   style={{ backgroundImage: `url(${chap.image}), url(${chap.fallbackImage})` }}
                 >
-                  <div className="recon-crosshair-overlay">
-                    <div className="recon-reticle" />
-                    <span className="recon-coords-label">{chap.coords}</span>
+                  <div className="card-media-gradient" />
+                  <div className="card-media-top">
+                    <span className="card-chapter-pill">CH 0{chap.id}</span>
+                    <span className={`card-status-pill ${isDeploying ? "status-deploying" : isDone ? "status-done" : isUnlocked ? "status-ready" : "status-locked"}`}>
+                      {isDeploying
+                        ? (lang === "en" ? "SOON" : "ළඟදීම")
+                        : isDone
+                        ? (lang === "en" ? "✓ SECURED" : "✓ සම්පූර්ණයි")
+                        : isUnlocked
+                        ? (lang === "en" ? "● READY" : "● සූදානම්")
+                        : (lang === "en" ? "🔒 LOCKED" : "🔒 අගුළු වැටී ඇත")}
+                    </span>
                   </div>
-
-                  <div className="card-badge-row">
-                    <span className="chap-num-badge">{chap.title}</span>
-                    <span className="chap-sector-badge">{chap.sector || `SECTOR 0${chap.id}`}</span>
+                  <div className="card-media-bottom">
+                    <span className="card-sector-tag">{chap.sectorShort || `SECTOR 0${chap.id}`}</span>
                   </div>
-                  {chap.climate && (
-                    <span className="card-climate-badge">{chap.climate}</span>
-                  )}
                 </div>
 
-                <div className="flashcard-body">
-                  <span className="chap-watermark-num">0{chap.id}</span>
-                  <h2 className="chap-main-heading">
+                {/* Card Info Body */}
+                <div className="game-card-body">
+                  <h3 className="game-card-title">
                     {lang === "en" ? chap.nameEnglish : chap.nameSinhala}
-                  </h2>
-                  <h3 className="chap-sub-heading">
-                    {lang === "en" ? chap.nameSinhala : chap.nameEnglish}
                   </h3>
-                  <p className="chap-tagline">“{lang === "en" ? (chap.taglineEn || chap.tagline) : (chap.taglineSinhala || chap.tagline)}”</p>
-                  <p className="chap-desc">{lang === "en" ? (chap.descEn || chap.desc) : (chap.descSinhala || chap.desc)}</p>
+                  <span className="game-card-subtitle">
+                    {lang === "en" ? chap.nameSinhala : chap.nameEnglish}
+                  </span>
+                  <p className="game-card-desc">
+                    {lang === "en" ? (chap.taglineEn || chap.tagline) : (chap.taglineSinhala || chap.tagline)}
+                  </p>
 
-                  {/* Hazard Assessment Callout */}
-                  {(chap.hazardEn || chap.hazard) && (
-                    <div className="dossier-hazard-strip">
-                      <span className="hazard-title">⚠️ {lang === "en" ? "THREAT ASSESSMENT:" : "අවදානම් තොරතුරු:"}</span>
-                      <span className="hazard-desc">{lang === "en" ? (chap.hazardEn || chap.hazard) : (chap.hazardSi || chap.hazard)}</span>
+                  <div className="game-card-intel-strip">
+                    <div className="intel-pill">
+                      <Icons.Evidence className="intel-icon" />
+                      <span>{chap.evidenceList ? `${chap.evidenceList.filter(e => evidence[e.id]).length}/${chap.evidenceList.length} Clues` : "3 Clues"}</span>
                     </div>
-                  )}
-
-                  {chap.evidenceList && (
-                    <div className="card-evidence-box">
-                      <span className="evidence-box-title">
-                        <Icons.Target className="tactical-svg-icon" /> {lang === "en" ? "FORENSIC OBJECTIVES & EVIDENCE:" : "මෙහෙයුම් ඉලක්ක හා සාක්ෂි:"}
-                      </span>
-                      <div className="evidence-tags">
-                        {chap.evidenceList.map((ev) => {
-                          const isFound = evidence[ev.id];
-                          const evName = lang === "en" ? (ev.nameEn || ev.name) : (ev.nameSi || ev.name);
-                          return (
-                            <span
-                              key={ev.id}
-                              className={`ev-tag ${isFound ? "found" : "missing"}`}
-                            >
-                              <span className="ev-tag-status-dot" /> {evName} {isFound ? "✓" : "○"}
-                            </span>
-                          );
-                        })}
-                      </div>
+                    <div className="intel-pill hazard-pill">
+                      <span className="intel-hazard-dot" />
+                      <span className="intel-hazard-txt">{shortHazard}</span>
                     </div>
-                  )}
-
-                  {isDeploying ? (
-                    <div className="lock-reason deploying-notice">
-                      <Icons.Lock className="tactical-svg-icon" /> 🚧 {lang === "en" ? (chap.reqMsgEn || "UNDER ACTIVE DEPLOYMENT // COMING SOON") : (chap.reqMsgSi || chap.reqMsg)}
-                    </div>
-                  ) : !isUnlocked ? (
-                    <div className="lock-reason">
-                      <Icons.Lock className="tactical-svg-icon" /> {lang === "en" ? (chap.reqMsgEn || `LOCKED // Complete Chapter 0${chap.id - 1} and gather clues to proceed.`) : (chap.reqMsgSi || chap.reqMsg)}
-                    </div>
-                  ) : null}
+                  </div>
 
                   <button
-                    className={`chap-play-btn ${isDeploying ? "btn-deploying" : isUnlocked ? "btn-primary" : "btn-locked"}`}
+                    className={`game-card-btn ${isDeploying ? "btn-deploying" : isDone ? "btn-replay" : isUnlocked ? "btn-play" : "btn-locked"}`}
                     disabled={isDeploying}
                     onClick={(e) => {
                       e.stopPropagation();
                       if (isDeploying) {
-                        showToast(lang === "en" ? `🚧 [DEPLOYING SOON] ${chap.title} is under active deployment.` : `🚧 [DEPLOYING SOON] ${chap.title} සංවර්ධනය වෙමින් පවතී (Under Active Deployment). ඉදිරියේදී නිකුත් වේ!`);
+                        showToast(lang === "en" ? `🚧 Chapter 0${chap.id} is coming soon!` : `🚧 Chapter 0${chap.id} ළඟදීම නිකුත් වේ!`);
                       } else if (isUnlocked) {
                         launchChapter(chap.id);
                       } else {
-                        showToast(lang === "en" ? `[LOCKED] ${chap.title} is locked! Complete Chapter 0${chap.id - 1} to unlock.` : `[LOCKED] ${chap.title} අගුළු වැටී ඇත! එය විවෘත කිරීමට Chapter 0${chap.id - 1} සම්පූර්ණ කරන්න.`);
+                        showToast(lang === "en" ? `🔒 Complete Chapter 0${chap.id - 1} to unlock.` : `🔒 Chapter 0${chap.id - 1} අවසන් කර මෙය විවෘත කරන්න.`);
                       }
                     }}
                   >
                     {isDeploying
-                      ? (lang === "en" ? "🚧 UNDER DEVELOPMENT" : "🚧 DEPLOYING SOON (සංවර්ධනය වෙමින් පවතී)")
+                      ? (lang === "en" ? "COMING SOON 🚧" : "ඉදිරියේදී 🚧")
+                      : isDone
+                      ? (lang === "en" ? "REPLAY SECTOR ↺" : "නැවත ක්‍රීඩා කරන්න ↺")
                       : isUnlocked
-                      ? (isDone
-                          ? (lang === "en" ? `REPLAY ${chap.title} ▶` : `නැවත ක්‍රීඩා කරන්න ${chap.title} ▶`)
-                          : (lang === "en" ? `DEPLOY MISSION 0${chap.id} ▶` : `මෙහෙයුම අරඹන්න 0${chap.id} ▶`))
-                      : (lang === "en" ? `🔒 LOCKED (COMPLETE CH 0${chap.id - 1})` : `🔒 අගුළු වැටී ඇත (CH 0${chap.id - 1} අවසන් කරන්න)`)}
+                      ? (lang === "en" ? "ENTER SECTOR ▶" : "පිවිසෙන්න ▶")
+                      : (lang === "en" ? `LOCKED (CH 0${chap.id - 1}) 🔒` : `අගුළු වැටී ඇත 🔒`)}
                   </button>
                 </div>
               </div>
